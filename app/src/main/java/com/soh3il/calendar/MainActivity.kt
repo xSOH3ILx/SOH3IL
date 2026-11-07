@@ -27,9 +27,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.soh3il.core.database.Soh3ilDatabase
 import com.soh3il.core.database.entity.ReminderEntity
+import com.soh3il.core.database.preferences.UserPreferences
 import com.soh3il.core.designsystem.theme.Soh3ilTheme
 import com.soh3il.core.model.AppTheme
 import com.soh3il.core.scheduler.AlarmScheduler
@@ -62,8 +64,9 @@ class MainActivity : ComponentActivity() {
         val db = Soh3ilDatabase.getInstance(this)
 
         setContent {
-            var currentTheme by remember { mutableStateOf(AppTheme.SYSTEM) }
-            var isAmoled by remember { mutableStateOf(false) }
+            val context = LocalContext.current
+            var currentTheme by remember { mutableStateOf(UserPreferences.getTheme(context)) }
+            var isAmoled by remember { mutableStateOf(UserPreferences.isAmoled(context)) }
 
             Soh3ilTheme(themePreference = currentTheme, isAmoled = isAmoled) {
                 val coroutineScope = rememberCoroutineScope()
@@ -111,9 +114,15 @@ class MainActivity : ComponentActivity() {
                             )
                             1 -> SettingsScreen(
                                 currentTheme = currentTheme,
-                                onThemeSelected = { currentTheme = it },
+                                onThemeSelected = {
+                                    currentTheme = it
+                                    UserPreferences.setTheme(context, it)
+                                },
                                 isAmoled = isAmoled,
-                                onAmoledToggled = { isAmoled = it },
+                                onAmoledToggled = {
+                                    isAmoled = it
+                                    UserPreferences.setAmoled(context, it)
+                                },
                                 currentVersionName = currentVersion
                             )
                         }

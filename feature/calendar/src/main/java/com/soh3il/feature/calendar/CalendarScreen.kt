@@ -425,8 +425,16 @@ fun SelectedDayDetails(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             val timeStr = "\u200E${rem.hour.toPersianDigits().padStart(2, '۰')}:${rem.minute.toPersianDigits().padStart(2, '۰')}"
+                            val recurrenceDetail = when (rem.recurrence.type) {
+                                com.soh3il.core.model.RecurrenceType.NONE -> null
+                                com.soh3il.core.model.RecurrenceType.DAILY -> if (rem.recurrence.interval <= 1) "روزانه" else "هر ${rem.recurrence.interval.toPersianDigits()} روز یکبار"
+                                com.soh3il.core.model.RecurrenceType.WEEKLY -> if (rem.recurrence.interval <= 1) "هفتگی" else "هر ${rem.recurrence.interval.toPersianDigits()} هفته یکبار"
+                                com.soh3il.core.model.RecurrenceType.MONTHLY_JALALI -> if (rem.recurrence.interval <= 1) "ماهانه" else "هر ${rem.recurrence.interval.toPersianDigits()} ماه یکبار"
+                                com.soh3il.core.model.RecurrenceType.YEARLY_JALALI -> if (rem.recurrence.interval <= 1) "سالانه" else "هر ${rem.recurrence.interval.toPersianDigits()} سال یکبار"
+                            }
+                            val subtitle = if (recurrenceDetail != null) "ساعت $timeStr • $recurrenceDetail" else "ساعت $timeStr"
                             Text(
-                                text = "ساعت $timeStr",
+                                text = subtitle,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

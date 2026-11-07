@@ -86,6 +86,8 @@ fun AddReminderSheet(
     var showTimePickerDialog by remember { mutableStateOf(false) }
 
     var recurrenceType by remember { mutableStateOf(RecurrenceType.NONE) }
+    var recurrenceInterval by remember { mutableIntStateOf(1) }
+    var showCustomRecurrenceDialog by remember { mutableStateOf(false) }
 
     // Pre-reminder state: presets or custom
     var selectedPreReminderMinutes by remember { mutableStateOf<Int?>(null) } // null = none, 15, 30, 60, 1440, 2880
@@ -290,7 +292,10 @@ fun AddReminderSheet(
                             val isSelected = recurrenceType == type
                             FilterChip(
                                 selected = isSelected,
-                                onClick = { recurrenceType = type },
+                                onClick = {
+                                    recurrenceType = type
+                                    recurrenceInterval = 1
+                                },
                                 label = {
                                     Text(
                                         text = label,
@@ -301,6 +306,112 @@ fun AddReminderSheet(
                                 leadingIcon = if (isSelected) {
                                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                                 } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+
+                    // 5.1 Interval Selection when recurring
+                    if (recurrenceType != RecurrenceType.NONE) {
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "بازه تکرار:",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val presetIntervals = when (recurrenceType) {
+                                RecurrenceType.MONTHLY_JALALI -> listOf(
+                                    1 to "هر ماه",
+                                    2 to "هر ۲ ماه یکبار",
+                                    3 to "هر ۳ ماه (فصلی)",
+                                    6 to "هر ۶ ماه (نیم‌سال)"
+                                )
+                                RecurrenceType.DAILY -> listOf(
+                                    1 to "هر روز",
+                                    2 to "یک روز در میان",
+                                    3 to "هر ۳ روز",
+                                    7 to "هر هفته (۷ روز)"
+                                )
+                                RecurrenceType.WEEKLY -> listOf(
+                                    1 to "هر هفته",
+                                    2 to "هر ۲ هفته یکبار",
+                                    3 to "هر ۳ هفته یکبار",
+                                    4 to "هر ۴ هفته یکبار"
+                                )
+                                RecurrenceType.YEARLY_JALALI -> listOf(
+                                    1 to "هر سال",
+                                    2 to "هر ۲ سال یکبار"
+                                )
+                                else -> emptyList()
+                            }
+
+                            presetIntervals.forEach { (interval, label) ->
+                                val isSelected = recurrenceInterval == interval
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { recurrenceInterval = interval },
+                                    label = {
+                                        Text(
+                                            text = label,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    leadingIcon = if (isSelected) {
+                                        { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                    } else null,
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            }
+
+                            // Custom interval chip
+                            val isPreset = presetIntervals.any { it.first == recurrenceInterval }
+                            FilterChip(
+                                selected = !isPreset,
+                                onClick = { showCustomRecurrenceDialog = true },
+                                label = {
+                                    Text(
+                                        text = if (!isPreset) {
+                                            val unitName = when (recurrenceType) {
+                                                RecurrenceType.DAILY -> "روز"
+                                                RecurrenceType.WEEKLY -> "هفته"
+                                                RecurrenceType.MONTHLY_JALALI -> "ماه شمسی"
+                                                RecurrenceType.YEARLY_JALALI -> "سال شمسی"
+                                                else -> ""
+                                            }
+                                            "هر ${recurrenceInterval.toPersianDigits()} $unitName یکبار"
+                                        } else {
+                                            "+ بازه دلخواه..."
+                                        },
+                                        fontSize = 12.sp,
+                                        fontWeight = if (!isPreset) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        if (!isPreset) Icons.Default.Check else Icons.Default.Tune,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                                     selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -468,6 +579,7 @@ fun AddReminderSheet(
                             minute = selectedMinute,
                             recurrence = RecurrenceRule(
                                 type = recurrenceType,
+                                interval = recurrenceInterval.coerceAtLeast(1),
                                 dayOfMonth = if (recurrenceType == RecurrenceType.MONTHLY_JALALI) initialDate.day else null
                             ),
                             preReminders = preList,
@@ -634,6 +746,90 @@ fun AddReminderSheet(
                     }
                     Text(
                         text = "پیش‌نمایش: ${amountVal.toPersianDigits()} $unitStr قبل از موعد",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        )
+    }
+
+    // 10. Custom Recurrence Interval Dialog
+    if (showCustomRecurrenceDialog) {
+        var intervalInput by remember { mutableStateOf(recurrenceInterval.toString()) }
+        val unitLabel = when (recurrenceType) {
+            RecurrenceType.DAILY -> "روز"
+            RecurrenceType.WEEKLY -> "هفته"
+            RecurrenceType.MONTHLY_JALALI -> "ماه شمسی"
+            RecurrenceType.YEARLY_JALALI -> "سال شمسی"
+            else -> "دوره"
+        }
+
+        AlertDialog(
+            onDismissRequest = { showCustomRecurrenceDialog = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val parsed = intervalInput.toIntOrNull()
+                        if (parsed != null && parsed > 0) {
+                            recurrenceInterval = parsed
+                            showCustomRecurrenceDialog = false
+                        }
+                    }
+                ) {
+                    Text("تایید بازه تکرار", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomRecurrenceDialog = false }) {
+                    Text("انصراف")
+                }
+            },
+            title = {
+                Text(
+                    text = "تنظیم بازه تکرار دلخواه",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "این یادآور هر چند $unitLabel یک‌بار تکرار شود؟",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedTextField(
+                        value = intervalInput,
+                        onValueChange = { input ->
+                            if (input.all { it.isDigit() } && input.length <= 3) {
+                                intervalInput = input
+                            }
+                        },
+                        label = { Text("عدد بازه تکرار (به $unitLabel)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val valInt = intervalInput.toIntOrNull() ?: 1
+                    val previewDetail = when (recurrenceType) {
+                        RecurrenceType.MONTHLY_JALALI -> "هر ${valInt.toPersianDigits()} ماه شمسی در تاریخ ${initialDate.day.toPersianDigits()} هر ماه"
+                        RecurrenceType.DAILY -> "هر ${valInt.toPersianDigits()} روز یکبار"
+                        RecurrenceType.WEEKLY -> "هر ${valInt.toPersianDigits()} هفته یکبار"
+                        RecurrenceType.YEARLY_JALALI -> "هر ${valInt.toPersianDigits()} سال یکبار در ${initialDate.day.toPersianDigits()} ${initialDate.monthNameFa}"
+                        else -> ""
+                    }
+
+                    Text(
+                        text = "پیش‌نمایش: تکرار $previewDetail",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium

@@ -7,8 +7,10 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.soh3il.core.database.preferences.UserPreferences
 
 object NotificationHelper {
 
@@ -19,14 +21,23 @@ object NotificationHelper {
     const val ACTION_SNOOZE_15 = "com.soh3il.calendar.ACTION_SNOOZE_15"
     const val EXTRA_REMINDER_ID = "extra_reminder_id"
 
-    fun createNotificationChannel(context: Context) {
+    private fun getEffectiveSoundUri(context: Context): Uri {
+        val saved = UserPreferences.getNotificationSoundUri(context)
+        return if (!saved.isNullOrEmpty()) {
+            Uri.parse(saved)
+        } else {
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        }
+    }
+
+    fun createNotificationChannel(context: Context, customSoundUri: Uri? = null) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val audioAttributes = AudioAttributes.Builder()
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .setUsage(AudioAttributes.USAGE_ALARM)
                 .build()
 
-            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val soundUri = customSoundUri ?: getEffectiveSoundUri(context)
 
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -43,6 +54,28 @@ object NotificationHelper {
         }
     }
 
+    fun updateNotificationChannelSound(context: Context, newSoundUri: Uri?) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val soundUri = newSoundUri ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .build()
+
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "اعلان‌های زنده و فوری یادآورهای تقویم سُهیل"
+                enableVibration(true)
+                setSound(soundUri, audioAttributes)
+            }
+            manager.createNotificationChannel(channel)
+        }
+    }
+
     fun showReminderNotification(
         context: Context,
         reminderId: Long,
@@ -50,7 +83,8 @@ object NotificationHelper {
         description: String,
         isPreReminder: Boolean = false
     ) {
-        createNotificationChannel(context)
+        val soundUri = getEffectiveSoundUri(context)
+        createNotificationChannel(context, soundUri)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -100,6 +134,7 @@ object NotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
+            .setSound(soundUri)
             .setContentIntent(contentPendingIntent)
             .addAction(0, "انجام شد", donePendingIntent)
             .addAction(0, "تعویق ۱۵ دقیقه", snoozePendingIntent)

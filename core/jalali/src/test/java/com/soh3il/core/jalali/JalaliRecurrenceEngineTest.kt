@@ -298,4 +298,100 @@ class JalaliRecurrenceEngineTest {
         assertEquals(12, d1404.month)
         assertEquals(29, d1404.day)
     }
+
+    @Test
+    fun testCustomMonthlyIntervalRecurrence() {
+        // Every 3 solar months (quarterly: Farvardin, Tir, Mehr, Dey) on 15th
+        val reminder = Reminder(
+            id = 30,
+            title = "تسویه‌حساب فصلی",
+            jalaliYear = 1404,
+            jalaliMonth = 1,
+            jalaliDay = 15,
+            hour = 9,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.MONTHLY_JALALI,
+                interval = 3,
+                dayOfMonth = 15
+            )
+        )
+
+        var refEpoch = JalaliDate(1404, 1, 1).toEpochMillis(0, 0, 0)
+
+        // 1st occurrence: 1404-01-15
+        val t1 = JalaliRecurrenceEngine.calculateNextTrigger(reminder, refEpoch)
+        assertNotNull(t1)
+        val d1 = JalaliDate.fromEpochMillis(t1!!)
+        assertEquals(1404, d1.year)
+        assertEquals(1, d1.month)
+        assertEquals(15, d1.day)
+
+        // 2nd occurrence: 1404-04-15 (Tir)
+        val t2 = JalaliRecurrenceEngine.calculateNextTrigger(reminder, t1 + 1000L)
+        assertNotNull(t2)
+        val d2 = JalaliDate.fromEpochMillis(t2!!)
+        assertEquals(1404, d2.year)
+        assertEquals(4, d2.month)
+        assertEquals(15, d2.day)
+
+        // 3rd occurrence: 1404-07-15 (Mehr)
+        val t3 = JalaliRecurrenceEngine.calculateNextTrigger(reminder, t2 + 1000L)
+        assertNotNull(t3)
+        val d3 = JalaliDate.fromEpochMillis(t3!!)
+        assertEquals(1404, d3.year)
+        assertEquals(7, d3.month)
+        assertEquals(15, d3.day)
+
+        // 4th occurrence: 1404-10-15 (Dey)
+        val t4 = JalaliRecurrenceEngine.calculateNextTrigger(reminder, t3 + 1000L)
+        assertNotNull(t4)
+        val d4 = JalaliDate.fromEpochMillis(t4!!)
+        assertEquals(1404, d4.year)
+        assertEquals(10, d4.month)
+        assertEquals(15, d4.day)
+
+        // 5th occurrence: 1405-01-15 (Next year Farvardin)
+        val t5 = JalaliRecurrenceEngine.calculateNextTrigger(reminder, t4 + 1000L)
+        assertNotNull(t5)
+        val d5 = JalaliDate.fromEpochMillis(t5!!)
+        assertEquals(1405, d5.year)
+        assertEquals(1, d5.month)
+        assertEquals(15, d5.day)
+    }
+
+    @Test
+    fun testCustomDailyIntervalRecurrence() {
+        // Every 3 days starting from 1404-01-01
+        val reminder = Reminder(
+            id = 40,
+            title = "آبیاری گیاهان هر ۳ روز",
+            jalaliYear = 1404,
+            jalaliMonth = 1,
+            jalaliDay = 1,
+            hour = 8,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.DAILY,
+                interval = 3
+            )
+        )
+
+        var refEpoch = JalaliDate(1404, 1, 1).toEpochMillis(0, 0, 0)
+
+        val t1 = JalaliRecurrenceEngine.calculateNextTrigger(reminder, refEpoch)
+        assertNotNull(t1)
+        val d1 = JalaliDate.fromEpochMillis(t1!!)
+        assertEquals(1, d1.day)
+
+        val t2 = JalaliRecurrenceEngine.calculateNextTrigger(reminder, t1 + 1000L)
+        assertNotNull(t2)
+        val d2 = JalaliDate.fromEpochMillis(t2!!)
+        assertEquals(4, d2.day)
+
+        val t3 = JalaliRecurrenceEngine.calculateNextTrigger(reminder, t2 + 1000L)
+        assertNotNull(t3)
+        val d3 = JalaliDate.fromEpochMillis(t3!!)
+        assertEquals(7, d3.day)
+    }
 }

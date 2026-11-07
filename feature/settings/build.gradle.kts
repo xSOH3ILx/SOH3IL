@@ -29,6 +29,7 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:designsystem"))
+    implementation(project(":core:database"))
     implementation(project(":core:updater"))
 
     implementation(platform(libs.compose.bom))

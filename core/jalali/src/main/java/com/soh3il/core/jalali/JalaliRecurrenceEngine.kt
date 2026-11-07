@@ -7,13 +7,13 @@ import com.soh3il.core.model.Reminder
 import com.soh3il.core.model.ShortMonthPolicy
 import java.time.Instant
 import java.time.ZoneId
-import java.time.ZonedDateTime
 
 object JalaliRecurrenceEngine {
 
     /**
      * Calculates the exact next epoch millis when this reminder should fire,
-     * strictly adhering to the Solar Hijri (Jalali) calendar rules without any drift.
+     * strictly adhering to the Solar Hijri (Jalali) calendar rules without any drift,
+     * fully supporting customizable recurrence intervals (every X days, weeks, months, years).
      */
     fun calculateNextTrigger(
         reminder: Reminder,
@@ -22,42 +22,57 @@ object JalaliRecurrenceEngine {
     ): Long? {
         if (!reminder.isEnabled) return null
 
-        val refZdt = Instant.ofEpochMilli(referenceEpochMillis).atZone(zoneId)
         val todayJalali = JalaliDate.fromEpochMillis(referenceEpochMillis, zoneId)
+        val baseDate = JalaliDate(reminder.jalaliYear, reminder.jalaliMonth, reminder.jalaliDay)
 
         return when (reminder.recurrence.type) {
             RecurrenceType.NONE -> {
-                val targetDate = JalaliDate(reminder.jalaliYear, reminder.jalaliMonth, reminder.jalaliDay)
-                val targetEpoch = targetDate.toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                val targetEpoch = baseDate.toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
                 if (targetEpoch > referenceEpochMillis) targetEpoch else null
             }
 
             RecurrenceType.DAILY -> {
                 val interval = reminder.recurrence.interval.coerceAtLeast(1)
-                var candidate = todayJalali
-                var targetEpoch = candidate.toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
-                if (targetEpoch <= referenceEpochMillis) {
-                    candidate = candidate.plusDays(interval.toLong())
-                    targetEpoch = candidate.toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                val daysDiff = todayJalali.toJdn() - baseDate.toJdn()
+
+                if (daysDiff >= 0 && daysDiff % interval == 0L) {
+                    val candidateEpoch = todayJalali.toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                    if (candidateEpoch > referenceEpochMillis) {
+                        return candidateEpoch
+                    }
                 }
-                targetEpoch
+
+                val step = if (daysDiff >= 0) {
+                    val rem = (daysDiff % interval).toInt()
+                    if (rem == 0) interval else interval - rem
+                } else {
+                    (-daysDiff).toInt()
+                }
+
+                val nextDate = todayJalali.plusDays(step.toLong())
+                nextDate.toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
             }
 
             RecurrenceType.WEEKLY -> {
+                val interval = reminder.recurrence.interval.coerceAtLeast(1)
                 val targetDaysOfWeek = if (reminder.recurrence.daysOfWeek.isNotEmpty()) {
                     reminder.recurrence.daysOfWeek
                 } else {
-                    setOf(JalaliDate(reminder.jalaliYear, reminder.jalaliMonth, reminder.jalaliDay).dayOfWeek)
+                    setOf(baseDate.dayOfWeek)
                 }
 
-                var candidate = todayJalali
-                // Check up to 14 days ahead to find the next matching day of the week
-                for (offset in 0..14) {
-                    val dateToCheck = candidate.plusDays(offset.toLong())
+                // Search up to (10 * interval) weeks ahead
+                val maxDaysToSearch = (7 * interval * 10).coerceAtLeast(60)
+                for (dayOffset in 0..maxDaysToSearch) {
+                    val dateToCheck = todayJalali.plusDays(dayOffset.toLong())
                     if (dateToCheck.dayOfWeek in targetDaysOfWeek) {
-                        val epoch = dateToCheck.toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
-                        if (epoch > referenceEpochMillis) {
-                            return epoch
+                        val daysFromBase = dateToCheck.toJdn() - baseDate.toJdn()
+                        val weeksFromBase = (daysFromBase / 7).toInt()
+                        if (interval == 1 || (weeksFromBase >= 0 && weeksFromBase % interval == 0)) {
+                            val epoch = dateToCheck.toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                            if (epoch > referenceEpochMillis) {
+                                return epoch
+                            }
                         }
                     }
                 }
@@ -73,34 +88,41 @@ object JalaliRecurrenceEngine {
             }
 
             RecurrenceType.YEARLY_JALALI -> {
+                val interval = reminder.recurrence.interval.coerceAtLeast(1)
                 val targetMonth = reminder.jalaliMonth
                 val targetDay = reminder.jalaliDay
                 var targetYear = todayJalali.year
 
-                // Try this year first
-                val maxDaysThisYear = JalaliDate.getDaysInMonth(targetYear, targetMonth)
-                val dayThisYear = targetDay.coerceAtMost(maxDaysThisYear)
-                val thisYearEpoch = JalaliDate(targetYear, targetMonth, dayThisYear)
-                    .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
-
-                if (thisYearEpoch > referenceEpochMillis) {
-                    thisYearEpoch
-                } else {
-                    // Otherwise next year
-                    targetYear += reminder.recurrence.interval.coerceAtLeast(1)
-                    val maxDaysNextYear = JalaliDate.getDaysInMonth(targetYear, targetMonth)
-                    val dayNextYear = targetDay.coerceAtMost(maxDaysNextYear)
-                    JalaliDate(targetYear, targetMonth, dayNextYear)
+                val yearDiff = targetYear - baseDate.year
+                if (yearDiff >= 0 && yearDiff % interval == 0) {
+                    val maxDaysThisYear = JalaliDate.getDaysInMonth(targetYear, targetMonth)
+                    val dayThisYear = targetDay.coerceAtMost(maxDaysThisYear)
+                    val thisYearEpoch = JalaliDate(targetYear, targetMonth, dayThisYear)
                         .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                    if (thisYearEpoch > referenceEpochMillis) {
+                        return thisYearEpoch
+                    }
                 }
+
+                val step = if (yearDiff >= 0) {
+                    val rem = yearDiff % interval
+                    if (rem == 0) interval else interval - rem
+                } else {
+                    -yearDiff
+                }
+
+                targetYear += step
+                val maxDaysNextYear = JalaliDate.getDaysInMonth(targetYear, targetMonth)
+                val dayNextYear = targetDay.coerceAtMost(maxDaysNextYear)
+                JalaliDate(targetYear, targetMonth, dayNextYear)
+                    .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
             }
         }
     }
 
     /**
      * Computes the exact monthly trigger in Solar Hijri calendar.
-     * Guarantees that if the user configured day 3 of every month, it will ALWAYS
-     * trigger on day 3 of that Jalali month.
+     * Supports intervals (e.g. every 2 months, every 3 months).
      */
     private fun calculateNextMonthlyJalaliTrigger(
         reminder: Reminder,
@@ -108,29 +130,40 @@ object JalaliRecurrenceEngine {
         zoneId: ZoneId
     ): Long {
         val todayJalali = JalaliDate.fromEpochMillis(referenceEpochMillis, zoneId)
+        val baseDate = JalaliDate(reminder.jalaliYear, reminder.jalaliMonth, reminder.jalaliDay)
         val targetDayOfMonth = reminder.recurrence.dayOfMonth ?: reminder.jalaliDay
         val interval = reminder.recurrence.interval.coerceAtLeast(1)
         val policy = reminder.recurrence.shortMonthPolicy
 
-        // 1. Check if it can trigger in the current Jalali month
-        val daysInCurrentMonth = todayJalali.daysInMonth
-        val candidateDay = resolveDayForMonth(targetDayOfMonth, daysInCurrentMonth, policy)
+        val currentTotalMonths = todayJalali.year * 12 + (todayJalali.month - 1)
+        val baseTotalMonths = baseDate.year * 12 + (baseDate.month - 1)
+        val diffMonths = currentTotalMonths - baseTotalMonths
 
-        if (candidateDay != null) {
-            val candidateEpoch = JalaliDate(todayJalali.year, todayJalali.month, candidateDay)
-                .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
-
-            if (candidateEpoch > referenceEpochMillis) {
-                return candidateEpoch
+        // 1. Check current month if aligned
+        if (diffMonths >= 0 && diffMonths % interval == 0) {
+            val daysInCurrentMonth = todayJalali.daysInMonth
+            val candidateDay = resolveDayForMonth(targetDayOfMonth, daysInCurrentMonth, policy)
+            if (candidateDay != null) {
+                val candidateEpoch = JalaliDate(todayJalali.year, todayJalali.month, candidateDay)
+                    .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                if (candidateEpoch > referenceEpochMillis) {
+                    return candidateEpoch
+                }
             }
         }
 
-        // 2. Otherwise search in subsequent months step-by-step
-        var monthsToAdd = interval
+        // 2. Next aligned month step
+        var step = if (diffMonths >= 0) {
+            val rem = diffMonths % interval
+            if (rem == 0) interval else interval - rem
+        } else {
+            -diffMonths
+        }
+
         while (true) {
-            val totalMonths = (todayJalali.year * 12 + (todayJalali.month - 1)) + monthsToAdd
-            val nextYear = totalMonths / 12
-            val nextMonth = (totalMonths % 12) + 1
+            val nextTotalMonths = currentTotalMonths + step
+            val nextYear = nextTotalMonths / 12
+            val nextMonth = (nextTotalMonths % 12) + 1
             val daysInNextMonth = JalaliDate.getDaysInMonth(nextYear, nextMonth)
 
             val resolvedDay = resolveDayForMonth(targetDayOfMonth, daysInNextMonth, policy)
@@ -141,7 +174,7 @@ object JalaliRecurrenceEngine {
                     return nextEpoch
                 }
             }
-            monthsToAdd += interval
+            step += interval
         }
     }
 
