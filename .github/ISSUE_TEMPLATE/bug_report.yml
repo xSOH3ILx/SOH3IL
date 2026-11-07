@@ -1,0 +1,40 @@
+name: گزارش باگ / Bug Report
+description: ایجاد یک گزارش خطا جهت بررسی و رفع در اپلیکیشن سُهیل
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        از گزارش شما سپاسگزاریم. لطفاً جزئیات زیر را تکمیل کنید تا بتوانیم خطا را سریع‌تر بازتولید و رفع کنیم.
+  - type: textarea
+    id: description
+    attributes:
+      label: شرح خطا
+      description: توضیح دهید چه اتفاقی افتاد و رفتار مورد انتظار چه بود.
+      placeholder: در زمان تنظیم یادآور برای روز ۳ ماه...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: مراحل بازتولید
+      description: گام‌به‌گام توضیح دهید چگونه می‌توان این خطا را بازتولید کرد.
+      placeholder: |
+        ۱. رفتن به صفحه تقویم
+        ۲. زدن دکمه افزودن یادآور
+        ۳. ...
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: مدل گوشی و نسخه اندروید
+      placeholder: مثال: Xiaomi Redmi Note 12 - Android 14
+    validations:
+      required: true
+  - type: input
+    id: app_version
+    attributes:
+      label: نسخه برنامه
+      placeholder: مثال: v1.0.0
