@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,6 +85,8 @@ private fun openAppDetailsSettings(context: Context) {
 fun SettingsScreen(
     currentTheme: AppTheme = AppTheme.SYSTEM,
     onThemeSelected: (AppTheme) -> Unit = {},
+    isAmoled: Boolean = false,
+    onAmoledToggled: (Boolean) -> Unit = {},
     currentVersionName: String = "1.0.0"
 ) {
     val context = LocalContext.current
@@ -112,7 +117,7 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 1. Theme Selection
+        // 1. Theme Selection & AMOLED
         FarsiCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -134,8 +139,7 @@ fun SettingsScreen(
                 val themeOptions = listOf(
                     AppTheme.SYSTEM to "هماهنگ با سیستم (خودکار)",
                     AppTheme.LIGHT to "پوسته روشن",
-                    AppTheme.DARK to "پوسته تاریک",
-                    AppTheme.AMOLED_DARK to "پوسته مشکی عمیق (AMOLED)"
+                    AppTheme.DARK to "پوسته تاریک"
                 )
 
                 themeOptions.forEach { (theme, label) ->
@@ -156,6 +160,42 @@ fun SettingsScreen(
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // AMOLED Switch (active when theme is dark or system dark)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onAmoledToggled(!isAmoled) }
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "مشکی خالص برای نمایشگرهای AMOLED",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (currentTheme == AppTheme.LIGHT)
+                                "در حالت روشن غیرفعال است؛ در زمان تاریک بودن سیستم یا برنامه اعمال می‌شود."
+                            else
+                                "پس‌زمینه مشکی خالص (#000000) برای خاموش شدن پیکسل‌ها و کاهش مصرف باتری.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = isAmoled,
+                        onCheckedChange = onAmoledToggled
+                    )
                 }
             }
         }

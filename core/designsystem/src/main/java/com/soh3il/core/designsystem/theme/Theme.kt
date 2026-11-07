@@ -51,6 +51,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun Soh3ilTheme(
     themePreference: AppTheme = AppTheme.SYSTEM,
+    isAmoled: Boolean = false,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -64,7 +65,7 @@ fun Soh3ilTheme(
 
     val context = LocalContext.current
     val colorScheme = when {
-        themePreference == AppTheme.AMOLED_DARK -> AmoledColorScheme
+        isDark && (isAmoled || themePreference == AppTheme.AMOLED_DARK) -> AmoledColorScheme
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }

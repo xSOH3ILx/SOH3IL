@@ -9,6 +9,7 @@ import com.soh3il.core.model.ShortMonthPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class JalaliRecurrenceEngineTest {
@@ -194,5 +195,107 @@ class JalaliRecurrenceEngineTest {
         assertEquals(1404, preDate.year)
         assertEquals(12, preDate.month)
         assertEquals(29, preDate.day)
+    }
+
+    @Test
+    fun testCustomPreRemindersWithVariousUnits() {
+        val mainTrigger = JalaliDate(1405, 5, 20).toEpochMillis(14, 0, 0)
+
+        val customList = listOf(
+            PreReminder(7, PreReminderUnit.DAYS),      // 7 days before
+            PreReminder(3, PreReminderUnit.HOURS),     // 3 hours before
+            PreReminder(45, PreReminderUnit.MINUTES)   // 45 min before
+        )
+
+        assertEquals(10080L, customList[0].toMinutes())
+        assertEquals(180L, customList[1].toMinutes())
+        assertEquals(45L, customList[2].toMinutes())
+
+        val triggers = JalaliRecurrenceEngine.calculatePreReminderTriggers(customList, mainTrigger)
+        assertEquals(3, triggers.size)
+
+        // 7 days before
+        assertEquals(mainTrigger - 7L * 24 * 3600 * 1000L, triggers[0])
+        val sevenDaysBeforeDate = JalaliDate.fromEpochMillis(triggers[0])
+        assertEquals(13, sevenDaysBeforeDate.day) // 20 - 7 = 13 Mordad
+
+        // 3 hours before
+        assertEquals(mainTrigger - 3L * 3600 * 1000L, triggers[1])
+
+        // 45 min before
+        assertEquals(mainTrigger - 45L * 60 * 1000L, triggers[2])
+    }
+
+    @Test
+    fun testWeeklyRecurrenceOnlyOnSelectedDays() {
+        val reminder = Reminder(
+            id = 10,
+            title = "جلسه شنبه‌ها و سه‌شنبه‌ها",
+            jalaliYear = 1405,
+            jalaliMonth = 1,
+            jalaliDay = 1,
+            hour = 9,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.WEEKLY,
+                daysOfWeek = setOf(1, 4) // 1=Shanbeh, 4=Seshanbeh
+            )
+        )
+
+        var refEpoch = JalaliDate(1405, 1, 1).toEpochMillis(0, 0, 0)
+
+        // Find next 10 occurrences
+        for (i in 1..10) {
+            val nextTrigger = JalaliRecurrenceEngine.calculateNextTrigger(reminder, refEpoch)
+            assertNotNull(nextTrigger)
+
+            val triggerDate = JalaliDate.fromEpochMillis(nextTrigger!!)
+            assertTrue(
+                "روز هفته باید یا ۱ (شنبه) یا ۴ (سه‌شنبه) باشد اما ${triggerDate.dayOfWeek} بود",
+                triggerDate.dayOfWeek == 1 || triggerDate.dayOfWeek == 4
+            )
+
+            refEpoch = nextTrigger + 1000L
+        }
+    }
+
+    @Test
+    fun testLeapYearEsfandRecurrenceSnapping() {
+        // Recurring reminder on 30th of Esfand (end of year)
+        val reminder = Reminder(
+            id = 20,
+            title = "انبارگردانی پایان سال",
+            jalaliYear = 1403,
+            jalaliMonth = 12,
+            jalaliDay = 30,
+            hour = 12,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.YEARLY_JALALI,
+                shortMonthPolicy = ShortMonthPolicy.SNAP_TO_LAST_DAY
+            )
+        )
+
+        // In 1403 (leap year) -> 1403-12-30
+        val t1403 = JalaliRecurrenceEngine.calculateNextTrigger(
+            reminder,
+            JalaliDate(1403, 12, 1).toEpochMillis(0, 0, 0)
+        )
+        assertNotNull(t1403)
+        val d1403 = JalaliDate.fromEpochMillis(t1403!!)
+        assertEquals(1403, d1403.year)
+        assertEquals(12, d1403.month)
+        assertEquals(30, d1403.day)
+
+        // In 1404 (common year, 29 days) -> snaps to 1404-12-29
+        val t1404 = JalaliRecurrenceEngine.calculateNextTrigger(
+            reminder,
+            JalaliDate(1404, 1, 1).toEpochMillis(0, 0, 0)
+        )
+        assertNotNull(t1404)
+        val d1404 = JalaliDate.fromEpochMillis(t1404!!)
+        assertEquals(1404, d1404.year)
+        assertEquals(12, d1404.month)
+        assertEquals(29, d1404.day)
     }
 }

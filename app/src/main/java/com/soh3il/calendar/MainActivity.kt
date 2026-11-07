@@ -63,8 +63,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var currentTheme by remember { mutableStateOf(AppTheme.SYSTEM) }
+            var isAmoled by remember { mutableStateOf(false) }
 
-            Soh3ilTheme(themePreference = currentTheme) {
+            Soh3ilTheme(themePreference = currentTheme, isAmoled = isAmoled) {
                 val coroutineScope = rememberCoroutineScope()
                 var currentTab by remember { mutableStateOf(0) } // 0=Calendar, 1=Settings
                 var showAddSheet by remember { mutableStateOf(false) }
@@ -111,6 +112,8 @@ class MainActivity : ComponentActivity() {
                             1 -> SettingsScreen(
                                 currentTheme = currentTheme,
                                 onThemeSelected = { currentTheme = it },
+                                isAmoled = isAmoled,
+                                onAmoledToggled = { isAmoled = it },
                                 currentVersionName = currentVersion
                             )
                         }
