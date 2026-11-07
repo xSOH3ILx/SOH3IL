@@ -68,7 +68,7 @@ jobs:
           ls -la release-apks/
 
       - name: Upload Release APKs Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SOH3IL-v${{ env.APP_VERSION }}-APKs
           path: release-apks/*.apk
@@ -76,7 +76,7 @@ jobs:
 
       - name: Upload Debug APK Artifact
         if: github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SOH3IL-Debug-APK
           path: app/build/outputs/apk/debug/*.apk
