@@ -1,10 +1,8 @@
 package com.soh3il.feature.reminder
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -18,11 +16,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -31,7 +27,6 @@ import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,12 +39,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -58,9 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.designsystem.components.FarsiCard
@@ -71,6 +60,10 @@ import com.soh3il.core.model.PreReminderUnit
 import com.soh3il.core.model.RecurrenceRule
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
+import com.soh3il.feature.reminder.components.CustomPreReminderDialog
+import com.soh3il.feature.reminder.components.CustomRecurrenceDialog
+import com.soh3il.feature.reminder.components.DeleteReminderDialog
+import com.soh3il.feature.reminder.components.ReminderTimePickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -109,6 +102,7 @@ fun AddReminderSheet(
     }
     var isCustomPreReminderSelected by remember { mutableStateOf(customPreReminder != null) }
     var showCustomPreReminderDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -161,13 +155,10 @@ fun AddReminderSheet(
                 value = title,
                 onValueChange = { title = it },
                 label = { Text("عنوان یادآور") },
-                placeholder = { Text("مثال: پرداخت قسط، جلسه کاری...") },
-                leadingIcon = {
-                    Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                },
+                placeholder = { Text("مثال: تمدید بیمه ماشین، سالگرد ازدواج...") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(14.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -176,18 +167,67 @@ fun AddReminderSheet(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("توضیحات (اختیاری)") },
+                label = { Text("توضیحات یا یادداشت (اختیاری)") },
                 leadingIcon = {
-                    Icon(Icons.Default.Notes, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        Icons.Default.Notes,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 },
                 modifier = Modifier.fillMaxWidth(),
+                minLines = 2,
                 maxLines = 3,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(14.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 4. Interactive Time Selector Card
+            // 4. Time Picker Section
+            FarsiCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.AccessTime,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = "زمان یادآوری:",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            val timeStr = "%02d:%02d".format(selectedHour, selectedMinute).toPersianDigits()
+                            Text(
+                                text = "ساعت $timeStr",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { showTimePickerDialog = true },
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("تغییر ساعت", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 5. Recurrence Section
             FarsiCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Row(
@@ -197,95 +237,29 @@ fun AddReminderSheet(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                Icons.Default.AccessTime,
+                                Icons.Default.Repeat,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = "زمان یادآوری:",
+                                text = "تکرار بر اساس گاه‌شمار خورشیدی",
                                 fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-
-                        val timeFormatted = "\u200E${selectedHour.toPersianDigits().padStart(2, '۰')}:${selectedMinute.toPersianDigits().padStart(2, '۰')}"
-                        Surface(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { showTimePickerDialog = true },
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                        ) {
-                            Text(
-                                text = timeFormatted,
-                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(start = 6.dp)
                             )
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Quick Time Preset Chips
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        val presets = listOf(
-                            Pair(8, 0) to "۰۸:۰۰",
-                            Pair(12, 0) to "۱۲:۰۰",
-                            Pair(16, 0) to "۱۶:۰۰",
-                            Pair(20, 0) to "۲۰:۰۰"
-                        )
-                        presets.forEach { (time, label) ->
-                            val isSelected = selectedHour == time.first && selectedMinute == time.second
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = {
-                                    selectedHour = time.first
-                                    selectedMinute = time.second
-                                },
-                                label = { Text(label, fontSize = 12.sp) },
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.weight(1f)
+                        if (recurrenceType != RecurrenceType.NONE) {
+                            val intervalText = if (recurrenceInterval == 1) "هر دوره" else "هر ${recurrenceInterval.toPersianDigits()} دوره"
+                            Text(
+                                text = intervalText,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    OutlinedButton(
-                        onClick = { showTimePickerDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("انتخاب ساعت دقیق (تنظیم دستی)", fontSize = 13.sp)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 5. Jalali Recurrence Section (Polished Chips with Icons & Visual States)
-            FarsiCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Repeat,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "تکرار بر اساس گاه‌شمار شمسی",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(start = 6.dp)
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -295,21 +269,21 @@ fun AddReminderSheet(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val types = listOf(
-                            RecurrenceType.NONE to "بدون تکرار (یکباره)",
+                        val recurrenceOptions = listOf(
+                            RecurrenceType.NONE to "بدون تکرار (یکبار)",
                             RecurrenceType.DAILY to "روزانه",
                             RecurrenceType.WEEKLY to "هفتگی",
-                            RecurrenceType.MONTHLY_JALALI to "ماهانه (${initialDate.day.toPersianDigits()} هر ماه شمسی)",
-                            RecurrenceType.YEARLY_JALALI to "سالانه (${initialDate.day.toPersianDigits()} ${initialDate.monthNameFa})"
+                            RecurrenceType.MONTHLY_JALALI to "ماهانه شمسی",
+                            RecurrenceType.YEARLY_JALALI to "سالانه خورشیدی"
                         )
 
-                        types.forEach { (type, label) ->
+                        recurrenceOptions.forEach { (type, label) ->
                             val isSelected = recurrenceType == type
                             FilterChip(
                                 selected = isSelected,
                                 onClick = {
                                     recurrenceType = type
-                                    recurrenceInterval = 1
+                                    if (type == RecurrenceType.NONE) recurrenceInterval = 1
                                 },
                                 label = {
                                     Text(
@@ -328,63 +302,25 @@ fun AddReminderSheet(
                                 shape = RoundedCornerShape(12.dp)
                             )
                         }
-                    }
 
-                    // 5.1 Interval Selection when recurring (compact row opening custom interval dialog)
-                    if (recurrenceType != RecurrenceType.NONE) {
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        val unitName = when (recurrenceType) {
-                            RecurrenceType.DAILY -> "روز"
-                            RecurrenceType.WEEKLY -> "هفته"
-                            RecurrenceType.MONTHLY_JALALI -> "ماه شمسی"
-                            RecurrenceType.YEARLY_JALALI -> "سال شمسی"
-                            else -> ""
-                        }
-                        val intervalSummary = if (recurrenceInterval == 1) {
-                            when (recurrenceType) {
-                                RecurrenceType.DAILY -> "هر روز (۱ روز)"
-                                RecurrenceType.WEEKLY -> "هر هفته (۱ هفته)"
-                                RecurrenceType.MONTHLY_JALALI -> "هر ماه (${initialDate.day.toPersianDigits()} هر ماه)"
-                                RecurrenceType.YEARLY_JALALI -> "هر سال (${initialDate.day.toPersianDigits()} ${initialDate.monthNameFa})"
-                                else -> "هر ۱ $unitName"
-                            }
-                        } else {
-                            "هر ${recurrenceInterval.toPersianDigits()} $unitName یکبار"
-                        }
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { showCustomRecurrenceDialog = true }
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "بازه تکرار گاه‌شمار:",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = intervalSummary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-
-                            OutlinedButton(
+                        // Customize Recurrence Interval Button
+                        if (recurrenceType != RecurrenceType.NONE) {
+                            FilterChip(
+                                selected = recurrenceInterval > 1,
                                 onClick = { showCustomRecurrenceDialog = true },
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("بازه دلخواه", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
+                                label = {
+                                    val label = if (recurrenceInterval > 1) "بازه: ${recurrenceInterval.toPersianDigits()}" else "تنظیم بازه..."
+                                    Text(label, fontSize = 12.sp, fontWeight = if (recurrenceInterval > 1) FontWeight.Bold else FontWeight.Normal)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
                         }
                     }
                 }
@@ -392,7 +328,7 @@ fun AddReminderSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 6. Pre-reminder selector (Presets + Custom Choice)
+            // 6. Pre-Reminder Section
             FarsiCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Row(
@@ -577,8 +513,6 @@ fun AddReminderSheet(
 
             // Delete Button (only in edit mode)
             if (existingReminder != null && onDeleteReminder != null) {
-                var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-
                 Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedButton(
@@ -596,33 +530,6 @@ fun AddReminderSheet(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("حذف این یادآور", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
-
-                if (showDeleteConfirmDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDeleteConfirmDialog = false },
-                        title = { Text("حذف یادآور", fontWeight = FontWeight.Bold) },
-                        text = { Text("آیا از حذف یادآور «${existingReminder.title}» مطمئن هستید؟ این عمل غیرقابل بازگشت است.") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    showDeleteConfirmDialog = false
-                                    onDeleteReminder(existingReminder)
-                                    onDismiss()
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
-                                )
-                            ) {
-                                Text("بله، حذف شود", fontWeight = FontWeight.Bold)
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                                Text("انصراف")
-                            }
-                        }
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -631,288 +538,55 @@ fun AddReminderSheet(
 
     // Interactive TimePicker Dialog
     if (showTimePickerDialog) {
-        val timePickerState = rememberTimePickerState(
+        ReminderTimePickerDialog(
             initialHour = selectedHour,
             initialMinute = selectedMinute,
-            is24Hour = true
-        )
-
-        AlertDialog(
-            onDismissRequest = { showTimePickerDialog = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        selectedHour = timePickerState.hour
-                        selectedMinute = timePickerState.minute
-                        showTimePickerDialog = false
-                    }
-                ) {
-                    Text("تایید زمان", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePickerDialog = false }) {
-                    Text("انصراف")
-                }
-            },
-            title = {
-                Text(
-                    text = "تنظیم ساعت و دقیقه",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    TimePicker(state = timePickerState)
-                }
+            onDismiss = { showTimePickerDialog = false },
+            onConfirm = { h, m ->
+                selectedHour = h
+                selectedMinute = m
+                showTimePickerDialog = false
             }
         )
     }
 
     // Custom Pre-Reminder Dialog
     if (showCustomPreReminderDialog) {
-        var amountText by remember { mutableStateOf(customPreReminder?.value?.toString() ?: "2") }
-        var selectedUnit by remember { mutableStateOf(customPreReminder?.unit ?: PreReminderUnit.DAYS) }
-
-        AlertDialog(
-            onDismissRequest = { showCustomPreReminderDialog = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val amount = amountText.toIntOrNull() ?: 1
-                        if (amount > 0) {
-                            customPreReminder = PreReminder(amount, selectedUnit)
-                            isCustomPreReminderSelected = true
-                            selectedPreReminderMinutes = null
-                            showCustomPreReminderDialog = false
-                        }
-                    }
-                ) {
-                    Text("تایید و انتخاب", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCustomPreReminderDialog = false }) {
-                    Text("انصراف")
-                }
-            },
-            title = {
-                Text(
-                    text = "تنظیم پیش‌یادآور دلخواه",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "چه مدت قبل از زمان یادآور اصلی به شما هشدار داده شود؟",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    OutlinedTextField(
-                        value = amountText,
-                        onValueChange = { input ->
-                            if (input.all { it.isDigit() } && input.length <= 4) {
-                                amountText = input
-                            }
-                        },
-                        label = { Text("مقدار زمان") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "واحد زمانی:",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val units = listOf(
-                            PreReminderUnit.MINUTES to "دقیقه",
-                            PreReminderUnit.HOURS to "ساعت",
-                            PreReminderUnit.DAYS to "روز"
-                        )
-                        units.forEach { (unit, name) ->
-                            FilterChip(
-                                selected = selectedUnit == unit,
-                                onClick = { selectedUnit = unit },
-                                label = { Text(name, fontSize = 12.sp) },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    val amountVal = amountText.toIntOrNull() ?: 0
-                    val unitStr = when (selectedUnit) {
-                        PreReminderUnit.DAYS -> "روز"
-                        PreReminderUnit.HOURS -> "ساعت"
-                        PreReminderUnit.MINUTES -> "دقیقه"
-                    }
-                    Text(
-                        text = "پیش‌نمایش: ${amountVal.toPersianDigits()} $unitStr قبل از موعد",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+        CustomPreReminderDialog(
+            initialPreReminder = customPreReminder,
+            onDismiss = { showCustomPreReminderDialog = false },
+            onConfirm = { pre ->
+                customPreReminder = pre
+                isCustomPreReminderSelected = true
+                selectedPreReminderMinutes = null
+                showCustomPreReminderDialog = false
             }
         )
     }
 
-    // 10. Custom Recurrence Interval Dialog (holding presets + custom number input)
+    // Custom Recurrence Interval Dialog
     if (showCustomRecurrenceDialog) {
-        var intervalInput by remember { mutableStateOf(recurrenceInterval.toString()) }
-        val unitLabel = when (recurrenceType) {
-            RecurrenceType.DAILY -> "روز"
-            RecurrenceType.WEEKLY -> "هفته"
-            RecurrenceType.MONTHLY_JALALI -> "ماه شمسی"
-            RecurrenceType.YEARLY_JALALI -> "سال شمسی"
-            else -> "دوره"
-        }
+        CustomRecurrenceDialog(
+            recurrenceType = recurrenceType,
+            initialInterval = recurrenceInterval,
+            initialDate = initialDate,
+            onDismiss = { showCustomRecurrenceDialog = false },
+            onConfirm = { interval ->
+                recurrenceInterval = interval
+                showCustomRecurrenceDialog = false
+            }
+        )
+    }
 
-        val presetIntervals = when (recurrenceType) {
-            RecurrenceType.MONTHLY_JALALI -> listOf(
-                1 to "هر ماه",
-                2 to "هر ۲ ماه یکبار",
-                3 to "هر ۳ ماه (فصلی)",
-                6 to "هر ۶ ماه (نیم‌سال)"
-            )
-            RecurrenceType.DAILY -> listOf(
-                1 to "هر روز",
-                2 to "یک روز در میان",
-                3 to "هر ۳ روز",
-                7 to "هر هفته (۷ روز)"
-            )
-            RecurrenceType.WEEKLY -> listOf(
-                1 to "هر هفته",
-                2 to "هر ۲ هفته یکبار",
-                3 to "هر ۳ هفته یکبار",
-                4 to "هر ۴ هفته یکبار"
-            )
-            RecurrenceType.YEARLY_JALALI -> listOf(
-                1 to "هر سال",
-                2 to "هر ۲ سال یکبار",
-                3 to "هر ۳ سال یکبار"
-            )
-            else -> emptyList()
-        }
-
-        AlertDialog(
-            onDismissRequest = { showCustomRecurrenceDialog = false },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val parsed = intervalInput.toIntOrNull()
-                        if (parsed != null && parsed > 0) {
-                            recurrenceInterval = parsed
-                            showCustomRecurrenceDialog = false
-                        }
-                    }
-                ) {
-                    Text("تایید بازه تکرار", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCustomRecurrenceDialog = false }) {
-                    Text("انصراف")
-                }
-            },
-            title = {
-                Text(
-                    text = "تنظیم بازه تکرار گاه‌شمار",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "انتخاب بازه‌های متداول یا وارد کردن عدد دلخواه:",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    if (presetIntervals.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            presetIntervals.forEach { (presetVal, presetName) ->
-                                val isChosen = intervalInput == presetVal.toString()
-                                FilterChip(
-                                    selected = isChosen,
-                                    onClick = { intervalInput = presetVal.toString() },
-                                    label = {
-                                        Text(
-                                            text = presetName,
-                                            fontSize = 12.sp,
-                                            fontWeight = if (isChosen) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                    ),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    OutlinedTextField(
-                        value = intervalInput,
-                        onValueChange = { input ->
-                            if (input.all { it.isDigit() } && input.length <= 3) {
-                                intervalInput = input
-                            }
-                        },
-                        label = { Text("عدد بازه دلخواه (به $unitLabel)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    val valInt = intervalInput.toIntOrNull() ?: 1
-                    val previewDetail = when (recurrenceType) {
-                        RecurrenceType.MONTHLY_JALALI -> "هر ${valInt.toPersianDigits()} ماه شمسی در تاریخ ${initialDate.day.toPersianDigits()} هر ماه"
-                        RecurrenceType.DAILY -> "هر ${valInt.toPersianDigits()} روز یکبار"
-                        RecurrenceType.WEEKLY -> "هر ${valInt.toPersianDigits()} هفته یکبار"
-                        RecurrenceType.YEARLY_JALALI -> "هر ${valInt.toPersianDigits()} سال یکبار در ${initialDate.day.toPersianDigits()} ${initialDate.monthNameFa}"
-                        else -> ""
-                    }
-
-                    Text(
-                        text = "پیش‌نمایش: تکرار $previewDetail",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+    // Delete Confirmation Dialog
+    if (showDeleteConfirmDialog && existingReminder != null && onDeleteReminder != null) {
+        DeleteReminderDialog(
+            reminder = existingReminder,
+            onDismiss = { showDeleteConfirmDialog = false },
+            onConfirmDelete = {
+                showDeleteConfirmDialog = false
+                onDeleteReminder(existingReminder)
+                onDismiss()
             }
         )
     }
