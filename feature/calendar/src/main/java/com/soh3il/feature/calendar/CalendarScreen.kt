@@ -55,6 +55,7 @@ import com.soh3il.core.designsystem.components.FarsiCard
 import com.soh3il.core.designsystem.theme.FarsiHolidayRed
 import com.soh3il.core.designsystem.theme.FarsiPrimary
 import com.soh3il.core.designsystem.utils.toPersianDigits
+import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
 import com.soh3il.core.model.Occasion
 import com.soh3il.core.model.Reminder
@@ -70,6 +71,15 @@ fun CalendarScreen(
     var displayedDate by remember { mutableStateOf(today) }
     var selectedDate by remember { mutableStateOf(today) }
     var totalDragDistance by remember { mutableFloatStateOf(0f) }
+
+    val monthOccasions = remember(displayedDate.year, displayedDate.month, occasions) {
+        if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(displayedDate.year, displayedDate.month)
+    }
+
+    val selectedDayOccasions = remember(selectedDate, occasions) {
+        val list = if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(selectedDate.year, selectedDate.month)
+        list.filter { it.jalaliDate == selectedDate.format("YYYY-MM-DD") }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -134,7 +144,7 @@ fun CalendarScreen(
                     selectedDate = selectedDate,
                     today = today,
                     reminders = reminders,
-                    occasions = occasions,
+                    occasions = monthOccasions,
                     onDateSelected = { selectedDate = it }
                 )
             }
@@ -144,7 +154,7 @@ fun CalendarScreen(
             // 4. Selected Day Info & Occasions & Reminders
             SelectedDayDetails(
                 selectedDate = selectedDate,
-                occasions = occasions.filter { it.jalaliDate == selectedDate.format("YYYY-MM-DD") },
+                occasions = selectedDayOccasions,
                 reminders = reminders.filter {
                     it.jalaliYear == selectedDate.year &&
                             it.jalaliMonth == selectedDate.month &&
