@@ -44,7 +44,7 @@ object NotificationHelper {
                 CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "اعلان‌های زنده و فوری یادآورهای تقویم سُهیل"
+                description = "اعلان‌های زنده و فوری یادآورهای تقویم سهیل"
                 enableVibration(true)
                 setSound(soundUri, audioAttributes)
             }
@@ -68,7 +68,7 @@ object NotificationHelper {
                 CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "اعلان‌های زنده و فوری یادآورهای تقویم سُهیل"
+                description = "اعلان‌های زنده و فوری یادآورهای تقویم سهیل"
                 enableVibration(true)
                 setSound(soundUri, audioAttributes)
             }

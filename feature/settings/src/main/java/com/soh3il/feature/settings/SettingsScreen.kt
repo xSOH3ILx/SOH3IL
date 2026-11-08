@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryAlert
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -63,6 +65,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -104,6 +107,49 @@ private fun openAppDetailsSettings(context: Context) {
         }
         context.startActivity(intent)
     } catch (_: Exception) {}
+}
+
+@Composable
+private fun SettingsSectionHeader(
+    title: String,
+    subtitle: String,
+    icon: ImageVector
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = subtitle,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @Composable
@@ -200,27 +246,20 @@ fun SettingsScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // 1. Theme Selection & AMOLED
+        // ==========================================
+        // 1. پوسته و ظاهر (Appearance & Theme)
+        // ==========================================
+        SettingsSectionHeader(
+            title = "پوسته و ظاهر",
+            subtitle = "شخصی‌سازی رنگ‌بندی، حالت شب و صرفه‌جویی باتری",
+            icon = Icons.Default.ColorLens
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
         FarsiCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.ColorLens,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "پوسته و ظاهر برنامه",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 val themeOptions = listOf(
                     AppTheme.SYSTEM to "هماهنگ با سیستم (خودکار)",
                     AppTheme.LIGHT to "پوسته روشن",
@@ -247,9 +286,9 @@ fun SettingsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // AMOLED Switch (active when theme is dark or system dark)
+                // AMOLED Switch
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -285,117 +324,21 @@ fun SettingsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // 2. Notification Sound Selection
+        // ==========================================
+        // 2. اعلان‌ها و نوار وضعیت (Notifications & Status Bar)
+        // ==========================================
+        SettingsSectionHeader(
+            title = "اعلان‌ها و نوار وضعیت",
+            subtitle = "نوار تاریخ دائمی، صفحه قفل، AOD و صدای زنگ هشدار",
+            icon = Icons.Default.NotificationsActive
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
         FarsiCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.NotificationsActive,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "صدای اعلان و یادآورها",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = {
-                            try {
-                                if (isPlayingPreview) {
-                                    currentRingtone?.stop()
-                                    isPlayingPreview = false
-                                } else {
-                                    val currentUriString = UserPreferences.getNotificationSoundUri(context)
-                                    val uri = currentUriString?.let { Uri.parse(it) }
-                                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                                    val ringtone = RingtoneManager.getRingtone(context, uri)
-                                    currentRingtone = ringtone
-                                    ringtone?.play()
-                                    isPlayingPreview = true
-                                }
-                            } catch (_: Exception) {}
-                        }
-                    ) {
-                        Icon(
-                            imageVector = if (isPlayingPreview) Icons.Default.Stop else Icons.Default.VolumeUp,
-                            contentDescription = "پخش نمونه صدا",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "صدای زنگ فعلی:",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = selectedSoundTitle,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            val currentUriString = UserPreferences.getNotificationSoundUri(context)
-                            val existingUri = currentUriString?.let { Uri.parse(it) }
-                                ?: Settings.System.DEFAULT_NOTIFICATION_URI
-                            val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION or RingtoneManager.TYPE_ALARM)
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "انتخاب صدای اعلان یادآور سُهیل")
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existingUri)
-                            }
-                            ringtonePickerLauncher.launch(intent)
-                        },
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("تغییر صدا", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "می‌توانید هر یک از صداها و آهنگ‌های اعلان موجود در حافظه یا سیستم گوشی خود را برای هشدار یادآورها انتخاب کنید.",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 18.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 3. Persistent Status Bar Notification
-        FarsiCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+                // Persistent Status Bar Notification Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -404,15 +347,15 @@ fun SettingsScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "نوار اعلان دائمی تاریخ",
-                            fontSize = 16.sp,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "نمایش پیوسته تاریخ امروز، مناسبت جاری و دسترسی سریع به ثبت یادآور در نوار اعلان بالای گوشی.",
-                            fontSize = 12.sp,
+                            text = "نمایش عدد بزرگ روز شمسی در نوار وضعیت، صفحه قفل و Always On Display (AOD) با مناسبت‌ها و آیکون زنده.",
+                            fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 18.sp
+                            lineHeight = 17.sp
                         )
                     }
 
@@ -425,14 +368,97 @@ fun SettingsScreen(
                         }
                     )
                 }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Notification Sound Setting
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "صدای زنگ اعلان یادآورها:",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = selectedSoundTitle,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                try {
+                                    if (isPlayingPreview) {
+                                        currentRingtone?.stop()
+                                        isPlayingPreview = false
+                                    } else {
+                                        val currentUriString = UserPreferences.getNotificationSoundUri(context)
+                                        val uri = currentUriString?.let { Uri.parse(it) }
+                                            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                                        val ringtone = RingtoneManager.getRingtone(context, uri)
+                                        currentRingtone = ringtone
+                                        ringtone?.play()
+                                        isPlayingPreview = true
+                                    }
+                                } catch (_: Exception) {}
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isPlayingPreview) Icons.Default.Stop else Icons.Default.VolumeUp,
+                                contentDescription = "پخش نمونه صدا",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                val currentUriString = UserPreferences.getNotificationSoundUri(context)
+                                val existingUri = currentUriString?.let { Uri.parse(it) }
+                                    ?: Settings.System.DEFAULT_NOTIFICATION_URI
+                                val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                                    putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION or RingtoneManager.TYPE_ALARM)
+                                    putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "انتخاب صدای اعلان یادآور سهیل")
+                                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+                                    putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existingUri)
+                                }
+                                ringtonePickerLauncher.launch(intent)
+                            },
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("تغییر صدا", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // 4. Date Converter Tool
+        // ==========================================
+        // 3. ابزارها و گاه‌شماری (Tools & Calendar)
+        // ==========================================
+        SettingsSectionHeader(
+            title = "ابزارها و گاه‌شماری",
+            subtitle = "مبدل سه‌گانه تاریخ و پشتیبان‌گیری استاندارد جهانی تقویم",
+            icon = Icons.Default.DateRange
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
         FarsiCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
+                // Date Converter Tool
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -441,15 +467,15 @@ fun SettingsScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "مبدل پیشرفته تاریخ",
-                            fontSize = 16.sp,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "تبدیل بلادرنگ تاریخ‌های خورشیدی، میلادی و قمری، به همراه مشخصات کبیسه و حیوان سال.",
-                            fontSize = 12.sp,
+                            text = "تبدیل بلادرنگ تاریخ‌های خورشیدی، میلادی و قمری، تحلیل کبیسه و حیوان سال.",
+                            fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 18.sp
+                            lineHeight = 17.sp
                         )
                     }
 
@@ -460,26 +486,21 @@ fun SettingsScreen(
                         Text("باز کردن", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-            }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-        // 5. Universal Calendar Backup & Transfer (ICS)
-        FarsiCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
+                // Universal Calendar Backup & Transfer (ICS)
                 Text(
-                    text = "پشتیبان‌گیری و انتقال تقویم (ICS)",
-                    fontSize = 16.sp,
+                    text = "پشتیبان‌گیری و انتقال تقویم (فرمت جهانی iCalendar / ICS):",
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "سازگار با تقویم گوگل و نرم‌افزارهای استاندارد جهانی تقویم (فرمت iCalendar).",
-                    fontSize = 12.sp,
+                    text = "سازگار با تقویم گوگل، اوت‌لوک و نرم‌افزارهای استاندارد تقویم.",
+                    fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 18.sp,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+                    modifier = Modifier.padding(top = 2.dp, bottom = 10.dp)
                 )
 
                 Row(
@@ -509,9 +530,18 @@ fun SettingsScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // 6. Battery & Alarms Guidance (DontKillMyApp warning & Direct Click Action)
+        // ==========================================
+        // 4. پایداری سیستم و بهینه‌سازی باتری (System & Battery Optimization)
+        // ==========================================
+        SettingsSectionHeader(
+            title = "سیستم و پایداری زنگ‌ها",
+            subtitle = "جلوگیری از بسته شدن برنامه در پس‌زمینه برای دقت ۱۰۰٪ یادآورها",
+            icon = Icons.Default.BatteryAlert
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
         FarsiCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -523,19 +553,12 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.BatteryAlert,
-                            contentDescription = null,
-                            tint = if (isIgnoringBattery) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                        )
-                        Text(
-                            text = "بهینه‌سازی باتری و دقت آلارم‌ها",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
+                    Text(
+                        text = "وضعیت بهینه‌سازی باتری سیستم:",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
                     if (isIgnoringBattery) {
                         FarsiBadge(text = "مجاز و دقیق", isHoliday = false)
@@ -544,16 +567,16 @@ fun SettingsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "سیستم‌عامل اندروید برای کاهش مصرف باتری ممکن است برنامه‌ها را در پس‌زمینه متوقف کند. برای اینکه یادآورهای SOH3IL بدون تاخیر و دقیقاً سر موعد زنگ بزنند، حالت باتری برنامه را روی بدون محدودیت (Unrestricted) قرار دهید.",
-                    fontSize = 13.sp,
+                    text = "سیستم‌عامل اندروید برای کاهش مصرف باتری ممکن است برنامه‌ها را در پس‌زمینه متوقف کند. برای اینکه یادآورهای SOH3IL دقیقاً سر موعد زنگ بزنند، حالت باتری برنامه را روی بدون محدودیت (Unrestricted) قرار دهید.",
+                    fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 22.sp
+                    lineHeight = 20.sp
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -564,7 +587,7 @@ fun SettingsScreen(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("تنظیم باتری", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("تنظیم باتری (Unrestricted)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
@@ -572,15 +595,24 @@ fun SettingsScreen(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("شروع خودکار و پایداری", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("شروع خودکار و پس‌زمینه", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // 4. In-App Direct Update
+        // ==========================================
+        // 5. درباره برنامه و بروزرسانی (About & Direct Update)
+        // ==========================================
+        SettingsSectionHeader(
+            title = "درباره برنامه و بروزرسانی",
+            subtitle = "اطلاعات نسخه، سازنده و دریافت مستقیم جدیدترین نگارش",
+            icon = Icons.Default.SystemUpdate
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
         FarsiCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(
@@ -588,28 +620,28 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.SystemUpdate,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "بروزرسانی مستقیم برنامه",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
+                    Text(
+                        text = "گاه‌شمار و یادآور سهیل (SOH3IL)",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
                     Text(
-                        text = "نسخه فعلی: $currentVersionName",
+                        text = "نسخه $currentVersionName",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "طراحی و توسعه‌یافته با کاتلین خالص و Jetpack Compose برای استفاده شخصی و خانوادگی سهیل؛ آزاد و متن‌باز برای عموم علاقه‌مندان.",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 18.sp,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+                )
 
                 // Check Update Button
                 Button(
@@ -622,9 +654,9 @@ fun SettingsScreen(
                             isCheckingUpdate = false
                             updateInfo = result
                             updateCheckMessage = if (result.hasUpdate) {
-                                "نسخه جدید ${result.latestVersionName} موجود است!"
+                                "نسخه جدید ${result.latestVersionName} در گیت‌هاب موجود است!"
                             } else {
-                                "شما از آخرین نسخه سُهیل استفاده می‌کنید."
+                                "شما از آخرین نسخه سهیل استفاده می‌کنید."
                             }
                         }
                     },

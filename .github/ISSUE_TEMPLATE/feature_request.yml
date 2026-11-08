@@ -1,12 +1,12 @@
 name: پیشنهاد قابلیت جدید / Feature Request
-description: پیشنهاد ایده، بهبود یا قابلیت جدید برای برنامه سُهیل
+description: پیشنهاد ایده، بهبود یا قابلیت جدید برای برنامه سهیل
 title: "[FEATURE]: "
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        ایده‌ها و پیشنهادات شما به بهتر شدن برنامه سُهیل کمک می‌کند.
+        ایده‌ها و پیشنهادات شما به بهتر شدن برنامه سهیل کمک می‌کند.
   - type: textarea
     id: problem
     attributes:

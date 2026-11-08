@@ -1,5 +1,5 @@
 name: گزارش باگ / Bug Report
-description: ایجاد یک گزارش خطا جهت بررسی و رفع در اپلیکیشن سُهیل
+description: ایجاد یک گزارش خطا جهت بررسی و رفع در اپلیکیشن سهیل
 title: "[BUG]: "
 labels: ["bug", "triage"]
 body:
