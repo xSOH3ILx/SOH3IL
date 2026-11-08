@@ -88,9 +88,10 @@ class MainActivity : ComponentActivity() {
                     }.getOrNull() ?: "1.0.0"
                 }
 
-                // Update persistent notification whenever reminders change
+                // Update persistent notification and Home Screen Widget whenever reminders change
                 androidx.compose.runtime.LaunchedEffect(reminders) {
                     com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(context, reminders)
+                    com.soh3il.calendar.widget.CalendarAppWidgetProvider.updateAllWidgets(context)
                 }
 
                 // Check if opened from notification "+ یادآور جدید" action

@@ -62,10 +62,18 @@ object UserPreferences {
     }
 
     fun isLiveIconEnabled(context: Context): Boolean {
-        return getPrefs(context).getBoolean(KEY_LIVE_ICON, false)
+        return getPrefs(context).getBoolean(KEY_LIVE_ICON, true)
     }
 
     fun setLiveIconEnabled(context: Context, enabled: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_LIVE_ICON, enabled).apply()
+    }
+
+    fun isDynamicNotificationIconEnabled(context: Context): Boolean {
+        return getPrefs(context).getBoolean("pref_dynamic_notif_icon", true)
+    }
+
+    fun setDynamicNotificationIconEnabled(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean("pref_dynamic_notif_icon", enabled).apply()
     }
 }

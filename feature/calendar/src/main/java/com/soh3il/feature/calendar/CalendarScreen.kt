@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -35,6 +36,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -63,6 +67,7 @@ import com.soh3il.core.jalali.JalaliDate
 import com.soh3il.core.model.Occasion
 import com.soh3il.core.model.Reminder
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
     reminders: List<Reminder> = emptyList(),
@@ -104,39 +109,38 @@ fun CalendarScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // View Mode Selector (Month Grid vs Agenda View)
-            Row(
+            // View Mode Selector (Material 3 SingleChoiceSegmentedButtonRow with centered text)
+            SingleChoiceSegmentedButtonRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
-                FilterChip(
+                SegmentedButton(
                     selected = viewMode == 0,
                     onClick = { viewMode = 0 },
-                    label = {
-                        Text(
-                            "تقویم ماهانه",
-                            fontSize = 13.sp,
-                            fontWeight = if (viewMode == 0) FontWeight.Bold else FontWeight.Normal
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                FilterChip(
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                ) {
+                    Text(
+                        text = "تقویم ماهانه",
+                        fontSize = 13.sp,
+                        fontWeight = if (viewMode == 0) FontWeight.Bold else FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                SegmentedButton(
                     selected = viewMode == 1,
                     onClick = { viewMode = 1 },
-                    label = {
-                        Text(
-                            "دستور کار (رویدادها)",
-                            fontSize = 13.sp,
-                            fontWeight = if (viewMode == 1) FontWeight.Bold else FontWeight.Normal
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                )
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                ) {
+                    Text(
+                        text = "دستور کار (رویدادها)",
+                        fontSize = 13.sp,
+                        fontWeight = if (viewMode == 1) FontWeight.Bold else FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
             if (viewMode == 0) {

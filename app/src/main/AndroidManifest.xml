@@ -72,6 +72,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- Material 3 Calendar Home Screen Widget -->
+        <receiver
+            android:name=".widget.CalendarAppWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_calendar_info" />
+        </receiver>
+
         <!-- FileProvider for In-App Updates -->
         <provider
             android:name="androidx.core.content.FileProvider"

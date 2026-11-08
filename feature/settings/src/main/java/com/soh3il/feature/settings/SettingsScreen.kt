@@ -171,6 +171,12 @@ fun SettingsScreen(
     var isPersistentNotificationEnabled by remember {
         mutableStateOf(UserPreferences.isPersistentNotificationEnabled(context))
     }
+    var isLiveIconEnabled by remember {
+        mutableStateOf(UserPreferences.isLiveIconEnabled(context))
+    }
+    var isDynamicNotifIconEnabled by remember {
+        mutableStateOf(UserPreferences.isDynamicNotificationIconEnabled(context))
+    }
 
     val importIcsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -321,6 +327,46 @@ fun SettingsScreen(
                         onCheckedChange = onAmoledToggled
                     )
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Live Launcher Icon Switch
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            val newVal = !isLiveIconEnabled
+                            isLiveIconEnabled = newVal
+                            UserPreferences.setLiveIconEnabled(context, newVal)
+                        }
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "آیکون زنده تقویم در صفحه اصلی (Launcher Live Icon)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "نمایش روز جاری شمسی به عنوان آیکون برنامه در صفحه برنامه‌های گوشی شما.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = isLiveIconEnabled,
+                        onCheckedChange = { newVal ->
+                            isLiveIconEnabled = newVal
+                            UserPreferences.setLiveIconEnabled(context, newVal)
+                        }
+                    )
+                }
             }
         }
 
@@ -365,6 +411,48 @@ fun SettingsScreen(
                             isPersistentNotificationEnabled = enabled
                             UserPreferences.setPersistentNotificationEnabled(context, enabled)
                             onPersistentNotificationToggled?.invoke(enabled)
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Dynamic Status Bar Icon Switch
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            val newVal = !isDynamicNotifIconEnabled
+                            isDynamicNotifIconEnabled = newVal
+                            UserPreferences.setDynamicNotificationIconEnabled(context, newVal)
+                            onPersistentNotificationToggled?.invoke(isPersistentNotificationEnabled)
+                        }
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "نمایش رقم زنده روز در نوار وضعیت (Status Bar)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "نمایش رقم فارسی روز (مانند ۱۸) در بالای صفحه گوشی بجای آیکون پیش‌فرض برنامه.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = isDynamicNotifIconEnabled,
+                        onCheckedChange = { newVal ->
+                            isDynamicNotifIconEnabled = newVal
+                            UserPreferences.setDynamicNotificationIconEnabled(context, newVal)
+                            onPersistentNotificationToggled?.invoke(isPersistentNotificationEnabled)
                         }
                     )
                 }

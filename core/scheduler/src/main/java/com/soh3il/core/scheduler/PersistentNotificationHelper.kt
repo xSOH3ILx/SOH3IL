@@ -81,19 +81,76 @@ object PersistentNotificationHelper {
         return bitmap
     }
 
-    private fun getAppIconBitmap(context: Context): Bitmap? {
-        return try {
-            val drawable = context.packageManager.getApplicationIcon(context.packageName)
-            val w = drawable.intrinsicWidth.takeIf { it > 0 } ?: 128
-            val h = drawable.intrinsicHeight.takeIf { it > 0 } ?: 128
-            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            drawable.setBounds(0, 0, canvas.width, canvas.height)
-            drawable.draw(canvas)
-            bitmap
-        } catch (_: Throwable) {
-            null
+    /**
+     * بَدج اختصاصی تاریخ امروز با سبک تقویم متریال ۳ جهت نمایش به عنوان LargeIcon اعلان
+     */
+    private fun createDateBadgeBitmap(context: Context, today: JalaliDate): Bitmap {
+        val density = context.resources.displayMetrics.density
+        val sizePx = (72 * density).toInt().coerceAtLeast(144)
+        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val cornerRadius = sizePx * 0.24f
+        val fullRect = android.graphics.RectF(0f, 0f, sizePx.toFloat(), sizePx.toFloat())
+
+        // پس‌زمینه کارت تقویم (تم اسلیت شیک تیره #1E293B)
+        val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#1E293B")
+            style = Paint.Style.FILL
         }
+        canvas.drawRoundRect(fullRect, cornerRadius, cornerRadius, bgPaint)
+
+        // نوار بالایی نام ماه (رنگ فیروزه‌ای اختصاصی متریال ۳ #0284C7)
+        val headerHeight = sizePx * 0.34f
+        val headerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#0284C7")
+            style = Paint.Style.FILL
+        }
+        val headerPath = android.graphics.Path().apply {
+            addRoundRect(
+                fullRect,
+                floatArrayOf(
+                    cornerRadius, cornerRadius,
+                    cornerRadius, cornerRadius,
+                    0f, 0f,
+                    0f, 0f
+                ),
+                android.graphics.Path.Direction.CW
+            )
+        }
+        canvas.save()
+        canvas.clipRect(0f, 0f, sizePx.toFloat(), headerHeight)
+        canvas.drawPath(headerPath, headerPaint)
+        canvas.restore()
+
+        // متن نام ماه شمسی
+        val monthText = today.monthNameFa
+        val monthPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            textSize = headerHeight * 0.52f
+            textAlign = Paint.Align.CENTER
+        }
+        val monthBounds = Rect()
+        monthPaint.getTextBounds(monthText, 0, monthText.length, monthBounds)
+        val monthY = (headerHeight / 2f) - monthBounds.exactCenterY()
+        canvas.drawText(monthText, sizePx / 2f, monthY, monthPaint)
+
+        // عدد بزرگ روز شمسی در بدنه کارت
+        val dayText = today.day.toPersianDigits()
+        val dayPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            textSize = (sizePx - headerHeight) * 0.65f
+            textAlign = Paint.Align.CENTER
+        }
+        val dayBounds = Rect()
+        dayPaint.getTextBounds(dayText, 0, dayText.length, dayBounds)
+        val bodyCenterY = headerHeight + (sizePx - headerHeight) / 2f
+        val dayY = bodyCenterY - dayBounds.exactCenterY()
+        canvas.drawText(dayText, sizePx / 2f, dayY, dayPaint)
+
+        return bitmap
     }
 
     fun updateNotification(context: Context, reminders: List<Reminder>) {
@@ -107,7 +164,9 @@ object PersistentNotificationHelper {
         createNotificationChannel(context)
 
         val today = JalaliDate.now()
-        val title = "${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
+        val rlm = "\u200F" // نویسه اجباری راست‌چین یونیکد (Right-To-Left Mark)
+
+        val fullTitle = "$rlm${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
 
         // Gregorian & Hijri equivalent
         val conv = DateConverter.fromJalali(today.year, today.month, today.day)
@@ -115,7 +174,6 @@ object PersistentNotificationHelper {
         val hijriStr = if (conv.hijriYear > 0) {
             "${conv.hijriDay.toPersianDigits()} ${HIJRI_MONTHS_FA.getOrElse(conv.hijriMonth - 1) { "" }} ${conv.hijriYear.toPersianDigits()}"
         } else null
-        val dateSummary = if (hijriStr != null) "$gregStr • $hijriStr" else gregStr
 
         // Occasions for today
         val todayStr = today.format("YYYY-MM-DD")
@@ -130,16 +188,39 @@ object PersistentNotificationHelper {
                     it.isEnabled
         }
 
-        val parts = mutableListOf<String>()
-        if (occasions.isNotEmpty()) {
-            parts.add(occasions.joinToString("، ") { it.titleFa })
-        }
-        if (todayRemindersCount > 0) {
-            parts.add("${todayRemindersCount.toPersianDigits()} یادآور برای امروز")
+        // تفکیک خطوط به شکل ساختاریافته، کاملاً راست‌چین و بدون فشردگی خطی
+        val lineJalali = "$rlm☀️ تقویم خورشیدی: ${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
+        val lineGregorian = "$rlm🌍 تقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth} ${conv.dayOfWeekNameEn} ${conv.gregorian.year})"
+        val lineHijri = if (hijriStr != null) "$rlm🌙 تقویم هجری قمری: $hijriStr" else null
+
+        val lineOccasions = if (occasions.isNotEmpty()) {
+            "$rlm📌 رویدادها: " + occasions.joinToString("، ") { it.titleFa }
         } else {
-            parts.add("بدون یادآور برای امروز")
+            "$rlm📌 رویدادها: بدون رویداد تعطیل"
         }
-        val contentText = parts.joinToString(" • ")
+
+        val lineReminders = if (todayRemindersCount > 0) {
+            "$rlm⏰ یادآورها: ${todayRemindersCount.toPersianDigits()} یادآور برای امروز"
+        } else {
+            "$rlm⏰ یادآورها: بدون یادآور برای امروز"
+        }
+
+        val bigTextFormatted = listOfNotNull(
+            lineJalali,
+            lineGregorian,
+            lineHijri,
+            lineOccasions,
+            lineReminders
+        ).joinToString("\n")
+
+        // خلاصه فشرده جهت نمایش در حالت تک‌خطی اعلان (کاملاً راست‌چین با RLM)
+        val gregShort = "${conv.gregorian.dayOfMonth.toPersianDigits()} ${GREGORIAN_MONTHS_FA.getOrElse(conv.gregorian.monthValue - 1) { "" }}"
+        val hijriShort = if (conv.hijriYear > 0) "${conv.hijriDay.toPersianDigits()} ${HIJRI_MONTHS_FA.getOrElse(conv.hijriMonth - 1) { "" }}" else null
+        val shortSummary = if (hijriShort != null) {
+            "$rlm${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort • $hijriShort"
+        } else {
+            "$rlm${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort"
+        }
 
         // Content intent (opens MainActivity)
         val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: Intent()
@@ -163,13 +244,13 @@ object PersistentNotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(title)
-            .setContentText(contentText)
-            .setSubText(dateSummary)
+            .setContentTitle(fullTitle)
+            .setContentText(shortSummary)
+            .setSubText("$rlm${today.monthNameFa} ${today.year.toPersianDigits()}")
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("$dateSummary\n$contentText")
-                    .setBigContentTitle(title)
+                    .bigText(bigTextFormatted)
+                    .setBigContentTitle(fullTitle)
             )
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -180,20 +261,24 @@ object PersistentNotificationHelper {
             .setContentIntent(contentPendingIntent)
             .addAction(android.R.drawable.ic_input_add, "افزودن یادآور", addReminderPendingIntent)
 
-        // Set dynamic day number as smallIcon in status bar
-        try {
-            val dayBitmap = createDayNumberBitmap(context, today.day)
-            builder.setSmallIcon(IconCompat.createWithBitmap(dayBitmap))
-        } catch (_: Throwable) {
+        // تنظیم آیکون کوچک استاتوس‌بار (عدد روز یا آیکون برنامه بر اساس تنظیمات کاربر)
+        val useDynamicIcon = UserPreferences.isDynamicNotificationIconEnabled(context)
+        if (useDynamicIcon) {
+            try {
+                val dayBitmap = createDayNumberBitmap(context, today.day)
+                builder.setSmallIcon(IconCompat.createWithBitmap(dayBitmap))
+            } catch (_: Throwable) {
+                val fallbackIcon = context.applicationInfo.icon.takeIf { it != 0 } ?: android.R.drawable.ic_menu_today
+                builder.setSmallIcon(fallbackIcon)
+            }
+        } else {
             val fallbackIcon = context.applicationInfo.icon.takeIf { it != 0 } ?: android.R.drawable.ic_menu_today
             builder.setSmallIcon(fallbackIcon)
         }
 
-        // Set app icon as largeIcon in notification body
-        val appIcon = getAppIconBitmap(context)
-        if (appIcon != null) {
-            builder.setLargeIcon(appIcon)
-        }
+        // نمایش بَدج گرافیکی تقویم امروز بجای آیکون پیش‌فرض برنامه در بدنه اعلان
+        val dateBadgeBitmap = createDateBadgeBitmap(context, today)
+        builder.setLargeIcon(dateBadgeBitmap)
 
         val notification = builder.build()
         notificationManager.notify(NOTIFICATION_ID, notification)
