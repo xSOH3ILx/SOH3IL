@@ -170,11 +170,11 @@ fun CalendarHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Right side of screen (Start in RTL): Next Month button (arrow points right)
-        IconButton(onClick = onNextMonth) {
+        // Right side of screen (Start in RTL): Previous Month button (arrow points right into past)
+        IconButton(onClick = onPreviousMonth) {
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = "ماه بعد",
+                contentDescription = "ماه قبل",
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -210,11 +210,11 @@ fun CalendarHeader(
             }
         }
 
-        // Left side of screen (End in RTL): Previous Month button (arrow points left)
-        IconButton(onClick = onPreviousMonth) {
+        // Left side of screen (End in RTL): Next Month button (arrow points left into future)
+        IconButton(onClick = onNextMonth) {
             Icon(
                 imageVector = Icons.Default.ChevronLeft,
-                contentDescription = "ماه قبل",
+                contentDescription = "ماه بعد",
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
