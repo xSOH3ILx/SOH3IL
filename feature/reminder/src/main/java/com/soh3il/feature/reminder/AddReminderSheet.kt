@@ -23,7 +23,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Tune
@@ -170,7 +170,7 @@ fun AddReminderSheet(
                 label = { Text("توضیحات یا یادداشت (اختیاری)") },
                 leadingIcon = {
                     Icon(
-                        Icons.Default.Notes,
+                        Icons.AutoMirrored.Filled.Notes,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )

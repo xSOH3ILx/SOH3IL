@@ -23,12 +23,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.feature.settings.util.AutoStartHelper
-import com.soh3il.feature.settings.util.DeviceAutoStartGuide
+import com.soh3il.feature.settings.util.ManufacturerGuide
 
 @Composable
 fun AutoStartDialog(
     context: Context,
-    deviceGuide: DeviceAutoStartGuide,
+    deviceGuide: ManufacturerGuide,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
