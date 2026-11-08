@@ -96,12 +96,11 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     val db = Soh3ilDatabase.getInstance(context)
-                    val reminderEntities = db.reminderDao().getAll()
-                    val count = reminderEntities.count {
+                    val activeReminders = db.reminderDao().getAllActiveRemindersSync()
+                    val count = activeReminders.count {
                         it.jalaliYear == today.year &&
                                 it.jalaliMonth == today.month &&
-                                it.jalaliDay == today.day &&
-                                it.isEnabled
+                                it.jalaliDay == today.day
                     }
                     val reminderText = if (count > 0) {
                         "⏰ ${count.toPersianDigits()} یادآور فعال برای امروز"
