@@ -153,6 +153,18 @@ object PersistentNotificationHelper {
         return bitmap
     }
 
+    private fun getDayDrawableRes(context: Context, day: Int): Int {
+        val safeDay = day.coerceIn(1, 31)
+        val resName = "ic_stat_day_$safeDay"
+        val resId = context.resources.getIdentifier(resName, "drawable", context.packageName)
+        if (resId != 0) return resId
+
+        val dsResId = context.resources.getIdentifier(resName, "drawable", "com.soh3il.core.designsystem")
+        if (dsResId != 0) return dsResId
+
+        return android.R.drawable.ic_menu_today
+    }
+
     fun updateNotification(context: Context, reminders: List<Reminder>) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -261,20 +273,9 @@ object PersistentNotificationHelper {
             .setContentIntent(contentPendingIntent)
             .addAction(android.R.drawable.ic_input_add, "افزودن یادآور", addReminderPendingIntent)
 
-        // تنظیم آیکون کوچک استاتوس‌بار (عدد روز یا آیکون برنامه بر اساس تنظیمات کاربر)
-        val useDynamicIcon = UserPreferences.isDynamicNotificationIconEnabled(context)
-        if (useDynamicIcon) {
-            try {
-                val dayBitmap = createDayNumberBitmap(context, today.day)
-                builder.setSmallIcon(IconCompat.createWithBitmap(dayBitmap))
-            } catch (_: Throwable) {
-                val fallbackIcon = context.applicationInfo.icon.takeIf { it != 0 } ?: android.R.drawable.ic_menu_today
-                builder.setSmallIcon(fallbackIcon)
-            }
-        } else {
-            val fallbackIcon = context.applicationInfo.icon.takeIf { it != 0 } ?: android.R.drawable.ic_menu_today
-            builder.setSmallIcon(fallbackIcon)
-        }
+        // تنظیم تضمینی آیکون روز در نوار وضعیت با شناسه منبع استاندارد اندروید
+        val smallIconRes = getDayDrawableRes(context, today.day)
+        builder.setSmallIcon(smallIconRes)
 
         // نمایش بَدج گرافیکی تقویم امروز بجای آیکون پیش‌فرض برنامه در بدنه اعلان
         val dateBadgeBitmap = createDateBadgeBitmap(context, today)
