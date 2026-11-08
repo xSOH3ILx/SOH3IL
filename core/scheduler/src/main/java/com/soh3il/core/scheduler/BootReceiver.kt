@@ -29,10 +29,13 @@ class BootReceiver : BroadcastReceiver() {
             try {
                 val db = Soh3ilDatabase.getInstance(context)
                 val activeReminders = db.reminderDao().getAllActiveRemindersSync()
+                val domainList = activeReminders.map { it.toDomain() }
 
-                activeReminders.forEach { reminderEntity ->
-                    AlarmScheduler.scheduleReminder(context, reminderEntity.toDomain())
+                domainList.forEach { reminder ->
+                    AlarmScheduler.scheduleReminder(context, reminder)
                 }
+
+                PersistentNotificationHelper.updateNotification(context, domainList)
             } finally {
                 pendingResult.finish()
             }

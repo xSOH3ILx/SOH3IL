@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
                 val coroutineScope = rememberCoroutineScope()
                 var currentTab by remember { mutableStateOf(0) } // 0=Calendar, 1=Settings
                 var showAddSheet by remember { mutableStateOf(false) }
+                var editingReminder by remember { mutableStateOf<com.soh3il.core.model.Reminder?>(null) }
 
                 val remindersState by db.reminderDao().getAllReminders().collectAsState(initial = emptyList())
                 val reminders = remindersState.map { it.toDomain() }
@@ -85,6 +86,19 @@ class MainActivity : ComponentActivity() {
                             packageManager.getPackageInfo(packageName, 0).versionName
                         }
                     }.getOrNull() ?: "1.0.0"
+                }
+
+                // Update persistent notification whenever reminders change
+                androidx.compose.runtime.LaunchedEffect(reminders) {
+                    com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(context, reminders)
+                }
+
+                // Check if opened from notification "+ یادآور جدید" action
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    if (intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)) {
+                        editingReminder = null
+                        showAddSheet = true
+                    }
                 }
 
                 Scaffold(
@@ -110,7 +124,14 @@ class MainActivity : ComponentActivity() {
                         when (currentTab) {
                             0 -> CalendarScreen(
                                 reminders = reminders,
-                                onAddReminderClick = { showAddSheet = true }
+                                onAddReminderClick = {
+                                    editingReminder = null
+                                    showAddSheet = true
+                                },
+                                onReminderClick = {
+                                    editingReminder = it
+                                    showAddSheet = true
+                                }
                             )
                             1 -> SettingsScreen(
                                 currentTheme = currentTheme,
@@ -123,18 +144,61 @@ class MainActivity : ComponentActivity() {
                                     isAmoled = it
                                     UserPreferences.setAmoled(context, it)
                                 },
-                                currentVersionName = currentVersion
+                                currentVersionName = currentVersion,
+                                onPersistentNotificationToggled = { enabled ->
+                                    if (enabled) {
+                                        com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(this@MainActivity, reminders)
+                                    } else {
+                                        com.soh3il.core.scheduler.PersistentNotificationHelper.cancelNotification(this@MainActivity)
+                                    }
+                                },
+                                onExportIcsClick = {
+                                    com.soh3il.core.scheduler.IcsHelper.shareIcsFile(this@MainActivity, reminders)
+                                },
+                                onImportIcsUri = { uri ->
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        contentResolver.openInputStream(uri)?.use { stream ->
+                                            val imported = com.soh3il.core.scheduler.IcsHelper.importFromIcsStream(stream)
+                                            imported.forEach { rem ->
+                                                val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(rem))
+                                                val saved = rem.copy(id = id)
+                                                AlarmScheduler.scheduleReminder(this@MainActivity, saved)
+                                            }
+                                        }
+                                    }
+                                }
                             )
                         }
 
                         if (showAddSheet) {
+                            val initialDate = editingReminder?.let {
+                                com.soh3il.core.jalali.JalaliDate(it.jalaliYear, it.jalaliMonth, it.jalaliDay)
+                            } ?: com.soh3il.core.jalali.JalaliDate.now()
+
                             AddReminderSheet(
-                                onDismiss = { showAddSheet = false },
+                                initialDate = initialDate,
+                                existingReminder = editingReminder,
+                                onDismiss = {
+                                    showAddSheet = false
+                                    editingReminder = null
+                                },
                                 onSaveReminder = { reminder ->
                                     coroutineScope.launch(Dispatchers.IO) {
-                                        val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(reminder))
-                                        val savedReminder = reminder.copy(id = id)
-                                        AlarmScheduler.scheduleReminder(this@MainActivity, savedReminder)
+                                        if (reminder.id != 0L) {
+                                            db.reminderDao().updateReminder(ReminderEntity.fromDomain(reminder))
+                                            AlarmScheduler.cancelReminder(this@MainActivity, reminder.id)
+                                            AlarmScheduler.scheduleReminder(this@MainActivity, reminder)
+                                        } else {
+                                            val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(reminder))
+                                            val savedReminder = reminder.copy(id = id)
+                                            AlarmScheduler.scheduleReminder(this@MainActivity, savedReminder)
+                                        }
+                                    }
+                                },
+                                onDeleteReminder = { reminder ->
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        db.reminderDao().deleteReminderById(reminder.id)
+                                        AlarmScheduler.cancelReminder(this@MainActivity, reminder.id)
                                     }
                                 }
                             )

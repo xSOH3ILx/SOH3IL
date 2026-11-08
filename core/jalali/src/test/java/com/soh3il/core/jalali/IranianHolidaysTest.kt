@@ -10,11 +10,39 @@ class IranianHolidaysTest {
     @Test
     fun testNowruzHolidaysInFarvardin() {
         val occasions = IranianHolidays.getOccasionsForMonth(1404, 1)
-        val holidayTitles = occasions.filter { it.isHoliday }.map { it.titleFa }
+        val holidays = occasions.filter { it.isHoliday }
+        val holidayTitles = holidays.map { it.titleFa }
 
         assertTrue(holidayTitles.any { it.contains("نوروز") })
         assertTrue(holidayTitles.any { it.contains("۱۲ فروردین") || it.contains("جمهوری اسلامی") })
         assertTrue(holidayTitles.any { it.contains("سیزده‌بدر") || it.contains("طبیعت") })
+
+        // Check that 1st to 4th Farvardin are holidays
+        assertTrue(holidays.any { it.jalaliDate == "1404-01-01" })
+        assertTrue(holidays.any { it.jalaliDate == "1404-01-02" })
+        assertTrue(holidays.any { it.jalaliDate == "1404-01-03" })
+        assertTrue(holidays.any { it.jalaliDate == "1404-01-04" })
+    }
+
+    @Test
+    fun testCulturalOccasionsAreNotMarkedAsHolidays() {
+        // Shab-e Yalda (30 Azar) must be present but NOT a holiday
+        val occasionsAzar = IranianHolidays.getOccasionsForMonth(1404, 9)
+        val yalda = occasionsAzar.firstOrNull { it.jalaliDate == "1404-09-30" }
+        assertTrue("شب یلدا باید در مناسبت‌ها باشد", yalda != null && yalda.titleFa.contains("یلدا"))
+        assertFalse("شب یلدا نباید تعطیل رسمی باشد", yalda!!.isHoliday)
+
+        // Cyrus Day (7 Aban) must be present but NOT a holiday
+        val occasionsAban = IranianHolidays.getOccasionsForMonth(1404, 8)
+        val cyrus = occasionsAban.firstOrNull { it.jalaliDate == "1404-08-07" }
+        assertTrue("بزرگداشت کوروش باید در مناسبت‌ها باشد", cyrus != null && cyrus.titleFa.contains("کوروش"))
+        assertFalse("بزرگداشت کوروش نباید تعطیل رسمی باشد", cyrus!!.isHoliday)
+
+        // Teacher's Day (12 Ordibehesht) must be present but NOT a holiday
+        val occasionsOrdibehesht = IranianHolidays.getOccasionsForMonth(1404, 2)
+        val teacherDay = occasionsOrdibehesht.firstOrNull { it.jalaliDate == "1404-02-12" }
+        assertTrue("روز معلم باید در مناسبت‌ها باشد", teacherDay != null && teacherDay.titleFa.contains("معلم"))
+        assertFalse("روز معلم نباید تعطیل رسمی باشد", teacherDay!!.isHoliday)
     }
 
     @Test
@@ -24,6 +52,8 @@ class IranianHolidaysTest {
 
         assertTrue(holidayTitles.any { it.contains("۱۴ خرداد") || it.contains("امام خمینی") })
         assertTrue(holidayTitles.any { it.contains("۱۵ خرداد") })
+        assertTrue(holidayTitles.any { it.contains("قربان") })
+        assertTrue(holidayTitles.any { it.contains("غدیر") })
     }
 
     @Test
@@ -40,15 +70,31 @@ class IranianHolidaysTest {
     }
 
     @Test
-    fun testLunarHolidays1404() {
-        // Farvardin 1404 has Eid al-Fitr (11 and 12)
+    fun testLunarHolidays1404ExactTehranUniversityCalendar() {
+        // Farvardin 1404: Eid al-Fitr is 11 and 12
         val occasionsFarvardin = IranianHolidays.getOccasionsForMonth(1404, 1)
-        assertTrue(occasionsFarvardin.any { it.jalaliDate == "1404-01-11" && it.titleFa.contains("فطر") })
+        assertTrue(occasionsFarvardin.any { it.jalaliDate == "1404-01-11" && it.isHoliday && it.titleFa.contains("فطر") })
+        assertTrue(occasionsFarvardin.any { it.jalaliDate == "1404-01-12" && it.isHoliday })
 
-        // Tir 1404 has Tasua & Ashura (14 and 15)
+        // Ordibehesht 1404: Imam Sadiq martyrdom is on 4th of Ordibehesht
+        val occasionsOrdibehesht = IranianHolidays.getOccasionsForMonth(1404, 2)
+        assertTrue(occasionsOrdibehesht.any { it.jalaliDate == "1404-02-04" && it.isHoliday && it.titleFa.contains("صادق") })
+
+        // Tir 1404: Tasua (14) & Ashura (15)
         val occasionsTir = IranianHolidays.getOccasionsForMonth(1404, 4)
-        assertTrue(occasionsTir.any { it.jalaliDate == "1404-04-14" && it.titleFa.contains("تاسوعا") })
-        assertTrue(occasionsTir.any { it.jalaliDate == "1404-04-15" && it.titleFa.contains("عاشورا") })
+        assertTrue(occasionsTir.any { it.jalaliDate == "1404-04-14" && it.isHoliday && it.titleFa.contains("تاسوعا") })
+        assertTrue(occasionsTir.any { it.jalaliDate == "1404-04-15" && it.isHoliday && it.titleFa.contains("عاشورا") })
+
+        // Mordad 1404: Arbaeen is 23 Mordad, Prophet demise is 31 Mordad
+        val occasionsMordad = IranianHolidays.getOccasionsForMonth(1404, 5)
+        assertTrue(occasionsMordad.any { it.jalaliDate == "1404-05-23" && it.isHoliday && it.titleFa.contains("اربعین") })
+        assertTrue(occasionsMordad.any { it.jalaliDate == "1404-05-31" && it.isHoliday && it.titleFa.contains("رحلت") })
+
+        // Shahrivar 1404: Imam Reza martyrdom (2), Imam Askari (10), Prophet birthday (19)
+        val occasionsShahrivar = IranianHolidays.getOccasionsForMonth(1404, 6)
+        assertTrue(occasionsShahrivar.any { it.jalaliDate == "1404-06-02" && it.isHoliday && it.titleFa.contains("رضا") })
+        assertTrue(occasionsShahrivar.any { it.jalaliDate == "1404-06-10" && it.isHoliday && it.titleFa.contains("عسکری") })
+        assertTrue(occasionsShahrivar.any { it.jalaliDate == "1404-06-19" && it.isHoliday && it.titleFa.contains("میلاد") })
     }
 
     @Test

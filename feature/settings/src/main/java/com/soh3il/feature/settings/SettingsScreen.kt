@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.VolumeUp
@@ -111,10 +112,27 @@ fun SettingsScreen(
     onThemeSelected: (AppTheme) -> Unit = {},
     isAmoled: Boolean = false,
     onAmoledToggled: (Boolean) -> Unit = {},
-    currentVersionName: String = "1.0.0"
+    currentVersionName: String = "1.0.0",
+    onPersistentNotificationToggled: ((Boolean) -> Unit)? = null,
+    onExportIcsClick: (() -> Unit)? = null,
+    onImportIcsUri: ((Uri) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    // Dialog state
+    var showDateConverterDialog by remember { mutableStateOf(false) }
+    var isPersistentNotificationEnabled by remember {
+        mutableStateOf(UserPreferences.isPersistentNotificationEnabled(context))
+    }
+
+    val importIcsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            onImportIcsUri?.invoke(uri)
+        }
+    }
 
     // Update state
     var isCheckingUpdate by remember { mutableStateOf(false) }
@@ -375,7 +393,125 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 3. Battery & Alarms Guidance (DontKillMyApp warning & Direct Click Action)
+        // 3. Persistent Status Bar Notification
+        FarsiCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "نوار اعلان دائمی تاریخ",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "نمایش پیوسته تاریخ امروز، مناسبت جاری و دسترسی سریع به ثبت یادآور در نوار اعلان بالای گوشی.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 18.sp
+                        )
+                    }
+
+                    Switch(
+                        checked = isPersistentNotificationEnabled,
+                        onCheckedChange = { enabled ->
+                            isPersistentNotificationEnabled = enabled
+                            UserPreferences.setPersistentNotificationEnabled(context, enabled)
+                            onPersistentNotificationToggled?.invoke(enabled)
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 4. Date Converter Tool
+        FarsiCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "مبدل پیشرفته تاریخ",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "تبدیل بلادرنگ تاریخ‌های خورشیدی، میلادی و قمری، به همراه مشخصات کبیسه و حیوان سال.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 18.sp
+                        )
+                    }
+
+                    Button(
+                        onClick = { showDateConverterDialog = true },
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("باز کردن", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 5. Universal Calendar Backup & Transfer (ICS)
+        FarsiCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "پشتیبان‌گیری و انتقال تقویم (ICS)",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "سازگار با تقویم گوگل و نرم‌افزارهای استاندارد جهانی تقویم (فرمت iCalendar).",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 18.sp,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { onExportIcsClick?.invoke() },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("صدور ICS", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = { importIcsLauncher.launch("text/calendar") },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("ورود ICS", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 6. Battery & Alarms Guidance (DontKillMyApp warning & Direct Click Action)
         FarsiCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -797,5 +933,10 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+
+    // Date Converter Dialog
+    if (showDateConverterDialog) {
+        DateConverterDialog(onDismiss = { showDateConverterDialog = false })
     }
 }

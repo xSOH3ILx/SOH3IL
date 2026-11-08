@@ -1,5 +1,6 @@
 package com.soh3il.feature.reminder
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -74,25 +76,38 @@ import com.soh3il.core.model.Reminder
 @Composable
 fun AddReminderSheet(
     initialDate: JalaliDate = JalaliDate.now(),
+    existingReminder: Reminder? = null,
     onDismiss: () -> Unit,
-    onSaveReminder: (Reminder) -> Unit
+    onSaveReminder: (Reminder) -> Unit,
+    onDeleteReminder: ((Reminder) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var selectedHour by remember { mutableIntStateOf(9) }
-    var selectedMinute by remember { mutableIntStateOf(0) }
+    var title by remember { mutableStateOf(existingReminder?.title ?: "") }
+    var description by remember { mutableStateOf(existingReminder?.description ?: "") }
+    var selectedHour by remember { mutableIntStateOf(existingReminder?.hour ?: 9) }
+    var selectedMinute by remember { mutableIntStateOf(existingReminder?.minute ?: 0) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
 
-    var recurrenceType by remember { mutableStateOf(RecurrenceType.NONE) }
-    var recurrenceInterval by remember { mutableIntStateOf(1) }
+    var recurrenceType by remember { mutableStateOf(existingReminder?.recurrence?.type ?: RecurrenceType.NONE) }
+    var recurrenceInterval by remember { mutableIntStateOf(existingReminder?.recurrence?.interval ?: 1) }
     var showCustomRecurrenceDialog by remember { mutableStateOf(false) }
 
     // Pre-reminder state: presets or custom
-    var selectedPreReminderMinutes by remember { mutableStateOf<Int?>(null) } // null = none, 15, 30, 60, 1440, 2880
-    var customPreReminder by remember { mutableStateOf<PreReminder?>(null) }
-    var isCustomPreReminderSelected by remember { mutableStateOf(false) }
+    val initialPreMinutes = existingReminder?.preReminders?.firstOrNull()?.toMinutes()?.toInt()
+    var selectedPreReminderMinutes by remember {
+        mutableStateOf(
+            if (initialPreMinutes != null && initialPreMinutes in listOf(15, 30, 60, 1440, 2880)) initialPreMinutes
+            else null
+        )
+    }
+    var customPreReminder by remember {
+        mutableStateOf(
+            if (initialPreMinutes != null && initialPreMinutes !in listOf(15, 30, 60, 1440, 2880)) existingReminder.preReminders.firstOrNull()
+            else null
+        )
+    }
+    var isCustomPreReminderSelected by remember { mutableStateOf(customPreReminder != null) }
     var showCustomPreReminderDialog by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -116,7 +131,7 @@ fun AddReminderSheet(
             ) {
                 Column {
                     Text(
-                        text = "افزودن یادآور جدید",
+                        text = if (existingReminder != null) "ویرایش یادآور" else "افزودن یادآور جدید",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -570,17 +585,18 @@ fun AddReminderSheet(
                         }
 
                         val reminder = Reminder(
+                            id = existingReminder?.id ?: 0L,
                             title = title.trim(),
                             description = description.trim(),
-                            jalaliYear = initialDate.year,
-                            jalaliMonth = initialDate.month,
-                            jalaliDay = initialDate.day,
+                            jalaliYear = existingReminder?.jalaliYear ?: initialDate.year,
+                            jalaliMonth = existingReminder?.jalaliMonth ?: initialDate.month,
+                            jalaliDay = existingReminder?.jalaliDay ?: initialDate.day,
                             hour = selectedHour,
                             minute = selectedMinute,
                             recurrence = RecurrenceRule(
                                 type = recurrenceType,
                                 interval = recurrenceInterval.coerceAtLeast(1),
-                                dayOfMonth = if (recurrenceType == RecurrenceType.MONTHLY_JALALI) initialDate.day else null
+                                dayOfMonth = if (recurrenceType == RecurrenceType.MONTHLY_JALALI) (existingReminder?.jalaliDay ?: initialDate.day) else null
                             ),
                             preReminders = preList,
                             isEnabled = true
@@ -600,7 +616,61 @@ fun AddReminderSheet(
             ) {
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("ثبت و زمان‌بندی یادآور", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(
+                    text = if (existingReminder != null) "ذخیره تغییرات" else "ثبت و زمان‌بندی یادآور",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+            }
+
+            // Delete Button (only in edit mode)
+            if (existingReminder != null && onDeleteReminder != null) {
+                var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedButton(
+                    onClick = { showDeleteConfirmDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("حذف این یادآور", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                }
+
+                if (showDeleteConfirmDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteConfirmDialog = false },
+                        title = { Text("حذف یادآور", fontWeight = FontWeight.Bold) },
+                        text = { Text("آیا از حذف یادآور «${existingReminder.title}» مطمئن هستید؟ این عمل غیرقابل بازگشت است.") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showDeleteConfirmDialog = false
+                                    onDeleteReminder(existingReminder)
+                                    onDismiss()
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Text("بله، حذف شود", fontWeight = FontWeight.Bold)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                                Text("انصراف")
+                            }
+                        }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))

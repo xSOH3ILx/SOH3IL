@@ -27,7 +27,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -71,6 +74,7 @@ fun CalendarScreen(
     var displayedDate by remember { mutableStateOf(today) }
     var selectedDate by remember { mutableStateOf(today) }
     var totalDragDistance by remember { mutableFloatStateOf(0f) }
+    var viewMode by remember { mutableIntStateOf(0) } // 0=Month Grid, 1=Agenda View
 
     val monthOccasions = remember(displayedDate.year, displayedDate.month, occasions) {
         if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(displayedDate.year, displayedDate.month)
@@ -100,68 +104,110 @@ fun CalendarScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // 1. Month Header (Centered Month, Left=Previous, Right=Next)
-            CalendarHeader(
-                currentDate = displayedDate,
-                onPreviousMonth = { displayedDate = displayedDate.plusMonths(-1) },
-                onNextMonth = { displayedDate = displayedDate.plusMonths(1) },
-                onTodayClick = {
-                    displayedDate = today
-                    selectedDate = today
-                }
-            )
-
-            // 2. Weekdays bar
-            WeekdaysRow()
-
-            // 3. Days Grid with Horizontal Swipe gesture
-            // Swipe Left-to-Right: Next month | Swipe Right-to-Left: Previous month
-            Box(
+            // View Mode Selector (Month Grid vs Agenda View)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .pointerInput(displayedDate) {
-                        detectHorizontalDragGestures(
-                            onDragStart = { totalDragDistance = 0f },
-                            onDragEnd = {
-                                val threshold = 40.dp.toPx()
-                                if (totalDragDistance > threshold) {
-                                    // Swiped Left to Right -> Next month
-                                    displayedDate = displayedDate.plusMonths(1)
-                                } else if (totalDragDistance < -threshold) {
-                                    // Swiped Right to Left -> Previous month
-                                    displayedDate = displayedDate.plusMonths(-1)
-                                }
-                            },
-                            onHorizontalDrag = { _, dragAmount ->
-                                totalDragDistance += dragAmount
-                            }
-                        )
-                    }
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                MonthGridView(
-                    year = displayedDate.year,
-                    month = displayedDate.month,
-                    selectedDate = selectedDate,
-                    today = today,
-                    reminders = reminders,
-                    occasions = monthOccasions,
-                    onDateSelected = { selectedDate = it }
+                FilterChip(
+                    selected = viewMode == 0,
+                    onClick = { viewMode = 0 },
+                    label = {
+                        Text(
+                            "تقویم ماهانه",
+                            fontSize = 13.sp,
+                            fontWeight = if (viewMode == 0) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                FilterChip(
+                    selected = viewMode == 1,
+                    onClick = { viewMode = 1 },
+                    label = {
+                        Text(
+                            "دستور کار (رویدادها)",
+                            fontSize = 13.sp,
+                            fontWeight = if (viewMode == 1) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (viewMode == 0) {
+                // 1. Month Header (Centered Month, Left=Previous, Right=Next)
+                CalendarHeader(
+                    currentDate = displayedDate,
+                    onPreviousMonth = { displayedDate = displayedDate.plusMonths(-1) },
+                    onNextMonth = { displayedDate = displayedDate.plusMonths(1) },
+                    onTodayClick = {
+                        displayedDate = today
+                        selectedDate = today
+                    }
+                )
 
-            // 4. Selected Day Info & Occasions & Reminders
-            SelectedDayDetails(
-                selectedDate = selectedDate,
-                occasions = selectedDayOccasions,
-                reminders = reminders.filter {
-                    it.jalaliYear == selectedDate.year &&
-                            it.jalaliMonth == selectedDate.month &&
-                            it.jalaliDay == selectedDate.day
-                },
-                onReminderClick = onReminderClick
-            )
+                // 2. Weekdays bar
+                WeekdaysRow()
+
+                // 3. Days Grid with Horizontal Swipe gesture
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pointerInput(displayedDate) {
+                            detectHorizontalDragGestures(
+                                onDragStart = { totalDragDistance = 0f },
+                                onDragEnd = {
+                                    val threshold = 40.dp.toPx()
+                                    if (totalDragDistance > threshold) {
+                                        displayedDate = displayedDate.plusMonths(1)
+                                    } else if (totalDragDistance < -threshold) {
+                                        displayedDate = displayedDate.plusMonths(-1)
+                                    }
+                                },
+                                onHorizontalDrag = { _, dragAmount ->
+                                    totalDragDistance += dragAmount
+                                }
+                            )
+                        }
+                ) {
+                    MonthGridView(
+                        year = displayedDate.year,
+                        month = displayedDate.month,
+                        selectedDate = selectedDate,
+                        today = today,
+                        reminders = reminders,
+                        occasions = monthOccasions,
+                        onDateSelected = { selectedDate = it }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 4. Selected Day Info & Occasions & Reminders
+                SelectedDayDetails(
+                    selectedDate = selectedDate,
+                    occasions = selectedDayOccasions,
+                    reminders = reminders.filter {
+                        it.jalaliYear == selectedDate.year &&
+                                it.jalaliMonth == selectedDate.month &&
+                                it.jalaliDay == selectedDate.day
+                    },
+                    onReminderClick = onReminderClick
+                )
+            } else {
+                // Agenda / Schedule View
+                AgendaView(
+                    today = today,
+                    reminders = reminders,
+                    onReminderClick = onReminderClick,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
@@ -427,7 +473,7 @@ fun SelectedDayDetails(
                                 .clip(CircleShape)
                                 .background(FarsiPrimary)
                         )
-                        Column(modifier = Modifier.padding(start = 12.dp)) {
+                        Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
                             Text(
                                 text = rem.title,
                                 fontWeight = FontWeight.Bold,
@@ -449,6 +495,12 @@ fun SelectedDayDetails(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "ویرایش یادآور",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }

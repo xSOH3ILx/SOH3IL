@@ -10,6 +10,8 @@ object UserPreferences {
     private const val KEY_AMOLED = "pref_amoled"
     private const val KEY_NOTIFICATION_SOUND_URI = "pref_sound_uri"
     private const val KEY_NOTIFICATION_SOUND_TITLE = "pref_sound_title"
+    private const val KEY_PERSISTENT_NOTIFICATION = "pref_persistent_notification"
+    private const val KEY_LIVE_ICON = "pref_live_icon"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -49,5 +51,21 @@ object UserPreferences {
             .putString(KEY_NOTIFICATION_SOUND_URI, uri)
             .putString(KEY_NOTIFICATION_SOUND_TITLE, title)
             .apply()
+    }
+
+    fun isPersistentNotificationEnabled(context: Context): Boolean {
+        return getPrefs(context).getBoolean(KEY_PERSISTENT_NOTIFICATION, true)
+    }
+
+    fun setPersistentNotificationEnabled(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_PERSISTENT_NOTIFICATION, enabled).apply()
+    }
+
+    fun isLiveIconEnabled(context: Context): Boolean {
+        return getPrefs(context).getBoolean(KEY_LIVE_ICON, false)
+    }
+
+    fun setLiveIconEnabled(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_LIVE_ICON, enabled).apply()
     }
 }
