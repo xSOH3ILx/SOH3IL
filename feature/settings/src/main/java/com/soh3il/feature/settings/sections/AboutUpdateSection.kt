@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.designsystem.components.FarsiCard
+import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.updater.UpdateChecker
 import com.soh3il.core.updater.UpdateInfo
 import com.soh3il.feature.settings.components.SettingsSectionHeader
@@ -83,7 +84,7 @@ fun AboutUpdateSection(
                 )
 
                 Text(
-                    text = "نسخه $currentVersionName",
+                    text = "نسخه ${currentVersionName.toPersianDigits()}",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -109,7 +110,7 @@ fun AboutUpdateSection(
                         isCheckingUpdate = false
                         updateInfo = result
                         updateCheckMessage = if (result.hasUpdate) {
-                            "نسخه جدید ${result.latestVersionName} در گیت‌هاب موجود است!"
+                            "نسخه جدید ${result.latestVersionName.toPersianDigits()} در گیت‌هاب موجود است!"
                         } else {
                             "شما از آخرین نسخه سهیل استفاده می‌کنید."
                         }
@@ -160,7 +161,7 @@ fun AboutUpdateSection(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "تغییرات نسخه ${updateInfo!!.latestVersionName}:",
+                            text = "تغییرات نسخه ${updateInfo!!.latestVersionName.toPersianDigits()}:",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(start = 6.dp)
@@ -195,7 +196,7 @@ fun AboutUpdateSection(
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "در حال دریافت فایل نصبی: ${(downloadProgress * 100).toInt()}%",
+                                text = "در حال دریافت فایل نصبی: ${(downloadProgress * 100).toInt().toPersianDigits()}%",
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )

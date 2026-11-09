@@ -59,21 +59,37 @@ fun FarsiBadge(
 @Composable
 fun FarsiCard(
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    Card(
-        modifier = modifier
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(16.dp)
+    val borderModifier = Modifier.border(
+        width = 1.dp,
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(16.dp)
+    )
+
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = modifier.then(borderModifier),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
             ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        content()
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            content()
+        }
+    } else {
+        Card(
+            modifier = modifier.then(borderModifier),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            content()
+        }
     }
 }

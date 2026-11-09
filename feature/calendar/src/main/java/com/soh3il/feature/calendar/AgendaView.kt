@@ -197,8 +197,8 @@ fun AgendaDaySection(
                 FarsiCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { onReminderClick(rem) }
+                        .padding(vertical = 4.dp),
+                    onClick = { onReminderClick(rem) }
                 ) {
                     Row(
                         modifier = Modifier

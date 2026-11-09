@@ -3,6 +3,8 @@ package com.soh3il.feature.settings.sections
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,17 +60,24 @@ fun AppearanceSection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onThemeSelected(theme) }
-                        .padding(vertical = 4.dp),
+                        .clip(RoundedCornerShape(8.dp))
+                        .selectable(
+                            selected = (currentTheme == theme),
+                            onClick = { onThemeSelected(theme) },
+                            role = Role.RadioButton
+                        )
+                        .padding(horizontal = 4.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
                         selected = (currentTheme == theme),
-                        onClick = { onThemeSelected(theme) }
+                        onClick = null
                     )
                     Text(
                         text = label,
                         fontSize = 14.sp,
+                        fontWeight = if (currentTheme == theme) FontWeight.SemiBold else FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }

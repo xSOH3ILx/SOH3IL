@@ -74,12 +74,12 @@ fun CalendarScreen(
                 onClick = onAddReminderClick,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = CircleShape
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "افزودن یادآور")
             }
         },
-        floatingActionButtonPosition = FabPosition.Start
+        floatingActionButtonPosition = FabPosition.End
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -145,10 +145,11 @@ fun CalendarScreen(
                                 onDragStart = { totalDragDistance = 0f },
                                 onDragEnd = {
                                     val threshold = 40.dp.toPx()
+                                    // In RTL: Dragging Right (>0) goes to past (Previous Month), Dragging Left (<0) goes to future (Next Month)
                                     if (totalDragDistance > threshold) {
-                                        displayedDate = displayedDate.plusMonths(1)
-                                    } else if (totalDragDistance < -threshold) {
                                         displayedDate = displayedDate.plusMonths(-1)
+                                    } else if (totalDragDistance < -threshold) {
+                                        displayedDate = displayedDate.plusMonths(1)
                                     }
                                 },
                                 onHorizontalDrag = { _, dragAmount ->

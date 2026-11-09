@@ -250,8 +250,13 @@ fun DateConverterDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("میلادی:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                val gregFaMonth = listOf(
+                                    "ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن",
+                                    "ژوئیه", "اوت", "سپتامبر", "اکتبر", "نوامبر", "دسامبر"
+                                ).getOrElse(conversionResult.gregorian.monthValue - 1) { "" }
+                                val gregEnMonth = conversionResult.gregorian.month.name.lowercase().replaceFirstChar { it.uppercase() }
                                 Text(
-                                    "${conversionResult.dayOfWeekNameEn}, ${conversionResult.gregorian.dayOfMonth} ${conversionResult.gregorian.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${conversionResult.gregorian.year}",
+                                    "${conversionResult.gregorian.dayOfMonth.toPersianDigits()} $gregFaMonth (${conversionResult.gregorian.dayOfMonth} $gregEnMonth ${conversionResult.gregorian.year})",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp
                                 )

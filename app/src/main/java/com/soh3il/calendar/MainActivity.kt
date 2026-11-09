@@ -14,6 +14,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -127,13 +129,23 @@ class MainActivity : ComponentActivity() {
                             NavigationBarItem(
                                 selected = currentTab == 0,
                                 onClick = { currentTab = 0 },
-                                icon = { Icon(Icons.Default.CalendarMonth, contentDescription = "تقویم") },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (currentTab == 0) Icons.Filled.CalendarMonth else Icons.Outlined.CalendarMonth,
+                                        contentDescription = "تقویم"
+                                    )
+                                },
                                 label = { Text("تقویم") }
                             )
                             NavigationBarItem(
                                 selected = currentTab == 1,
                                 onClick = { currentTab = 1 },
-                                icon = { Icon(Icons.Default.Settings, contentDescription = "تنظیمات") },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (currentTab == 1) Icons.Filled.Settings else Icons.Outlined.Settings,
+                                        contentDescription = "تنظیمات"
+                                    )
+                                },
                                 label = { Text("تنظیمات") }
                             )
                         }
