@@ -200,20 +200,20 @@ object PersistentNotificationHelper {
         val todayRemindersCount = reminders.count { it.matchesDate(today) }
 
         // تفکیک خطوط به شکل ساختاریافته، کاملاً راست‌چین و بدون فشردگی خطی (بدون ایموجی طبق قوانین طراحی سهیل)
-        val lineJalali = "$rlmتقویم خورشیدی: ${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
-        val lineGregorian = "$rlmتقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth} ${conv.dayOfWeekNameEn} ${conv.gregorian.year})"
-        val lineHijri = if (hijriStr != null) "$rlmتقویم هجری قمری: $hijriStr" else null
+        val lineJalali = "${rlm}تقویم خورشیدی: ${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
+        val lineGregorian = "${rlm}تقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth} ${conv.dayOfWeekNameEn} ${conv.gregorian.year})"
+        val lineHijri = if (hijriStr != null) "${rlm}تقویم هجری قمری: $hijriStr" else null
 
         val lineOccasions = if (occasions.isNotEmpty()) {
-            "$rlmرویدادها: " + occasions.joinToString("، ") { it.titleFa }
+            "${rlm}رویدادها: " + occasions.joinToString("، ") { it.titleFa }
         } else {
-            "$rlmرویدادها: بدون رویداد تعطیل"
+            "${rlm}رویدادها: بدون رویداد تعطیل"
         }
 
         val lineReminders = if (todayRemindersCount > 0) {
-            "$rlmیادآورها: ${todayRemindersCount.toPersianDigits()} یادآور برای امروز"
+            "${rlm}یادآورها: ${todayRemindersCount.toPersianDigits()} یادآور برای امروز"
         } else {
-            "$rlmیادآورها: بدون یادآور برای امروز"
+            "${rlm}یادآورها: بدون یادآور برای امروز"
         }
 
         val bigTextFormatted = listOfNotNull(
@@ -228,9 +228,9 @@ object PersistentNotificationHelper {
         val gregShort = "${conv.gregorian.dayOfMonth.toPersianDigits()} ${GREGORIAN_MONTHS_FA.getOrElse(conv.gregorian.monthValue - 1) { "" }}"
         val hijriShort = if (conv.hijriYear > 0) "${conv.hijriDay.toPersianDigits()} ${HIJRI_MONTHS_FA.getOrElse(conv.hijriMonth - 1) { "" }}" else null
         val shortSummary = if (hijriShort != null) {
-            "$rlm${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort • $hijriShort"
+            "${rlm}${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort • $hijriShort"
         } else {
-            "$rlm${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort"
+            "${rlm}${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort"
         }
 
         // Content intent (opens MainActivity)
@@ -268,7 +268,7 @@ object PersistentNotificationHelper {
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(fullTitle)
             .setContentText(shortSummary)
-            .setSubText("$rlm${today.monthNameFa} ${today.year.toPersianDigits()}")
+            .setSubText("${rlm}${today.monthNameFa} ${today.year.toPersianDigits()}")
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .bigText(bigTextFormatted)
