@@ -113,6 +113,12 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        ignoreTestSources = true
+        checkTestSources = false
+        abortOnError = true
+    }
 }
 
 dependencies {

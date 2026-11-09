@@ -50,7 +50,7 @@ import com.soh3il.feature.calendar.components.WeekdaysRow
 fun CalendarScreen(
     reminders: List<Reminder> = emptyList(),
     occasions: List<Occasion> = emptyList(),
-    onAddReminderClick: () -> Unit = {},
+    onAddReminderClick: (JalaliDate) -> Unit = {},
     onReminderClick: (Reminder) -> Unit = {}
 ) {
     val today = remember { JalaliDate.now() }
@@ -71,7 +71,10 @@ fun CalendarScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onAddReminderClick,
+                onClick = {
+                    val targetDate = if (viewMode == 0) selectedDate else today
+                    onAddReminderClick(targetDate)
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
@@ -181,7 +184,8 @@ fun CalendarScreen(
                     selectedDate = selectedDate,
                     occasions = selectedDayOccasions,
                     reminders = reminders.filter { it.matchesDate(selectedDate) },
-                    onReminderClick = onReminderClick
+                    onReminderClick = onReminderClick,
+                    onAddReminderClick = onAddReminderClick
                 )
             } else {
                 // Agenda / Schedule View

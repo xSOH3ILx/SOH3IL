@@ -90,6 +90,7 @@ class MainActivity : ComponentActivity() {
                 var currentTab by remember { mutableStateOf(0) } // 0=Calendar, 1=Settings
                 var showAddSheet by remember { mutableStateOf(false) }
                 var editingReminder by remember { mutableStateOf<com.soh3il.core.model.Reminder?>(null) }
+                var selectedCalendarDate by remember { mutableStateOf(com.soh3il.core.jalali.JalaliDate.now()) }
 
                 val remindersState by db.reminderDao().getAllReminders().collectAsState(initial = emptyList())
                 val reminders = remindersState.map { it.toDomain() }
@@ -117,6 +118,7 @@ class MainActivity : ComponentActivity() {
                 androidx.compose.runtime.LaunchedEffect(openAddReminderTrigger) {
                     if (openAddReminderTrigger) {
                         editingReminder = null
+                        selectedCalendarDate = com.soh3il.core.jalali.JalaliDate.now()
                         showAddSheet = true
                         openAddReminderTrigger = false
                     }
@@ -155,7 +157,8 @@ class MainActivity : ComponentActivity() {
                         when (currentTab) {
                             0 -> CalendarScreen(
                                 reminders = reminders,
-                                onAddReminderClick = {
+                                onAddReminderClick = { date ->
+                                    selectedCalendarDate = date
                                     editingReminder = null
                                     showAddSheet = true
                                 },
@@ -209,7 +212,7 @@ class MainActivity : ComponentActivity() {
                         if (showAddSheet) {
                             val initialDate = editingReminder?.let {
                                 com.soh3il.core.jalali.JalaliDate(it.jalaliYear, it.jalaliMonth, it.jalaliDay)
-                            } ?: com.soh3il.core.jalali.JalaliDate.now()
+                            } ?: selectedCalendarDate
 
                             AddReminderSheet(
                                 initialDate = initialDate,
