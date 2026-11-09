@@ -303,8 +303,10 @@ object PersistentNotificationHelper {
     fun updateNotification(context: Context) {
         try {
             val db = com.soh3il.core.database.Soh3ilDatabase.getInstance(context)
-            val activeReminders = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
-            updateNotification(context, activeReminders)
+            kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+                val activeReminders = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
+                updateNotification(context, activeReminders)
+            }
         } catch (_: Exception) {
             updateNotification(context, emptyList())
         }
