@@ -65,12 +65,14 @@ android {
         }
     }
 
+    val keyStoreFile = File(resolvedStoreFilePath).let {
+        if (it.isAbsolute) it else rootProject.file(resolvedStoreFilePath)
+    }
+    val hasReleaseKeystore = keyStoreFile.exists()
+
     signingConfigs {
-        create("release") {
-            val keyStoreFile = File(resolvedStoreFilePath).let {
-                if (it.isAbsolute) it else rootProject.file(resolvedStoreFilePath)
-            }
-            if (keyStoreFile.exists()) {
+        if (hasReleaseKeystore) {
+            create("release") {
                 storeFile = keyStoreFile
                 storePassword = resolvedStorePassword
                 keyAlias = resolvedKeyAlias
@@ -87,7 +89,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
         debug {
             applicationIdSuffix = ".debug"
