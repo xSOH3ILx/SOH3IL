@@ -56,21 +56,459 @@
             </intent-filter>
         </activity>
 
-        <!-- Receivers for Exact Alarms and Device Reboots -->
-        <receiver
-            android:name="com.soh3il.core.scheduler.AlarmReceiver"
-            android:exported="false" />
+        <activity-alias
+            android:name=".Day1"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day1"
+            android:roundIcon="@mipmap/day1"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
+        <activity-alias
+            android:name=".Day2"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day2"
+            android:roundIcon="@mipmap/day2"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day3"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day3"
+            android:roundIcon="@mipmap/day3"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day4"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day4"
+            android:roundIcon="@mipmap/day4"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day5"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day5"
+            android:roundIcon="@mipmap/day5"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day6"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day6"
+            android:roundIcon="@mipmap/day6"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day7"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day7"
+            android:roundIcon="@mipmap/day7"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day8"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day8"
+            android:roundIcon="@mipmap/day8"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day9"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day9"
+            android:roundIcon="@mipmap/day9"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day10"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day10"
+            android:roundIcon="@mipmap/day10"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day11"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day11"
+            android:roundIcon="@mipmap/day11"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day12"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day12"
+            android:roundIcon="@mipmap/day12"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day13"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day13"
+            android:roundIcon="@mipmap/day13"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day14"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day14"
+            android:roundIcon="@mipmap/day14"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day15"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day15"
+            android:roundIcon="@mipmap/day15"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day16"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day16"
+            android:roundIcon="@mipmap/day16"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day17"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day17"
+            android:roundIcon="@mipmap/day17"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day18"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day18"
+            android:roundIcon="@mipmap/day18"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day19"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day19"
+            android:roundIcon="@mipmap/day19"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day20"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day20"
+            android:roundIcon="@mipmap/day20"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day21"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day21"
+            android:roundIcon="@mipmap/day21"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day22"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day22"
+            android:roundIcon="@mipmap/day22"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day23"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day23"
+            android:roundIcon="@mipmap/day23"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day24"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day24"
+            android:roundIcon="@mipmap/day24"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day25"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day25"
+            android:roundIcon="@mipmap/day25"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day26"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day26"
+            android:roundIcon="@mipmap/day26"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day27"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day27"
+            android:roundIcon="@mipmap/day27"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day28"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day28"
+            android:roundIcon="@mipmap/day28"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day29"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day29"
+            android:roundIcon="@mipmap/day29"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day30"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day30"
+            android:roundIcon="@mipmap/day30"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Day31"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/day31"
+            android:roundIcon="@mipmap/day31"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Midnight Rollover, Date Change, and Notification Lifecycle Receiver -->
         <receiver
-            android:name="com.soh3il.core.scheduler.BootReceiver"
+            android:name="com.soh3il.core.scheduler.MidnightReceiver"
             android:exported="true">
             <intent-filter>
+                <action android:name="com.soh3il.calendar.ACTION_MIDNIGHT_TICK" />
+                <action android:name="com.soh3il.calendar.ACTION_NOTIFICATION_DISMISSED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <!-- Receivers for Exact Alarms and Device Reboots -->
+        <receiver
+            android:name="com.soh3il.core.scheduler.AlarmReceiver"
+            android:exported="false" />
 
         <!-- Material 3 Calendar Home Screen Widget -->
         <receiver

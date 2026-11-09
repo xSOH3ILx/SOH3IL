@@ -88,10 +88,12 @@ class MainActivity : ComponentActivity() {
                     }.getOrNull() ?: "1.0.0"
                 }
 
-                // Update persistent notification and Home Screen Widget whenever reminders change
+                // Update persistent notification, Home Screen Widget, and Live Launcher Icon
                 androidx.compose.runtime.LaunchedEffect(reminders) {
                     com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(context, reminders)
                     com.soh3il.calendar.widget.CalendarAppWidgetProvider.updateAllWidgets(context)
+                    com.soh3il.core.scheduler.LiveIconHelper.updateLiveIcon(context)
+                    com.soh3il.core.scheduler.MidnightScheduler.scheduleMidnightAlarm(context)
                 }
 
                 // Check if opened from notification "+ یادآور جدید" action
@@ -208,5 +210,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        com.soh3il.core.scheduler.LiveIconHelper.updateLiveIcon(this)
+        com.soh3il.core.scheduler.MidnightScheduler.scheduleMidnightAlarm(this)
+        com.soh3il.calendar.widget.CalendarAppWidgetProvider.updateAllWidgets(this)
     }
 }

@@ -255,6 +255,17 @@ object PersistentNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Delete intent: triggers automatic restoration if swiped away while enabled
+        val deleteIntent = Intent(context, MidnightReceiver::class.java).apply {
+            action = MidnightReceiver.ACTION_NOTIFICATION_DISMISSED
+        }
+        val deletePendingIntent = PendingIntent.getBroadcast(
+            context,
+            2002,
+            deleteIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(fullTitle)
             .setContentText(shortSummary)
@@ -271,6 +282,7 @@ object PersistentNotificationHelper {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setContentIntent(contentPendingIntent)
+            .setDeleteIntent(deletePendingIntent)
             .addAction(android.R.drawable.ic_input_add, "افزودن یادآور", addReminderPendingIntent)
 
         // تنظیم تضمینی آیکون روز در نوار وضعیت با شناسه منبع استاندارد اندروید
@@ -283,6 +295,19 @@ object PersistentNotificationHelper {
 
         val notification = builder.build()
         notificationManager.notify(NOTIFICATION_ID, notification)
+
+        // Ensure next midnight alarm is scheduled for exact date rollover
+        MidnightScheduler.scheduleMidnightAlarm(context)
+    }
+
+    fun updateNotification(context: Context) {
+        try {
+            val db = com.soh3il.core.database.Soh3ilDatabase.getInstance(context)
+            val activeReminders = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
+            updateNotification(context, activeReminders)
+        } catch (_: Exception) {
+            updateNotification(context, emptyList())
+        }
     }
 
     fun cancelNotification(context: Context) {

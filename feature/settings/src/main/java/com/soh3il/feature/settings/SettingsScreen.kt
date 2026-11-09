@@ -139,6 +139,7 @@ fun SettingsScreen(
             onLiveIconToggled = { newVal ->
                 isLiveIconEnabled = newVal
                 UserPreferences.setLiveIconEnabled(context, newVal)
+                com.soh3il.core.scheduler.LiveIconHelper.updateLiveIcon(context)
             }
         )
 
