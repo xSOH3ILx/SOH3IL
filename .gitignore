@@ -12,3 +12,8 @@ build/
 *.aab
 .kotlin
 
+# Keystores & Signing Credentials
+signing/*.jks
+signing/*.keystore
+signing/keystore.properties
+

@@ -73,4 +73,35 @@ class JalaliDateTest {
         assertEquals(7, inMehr.month)
         assertEquals(30, inMehr.day)
     }
+
+    @Test
+    fun testEsfandLeapYearBoundaries() {
+        // 1403: Leap (Esfand has 30 days)
+        assertTrue(JalaliDate.isLeap(1403))
+        assertEquals(30, JalaliDate.getDaysInMonth(1403, 12))
+        val esfand30_1403 = JalaliDate(1403, 12, 30)
+        assertEquals(1, esfand30_1403.plusDays(1).day)
+        assertEquals(1, esfand30_1403.plusDays(1).month)
+        assertEquals(1404, esfand30_1403.plusDays(1).year)
+
+        // 1404: Non-Leap (Esfand has 29 days)
+        assertFalse(JalaliDate.isLeap(1404))
+        assertEquals(29, JalaliDate.getDaysInMonth(1404, 12))
+        val esfand29_1404 = JalaliDate(1404, 12, 29)
+        assertEquals(1, esfand29_1404.plusDays(1).day)
+        assertEquals(1, esfand29_1404.plusDays(1).month)
+        assertEquals(1405, esfand29_1404.plusDays(1).year)
+
+        // 1407: Non-Leap (Esfand has 29 days)
+        assertFalse(JalaliDate.isLeap(1407))
+        assertEquals(29, JalaliDate.getDaysInMonth(1407, 12))
+
+        // 1408: Leap (Esfand has 30 days)
+        assertTrue(JalaliDate.isLeap(1408))
+        assertEquals(30, JalaliDate.getDaysInMonth(1408, 12))
+
+        // 1436: Leap (Official 5-year cycle)
+        assertTrue(JalaliDate.isLeap(1436))
+        assertEquals(30, JalaliDate.getDaysInMonth(1436, 12))
+    }
 }

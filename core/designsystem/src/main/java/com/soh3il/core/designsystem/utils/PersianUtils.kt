@@ -1,56 +1,71 @@
 package com.soh3il.core.designsystem.utils
 
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
+
 /**
- * Converts English digits (0-9) to Persian digits (۰-۹)
+ * Fast allocation-light converter from English digits (0-9) to Persian digits (۰-۹)
  */
 fun String.toPersianDigits(): String {
-    return this.map { ch ->
-        when (ch) {
-            '0' -> '۰'
-            '1' -> '۱'
-            '2' -> '۲'
-            '3' -> '۳'
-            '4' -> '۴'
-            '5' -> '۵'
-            '6' -> '۶'
-            '7' -> '۷'
-            '8' -> '۸'
-            '9' -> '۹'
-            else -> ch
+    val chars = CharArray(this.length)
+    for (i in indices) {
+        val ch = this[i]
+        chars[i] = if (ch in '0'..'9') {
+            (ch.code - '0'.code + 0x06F0).toChar()
+        } else {
+            ch
         }
-    }.joinToString("")
+    }
+    return String(chars)
 }
 
 fun Int.toPersianDigits(): String = this.toString().toPersianDigits()
 fun Long.toPersianDigits(): String = this.toString().toPersianDigits()
 
 /**
- * Converts Persian and Arabic-Indic digits to standard English digits (0-9)
+ * Fast, allocation-light utility that converts both Persian (\u06F0..\u06F9)
+ * and Arabic-Indic (\u0660..\u0669) numerals to standard ASCII (0..9).
  */
-fun String.toStandardDigits(): String {
-    return this.map { ch ->
-        when (ch) {
-            '۰', '٠' -> '0'
-            '۱', '١' -> '1'
-            '۲', '٢' -> '2'
-            '۳', '٣' -> '3'
-            '۴', '٤' -> '4'
-            '۵', '٥' -> '5'
-            '۶', '٦' -> '6'
-            '۷', '٧' -> '7'
-            '۸', '٨' -> '8'
-            '۹', '٩' -> '9'
+fun String.toEnglishDigits(): String {
+    val chars = CharArray(this.length)
+    for (i in indices) {
+        val ch = this[i]
+        chars[i] = when (ch) {
+            in '\u06F0'..'\u06F9' -> (ch.code - 0x06F0 + '0'.code).toChar()
+            in '\u0660'..'\u0669' -> (ch.code - 0x0660 + '0'.code).toChar()
             else -> ch
         }
-    }.joinToString("")
+    }
+    return String(chars)
 }
 
 /**
- * Parses String to Int supporting both Persian and Arabic numerals
+ * Alias for toEnglishDigits() to support backward compatibility.
  */
-fun String.toIntStandardOrNull(): Int? = this.toStandardDigits().trim().toIntOrNull()
+fun String.toStandardDigits(): String = this.toEnglishDigits()
 
 /**
- * Parses String to Long supporting both Persian and Arabic numerals
+ * Parses String to Int supporting both Persian and Arabic numerals.
  */
-fun String.toLongStandardOrNull(): Long? = this.toStandardDigits().trim().toLongOrNull()
+fun String.toIntStandardOrNull(): Int? = this.toEnglishDigits().trim().toIntOrNull()
+
+/**
+ * Parses String to Long supporting both Persian and Arabic numerals.
+ */
+fun String.toLongStandardOrNull(): Long? = this.toEnglishDigits().trim().toLongOrNull()
+
+/**
+ * VisualTransformation preserving 1-to-1 OffsetMapping.Identity to render numerals
+ * in Persian (۰-۹) on screen without breaking TextField cursor positioning or selection.
+ */
+class PersianDigitVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val converted = text.text.toPersianDigits()
+        return TransformedText(
+            text = AnnotatedString(converted),
+            offsetMapping = OffsetMapping.Identity
+        )
+    }
+}

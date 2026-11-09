@@ -436,4 +436,38 @@ class JalaliRecurrenceEngineTest {
         assertTrue(JalaliRecurrenceEngine.matchesDate(monthlyReminder, JalaliDate(1403, 7, 30)))
         assertFalse(JalaliRecurrenceEngine.matchesDate(monthlyReminder, JalaliDate(1403, 7, 29)))
     }
+
+    @Test
+    fun testYearlyRecurrenceLeapDayClamping() {
+        val leapReminder = Reminder(
+            id = 5,
+            title = "رویداد ویژه ۳۰ اسفند",
+            jalaliYear = 1403,
+            jalaliMonth = 12,
+            jalaliDay = 30,
+            hour = 12,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.YEARLY_JALALI,
+                interval = 1,
+                shortMonthPolicy = ShortMonthPolicy.SNAP_TO_LAST_DAY
+            )
+        )
+
+        // In 1403 (leap year): matches 1403/12/30
+        assertTrue(JalaliRecurrenceEngine.matchesDate(leapReminder, JalaliDate(1403, 12, 30)))
+
+        // In 1404 (non-leap year): Esfand has 29 days, snaps to 29
+        assertTrue(JalaliRecurrenceEngine.matchesDate(leapReminder, JalaliDate(1404, 12, 29)))
+        assertFalse(JalaliRecurrenceEngine.matchesDate(leapReminder, JalaliDate(1404, 12, 28)))
+
+        // Next trigger from 1403-12-30 13:00 should be 1404-12-29 12:00
+        val refEpoch = JalaliDate(1403, 12, 30).toEpochMillis(13, 0, 0)
+        val nextTrigger = JalaliRecurrenceEngine.calculateNextTrigger(leapReminder, refEpoch)
+        assertNotNull(nextTrigger)
+        val nextDate = JalaliDate.fromEpochMillis(nextTrigger!!)
+        assertEquals(1404, nextDate.year)
+        assertEquals(12, nextDate.month)
+        assertEquals(29, nextDate.day)
+    }
 }

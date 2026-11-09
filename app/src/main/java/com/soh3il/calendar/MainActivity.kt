@@ -169,11 +169,13 @@ class MainActivity : ComponentActivity() {
                                 onThemeSelected = {
                                     currentTheme = it
                                     UserPreferences.setTheme(context, it)
+                                    com.soh3il.calendar.widget.CalendarAppWidgetProvider.requestUpdate(this@MainActivity)
                                 },
                                 isAmoled = isAmoled,
                                 onAmoledToggled = {
                                     isAmoled = it
                                     UserPreferences.setAmoled(context, it)
+                                    com.soh3il.calendar.widget.CalendarAppWidgetProvider.requestUpdate(this@MainActivity)
                                 },
                                 currentVersionName = currentVersion,
                                 onPersistentNotificationToggled = { enabled ->
@@ -182,19 +184,22 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         com.soh3il.core.scheduler.PersistentNotificationHelper.cancelNotification(this@MainActivity)
                                     }
+                                    com.soh3il.calendar.widget.CalendarAppWidgetProvider.requestUpdate(this@MainActivity)
                                 },
                                 onExportIcsClick = {
                                     com.soh3il.core.scheduler.IcsHelper.shareIcsFile(this@MainActivity, reminders)
                                 },
                                 onImportIcsUri = { uri ->
                                     coroutineScope.launch(Dispatchers.IO) {
-                                        contentResolver.openInputStream(uri)?.use { stream ->
-                                            val imported = com.soh3il.core.scheduler.IcsHelper.importFromIcsStream(stream)
-                                            imported.forEach { rem ->
-                                                val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(rem))
-                                                val saved = rem.copy(id = id)
-                                                AlarmScheduler.scheduleReminder(this@MainActivity, saved)
-                                            }
+                                        val imported = com.soh3il.core.scheduler.IcsHelper.importFromIcsUri(this@MainActivity, uri)
+                                        imported.forEach { rem ->
+                                            val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(rem))
+                                            val saved = rem.copy(id = id)
+                                            AlarmScheduler.scheduleReminder(this@MainActivity, saved)
+                                        }
+                                        com.soh3il.calendar.widget.CalendarAppWidgetProvider.requestUpdate(this@MainActivity)
+                                        if (UserPreferences.isPersistentNotificationEnabled(this@MainActivity)) {
+                                            com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(this@MainActivity)
                                         }
                                     }
                                 }
@@ -217,19 +222,27 @@ class MainActivity : ComponentActivity() {
                                     coroutineScope.launch(Dispatchers.IO) {
                                         if (reminder.id != 0L) {
                                             db.reminderDao().updateReminder(ReminderEntity.fromDomain(reminder))
-                                            AlarmScheduler.cancelReminder(this@MainActivity, reminder.id)
+                                            AlarmScheduler.cancelReminder(this@MainActivity, reminder)
                                             AlarmScheduler.scheduleReminder(this@MainActivity, reminder)
                                         } else {
                                             val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(reminder))
                                             val savedReminder = reminder.copy(id = id)
                                             AlarmScheduler.scheduleReminder(this@MainActivity, savedReminder)
                                         }
+                                        com.soh3il.calendar.widget.CalendarAppWidgetProvider.requestUpdate(this@MainActivity)
+                                        if (com.soh3il.core.database.preferences.UserPreferences.isPersistentNotificationEnabled(this@MainActivity)) {
+                                            com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(this@MainActivity)
+                                        }
                                     }
                                 },
                                 onDeleteReminder = { reminder ->
                                     coroutineScope.launch(Dispatchers.IO) {
                                         db.reminderDao().deleteReminderById(reminder.id)
-                                        AlarmScheduler.cancelReminder(this@MainActivity, reminder.id)
+                                        AlarmScheduler.cancelReminder(this@MainActivity, reminder)
+                                        com.soh3il.calendar.widget.CalendarAppWidgetProvider.requestUpdate(this@MainActivity)
+                                        if (com.soh3il.core.database.preferences.UserPreferences.isPersistentNotificationEnabled(this@MainActivity)) {
+                                            com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(this@MainActivity)
+                                        }
                                     }
                                 }
                             )
@@ -244,6 +257,9 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         com.soh3il.core.scheduler.LiveIconHelper.updateLiveIcon(this)
         com.soh3il.core.scheduler.MidnightScheduler.scheduleMidnightAlarm(this)
-        com.soh3il.calendar.widget.CalendarAppWidgetProvider.updateAllWidgets(this)
+        com.soh3il.calendar.widget.CalendarAppWidgetProvider.requestUpdate(this)
+        if (com.soh3il.core.database.preferences.UserPreferences.isPersistentNotificationEnabled(this)) {
+            com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(this)
+        }
     }
 }

@@ -233,8 +233,10 @@ object PersistentNotificationHelper {
             "${rlm}${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort"
         }
 
-        // Content intent (opens MainActivity)
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: Intent()
+        // Content intent (explicitly opens MainActivity)
+        val launchIntent = Intent(context, Class.forName("com.soh3il.calendar.MainActivity")).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
         val contentPendingIntent = PendingIntent.getActivity(
             context,
             0,
@@ -242,8 +244,8 @@ object PersistentNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Action intent for "+ یادآور جدید"
-        val addReminderIntent = (context.packageManager.getLaunchIntentForPackage(context.packageName) ?: Intent()).apply {
+        // Action intent for "+ یادآور جدید" (explicitly opens MainActivity)
+        val addReminderIntent = Intent(context, Class.forName("com.soh3il.calendar.MainActivity")).apply {
             putExtra(EXTRA_OPEN_ADD_REMINDER, true)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -275,9 +277,10 @@ object PersistentNotificationHelper {
                     .setBigContentTitle(fullTitle)
             )
             .setOngoing(true)
+            .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setCategory(NotificationCompat.CATEGORY_EVENT)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setContentIntent(contentPendingIntent)

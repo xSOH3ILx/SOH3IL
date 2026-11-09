@@ -24,9 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.soh3il.core.designsystem.utils.PersianDigitVisualTransformation
+import com.soh3il.core.designsystem.utils.toEnglishDigits
 import com.soh3il.core.designsystem.utils.toIntStandardOrNull
 import com.soh3il.core.designsystem.utils.toPersianDigits
-import com.soh3il.core.designsystem.utils.toStandardDigits
 import com.soh3il.core.model.PreReminder
 import com.soh3il.core.model.PreReminderUnit
 
@@ -78,10 +79,12 @@ fun CustomPreReminderDialog(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { input ->
-                        if (input.toStandardDigits().all { it.isDigit() } && input.length <= 4) {
-                            amountText = input
+                        val standard = input.toEnglishDigits()
+                        if (standard.all { it.isDigit() } && standard.length <= 4) {
+                            amountText = standard
                         }
                     },
+                    visualTransformation = PersianDigitVisualTransformation(),
                     label = { Text("مقدار زمان") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),

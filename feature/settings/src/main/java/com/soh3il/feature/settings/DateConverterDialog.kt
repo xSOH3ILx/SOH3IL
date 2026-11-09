@@ -39,6 +39,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.designsystem.components.FarsiCard
+import com.soh3il.core.designsystem.utils.PersianDigitVisualTransformation
+import com.soh3il.core.designsystem.utils.toEnglishDigits
 import com.soh3il.core.designsystem.utils.toIntStandardOrNull
 import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.designsystem.utils.toStandardDigits
@@ -154,25 +156,28 @@ fun DateConverterDialog(
                     ) {
                         OutlinedTextField(
                             value = jDay,
-                            onValueChange = { if (it.length <= 2 && it.toStandardDigits().all { c -> c.isDigit() }) jDay = it },
+                            onValueChange = { val s = it.toEnglishDigits(); if (s.length <= 2 && s.all { c -> c.isDigit() }) jDay = s },
                             label = { Text("روز") },
                             modifier = Modifier.weight(1f),
+                            visualTransformation = PersianDigitVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true
                         )
                         OutlinedTextField(
                             value = jMonth,
-                            onValueChange = { if (it.length <= 2 && it.toStandardDigits().all { c -> c.isDigit() }) jMonth = it },
+                            onValueChange = { val s = it.toEnglishDigits(); if (s.length <= 2 && s.all { c -> c.isDigit() }) jMonth = s },
                             label = { Text("ماه") },
                             modifier = Modifier.weight(1f),
+                            visualTransformation = PersianDigitVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true
                         )
                         OutlinedTextField(
                             value = jYear,
-                            onValueChange = { if (it.length <= 4 && it.toStandardDigits().all { c -> c.isDigit() }) jYear = it },
+                            onValueChange = { val s = it.toEnglishDigits(); if (s.length <= 4 && s.all { c -> c.isDigit() }) jYear = s },
                             label = { Text("سال") },
                             modifier = Modifier.weight(1.5f),
+                            visualTransformation = PersianDigitVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true
                         )
@@ -191,7 +196,7 @@ fun DateConverterDialog(
                     ) {
                         OutlinedTextField(
                             value = gDay,
-                            onValueChange = { if (it.length <= 2 && it.toStandardDigits().all { c -> c.isDigit() }) gDay = it },
+                            onValueChange = { val s = it.toEnglishDigits(); if (s.length <= 2 && s.all { c -> c.isDigit() }) gDay = s },
                             label = { Text("Day") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -199,7 +204,7 @@ fun DateConverterDialog(
                         )
                         OutlinedTextField(
                             value = gMonth,
-                            onValueChange = { if (it.length <= 2 && it.toStandardDigits().all { c -> c.isDigit() }) gMonth = it },
+                            onValueChange = { val s = it.toEnglishDigits(); if (s.length <= 2 && s.all { c -> c.isDigit() }) gMonth = s },
                             label = { Text("Month") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -207,7 +212,7 @@ fun DateConverterDialog(
                         )
                         OutlinedTextField(
                             value = gYear,
-                            onValueChange = { if (it.length <= 4 && it.toStandardDigits().all { c -> c.isDigit() }) gYear = it },
+                            onValueChange = { val s = it.toEnglishDigits(); if (s.length <= 4 && s.all { c -> c.isDigit() }) gYear = s },
                             label = { Text("Year") },
                             modifier = Modifier.weight(1.5f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

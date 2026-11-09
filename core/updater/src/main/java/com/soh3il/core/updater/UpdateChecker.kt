@@ -3,6 +3,7 @@ package com.soh3il.core.updater
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -15,6 +16,7 @@ import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
 data class ApkAsset(
@@ -161,7 +163,7 @@ object UpdateChecker {
     }
 
     /**
-     * Downloads APK directly into the app's cache directory with progress reporting.
+     * Downloads APK directly into the app's cache directory with atomic .part file handling and progress reporting.
      */
     suspend fun downloadApk(
         context: Context,
@@ -169,6 +171,7 @@ object UpdateChecker {
         versionName: String,
         onProgress: (progress: Float, downloadedBytes: Long, totalBytes: Long) -> Unit
     ): Result<File> = withContext(Dispatchers.IO) {
+        var partFile: File? = null
         var apkFile: File? = null
         try {
             val request = Request.Builder()
@@ -187,19 +190,21 @@ object UpdateChecker {
             if (!updateDir.exists()) {
                 updateDir.mkdirs()
             }
-            // Clean up any stale APKs in cache before downloading
+            // Clean up any stale APKs, parts, or tmp files before downloading
             updateDir.listFiles()?.forEach { file ->
-                if (file.name.endsWith(".apk")) {
+                if (file.name.endsWith(".apk") || file.name.endsWith(".part") || file.name.endsWith(".tmp")) {
                     runCatching { file.delete() }
                 }
             }
 
+            val part = File(updateDir, "SOH3IL-v$versionName.apk.part")
             val targetApk = File(updateDir, "SOH3IL-v$versionName.apk")
+            partFile = part
             apkFile = targetApk
 
             var downloadedBytes = 0L
             body.byteStream().use { input ->
-                targetApk.outputStream().use { output ->
+                part.outputStream().use { output ->
                     val buffer = ByteArray(16 * 1024)
                     var bytesRead: Int
                     while (input.read(buffer).also { bytesRead = it } != -1) {
@@ -212,11 +217,97 @@ object UpdateChecker {
                 }
             }
 
+            // Verify content length integrity if provided
+            if (totalBytes > 0 && downloadedBytes != totalBytes) {
+                part.delete()
+                return@withContext Result.failure(IOException("حجم فایل بارگیری شده با سرور همخوانی ندارد ($downloadedBytes / $totalBytes)"))
+            }
+
+            // Atomic rename to .apk
+            if (!part.renameTo(targetApk)) {
+                part.copyTo(targetApk, overwrite = true)
+                part.delete()
+            }
+
+            // Package Integrity & Signature Verification
+            if (!verifyApkSignature(context, targetApk)) {
+                targetApk.delete()
+                return@withContext Result.failure(SecurityException("امضای دیجیتال بسته به‌روزرسانی با برنامه فعلی مطابقت ندارد"))
+            }
+
             Result.success(targetApk)
         } catch (e: Exception) {
+            partFile?.let { runCatching { it.delete() } }
             apkFile?.let { runCatching { it.delete() } }
             Result.failure(e)
         }
+    }
+
+    /**
+     * Verifies package name and cryptographic signature of downloaded APK against the currently running app.
+     */
+    fun verifyApkSignature(context: Context, apkFile: File): Boolean {
+        return try {
+            val pm = context.packageManager
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                PackageManager.GET_SIGNING_CERTIFICATES
+            } else {
+                @Suppress("DEPRECATION")
+                PackageManager.GET_SIGNATURES
+            }
+
+            val archiveInfo = pm.getPackageArchiveInfo(apkFile.absolutePath, flags) ?: return false
+            if (archiveInfo.packageName != context.packageName) {
+                return false
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val apkSigningInfo = archiveInfo.signingInfo ?: return false
+                val currentPackageInfo = pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                val currentSigningInfo = currentPackageInfo.signingInfo ?: return false
+
+                val apkCerts = if (apkSigningInfo.hasMultipleSigners()) {
+                    apkSigningInfo.apkContentsSigners
+                } else {
+                    apkSigningInfo.signingCertificateHistory
+                }
+
+                val currentCerts = if (currentSigningInfo.hasMultipleSigners()) {
+                    currentSigningInfo.apkContentsSigners
+                } else {
+                    currentSigningInfo.signingCertificateHistory
+                }
+
+                if (apkCerts == null || currentCerts == null) return false
+
+                val apkDigests = apkCerts.map { computeCertificateSha256(it.toByteArray()) }.toSet()
+                val currentDigests = currentCerts.map { computeCertificateSha256(it.toByteArray()) }.toSet()
+
+                apkDigests.intersect(currentDigests).isNotEmpty()
+            } else {
+                @Suppress("DEPRECATION")
+                val apkSignatures = archiveInfo.signatures
+                @Suppress("DEPRECATION")
+                val currentPackageInfo = pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNATURES)
+                @Suppress("DEPRECATION")
+                val currentSignatures = currentPackageInfo.signatures
+
+                if (apkSignatures.isNullOrEmpty() || currentSignatures.isNullOrEmpty()) return false
+
+                val apkDigests = apkSignatures.map { computeCertificateSha256(it.toByteArray()) }.toSet()
+                val currentDigests = currentSignatures.map { computeCertificateSha256(it.toByteArray()) }.toSet()
+
+                apkDigests.intersect(currentDigests).isNotEmpty()
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun computeCertificateSha256(certBytes: ByteArray): String {
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(certBytes)
+        return digest.joinToString("") { "%02x".format(it) }
     }
 
     /**
@@ -225,6 +316,12 @@ object UpdateChecker {
     fun launchApkInstall(context: Context, apkFile: File): Boolean {
         return try {
             if (!apkFile.exists()) return false
+
+            // Strict signature and package verification before handing over to PackageInstaller
+            if (!verifyApkSignature(context, apkFile)) {
+                runCatching { apkFile.delete() }
+                return false
+            }
 
             val uri = FileProvider.getUriForFile(
                 context,

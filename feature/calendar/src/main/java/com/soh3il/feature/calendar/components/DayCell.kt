@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -20,6 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,27 +39,49 @@ fun DayCell(
     isToday: Boolean,
     isHoliday: Boolean,
     hasReminder: Boolean,
+    monthName: String = "",
+    eventsCount: Int = 0,
     onClick: () -> Unit
 ) {
     val cellBackground = when {
-        isSelected && isHoliday -> FarsiHolidayRed // [LOCKED RULE] Selected holidays are RED instead of Blue
+        // [LOCKED RULE] Selected holidays are strictly FarsiHolidayRed (#EF4444), never blue
+        isSelected && isHoliday -> FarsiHolidayRed
         isSelected -> MaterialTheme.colorScheme.primary
         isToday -> MaterialTheme.colorScheme.surfaceVariant
+        isHoliday -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f)
         else -> Color.Transparent
+    }
+
+    val accessibilityDesc = buildString {
+        append(dayNumber.toPersianDigits())
+        if (monthName.isNotBlank()) append(" $monthName")
+        if (isToday) append("، امروز")
+        if (isHoliday) append("، تعطیل رسمی")
+        if (eventsCount > 0) {
+            append("، دارای ${eventsCount.toPersianDigits()} یادآور")
+        } else if (hasReminder) {
+            append("، دارای یادآور")
+        }
     }
 
     Box(
         modifier = Modifier
             .aspectRatio(1f)
+            .heightIn(min = 48.dp)
             .padding(3.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(cellBackground)
             .border(
-                width = if (isToday && !isSelected) 1.dp else 0.dp,
+                width = if (isToday && !isSelected) 1.5.dp else 0.dp,
                 color = if (isHoliday) FarsiHolidayRed else MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(12.dp)
             )
-            .clickable { onClick() },
+            .semantics(mergeDescendants = true) {
+                contentDescription = accessibilityDesc
+                role = Role.Button
+                selected = isSelected
+            }
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -63,9 +91,11 @@ fun DayCell(
             Text(
                 text = dayNumber.toPersianDigits(),
                 fontSize = 14.sp,
+                lineHeight = 16.sp,
+                maxLines = 1,
                 fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
                 color = when {
-                    isSelected -> Color.White
+                    isSelected -> Color.White // [LOCKED RULE] White text for selected cells
                     isHoliday -> FarsiHolidayRed
                     else -> MaterialTheme.colorScheme.onBackground
                 }

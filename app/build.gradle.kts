@@ -6,11 +6,29 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val envKeystoreFile = System.getenv("KEYSTORE_FILE")
+val envKeystorePassword = System.getenv("KEYSTORE_PASSWORD")
+val envKeyAlias = System.getenv("KEY_ALIAS")
+val envKeyPassword = System.getenv("KEY_PASSWORD")
+
 val keystorePropertiesFile = rootProject.file("signing/keystore.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
+
+val resolvedStoreFilePath = envKeystoreFile
+    ?: keystoreProperties.getProperty("storeFile")
+    ?: "signing/release.jks"
+val resolvedStorePassword = envKeystorePassword
+    ?: keystoreProperties.getProperty("storePassword")
+    ?: "soh3il_release_pass"
+val resolvedKeyAlias = envKeyAlias
+    ?: keystoreProperties.getProperty("keyAlias")
+    ?: "soh3il"
+val resolvedKeyPassword = envKeyPassword
+    ?: keystoreProperties.getProperty("keyPassword")
+    ?: "soh3il_release_pass"
 
 val versionPropertiesFile = rootProject.file("version.properties")
 val versionProperties = Properties()
@@ -49,12 +67,15 @@ android {
 
     signingConfigs {
         create("release") {
-            val keyStoreRelPath = keystoreProperties.getProperty("storeFile") ?: "signing/release.jks"
-            val file = rootProject.file(keyStoreRelPath)
-            storeFile = file
-            storePassword = keystoreProperties.getProperty("storePassword") ?: "soh3il_release_pass"
-            keyAlias = keystoreProperties.getProperty("keyAlias") ?: "soh3il"
-            keyPassword = keystoreProperties.getProperty("keyPassword") ?: "soh3il_release_pass"
+            val keyStoreFile = File(resolvedStoreFilePath).let {
+                if (it.isAbsolute) it else rootProject.file(resolvedStoreFilePath)
+            }
+            if (keyStoreFile.exists()) {
+                storeFile = keyStoreFile
+                storePassword = resolvedStorePassword
+                keyAlias = resolvedKeyAlias
+                keyPassword = resolvedKeyPassword
+            }
         }
     }
 

@@ -46,7 +46,8 @@ fun MonthGridView(
                 val isToday = cellDate == today
                 val dateStr = cellDate.format("YYYY-MM-DD")
                 val isHoliday = cellDate.dayOfWeek == 7 || occasions.any { it.jalaliDate == dateStr && it.isHoliday }
-                val hasReminder = reminders.any { it.matchesDate(cellDate) }
+                val eventsCount = reminders.count { it.matchesDate(cellDate) }
+                val hasReminder = eventsCount > 0
 
                 DayCell(
                     dayNumber = dayNumber,
@@ -54,6 +55,8 @@ fun MonthGridView(
                     isToday = isToday,
                     isHoliday = isHoliday,
                     hasReminder = hasReminder,
+                    monthName = cellDate.monthNameFa,
+                    eventsCount = eventsCount,
                     onClick = { onDateSelected(cellDate) }
                 )
             } else {

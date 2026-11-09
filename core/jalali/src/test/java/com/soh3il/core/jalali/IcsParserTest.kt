@@ -55,4 +55,51 @@ class IcsParserTest {
         assertEquals(RecurrenceType.MONTHLY_JALALI, imported[0].recurrence.type)
         assertEquals("پرداخت شهریه", imported[1].title)
     }
+
+    @Test
+    fun testLineUnfoldingAndEscapedCharacters() {
+        val icsWithFolding = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//FA
+            BEGIN:VEVENT
+            UID:test_fold_1@test.app
+            DTSTART:20250321T090000
+            SUMMARY:یک متن بسیار طولانی که بر اساس استاندارد RFC 5545 به چند
+              خط شکسته شده و تا خورده است
+            DESCRIPTION:خط اول توضیحات\nخط دوم توضیحات با کاراکترهای خاص\, و \; و اسلش \\
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val imported = IcsParser.importFromIcsStream(ByteArrayInputStream(icsWithFolding.toByteArray(Charsets.UTF_8)))
+        assertEquals(1, imported.size)
+        assertEquals(
+            "یک متن بسیار طولانی که بر اساس استاندارد RFC 5545 به چند خط شکسته شده و تا خورده است",
+            imported[0].title
+        )
+        assertEquals(
+            "خط اول توضیحات\nخط دوم توضیحات با کاراکترهای خاص, و ; و اسلش \\",
+            imported[0].description
+        )
+    }
+
+    @Test
+    fun testMaxEventsCap() {
+        val sb = StringBuilder()
+        sb.append("BEGIN:VCALENDAR\r\n")
+        for (i in 1..20) {
+            sb.append("BEGIN:VEVENT\r\n")
+            sb.append("DTSTART:20250321T090000\r\n")
+            sb.append("SUMMARY:رویداد $i\r\n")
+            sb.append("END:VEVENT\r\n")
+        }
+        sb.append("END:VCALENDAR\r\n")
+
+        val imported = IcsParser.importFromIcsStream(
+            ByteArrayInputStream(sb.toString().toByteArray(Charsets.UTF_8)),
+            maxEvents = 5
+        )
+        assertEquals(5, imported.size)
+    }
 }

@@ -76,27 +76,35 @@ object NotificationHelper {
         }
     }
 
+    fun cancelReminderNotification(context: Context, reminderId: Long, preOffsetMinutes: Int = 0) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationId = AlarmScheduler.computeAlarmRequestCode(reminderId, preOffsetMinutes)
+        notificationManager.cancel(notificationId)
+    }
+
     fun showReminderNotification(
         context: Context,
         reminderId: Long,
         title: String,
         description: String,
-        isPreReminder: Boolean = false
+        isPreReminder: Boolean = false,
+        preOffsetMinutes: Int = 0
     ) {
         val soundUri = getEffectiveSoundUri(context)
         createNotificationChannel(context, soundUri)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationId = AlarmScheduler.computeAlarmRequestCode(reminderId, preOffsetMinutes)
 
-        // Intent to launch the main app
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+        // Explicit Intent to launch MainActivity
+        val launchIntent = Intent(context, Class.forName("com.soh3il.calendar.MainActivity")).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_REMINDER_ID, reminderId)
         }
 
         val contentPendingIntent = PendingIntent.getActivity(
             context,
-            reminderId.toInt(),
+            notificationId,
             launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -105,10 +113,11 @@ object NotificationHelper {
         val doneIntent = Intent(context, AlarmReceiver::class.java).apply {
             action = ACTION_MARK_DONE
             putExtra(EXTRA_REMINDER_ID, reminderId)
+            putExtra(AlarmScheduler.EXTRA_PRE_OFFSET_MINUTES, preOffsetMinutes)
         }
         val donePendingIntent = PendingIntent.getBroadcast(
             context,
-            (reminderId * 10 + 1).toInt(),
+            AlarmScheduler.computeAlarmRequestCode(reminderId, preOffsetMinutes * 100 + 1),
             doneIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -117,10 +126,11 @@ object NotificationHelper {
         val snoozeIntent = Intent(context, AlarmReceiver::class.java).apply {
             action = ACTION_SNOOZE_15
             putExtra(EXTRA_REMINDER_ID, reminderId)
+            putExtra(AlarmScheduler.EXTRA_PRE_OFFSET_MINUTES, preOffsetMinutes)
         }
         val snoozePendingIntent = PendingIntent.getBroadcast(
             context,
-            (reminderId * 10 + 2).toInt(),
+            AlarmScheduler.computeAlarmRequestCode(reminderId, preOffsetMinutes * 100 + 2),
             snoozeIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -139,6 +149,6 @@ object NotificationHelper {
             .addAction(0, "انجام شد", donePendingIntent)
             .addAction(0, "تعویق ۱۵ دقیقه", snoozePendingIntent)
 
-        notificationManager.notify(reminderId.toInt(), builder.build())
+        notificationManager.notify(notificationId, builder.build())
     }
 }

@@ -17,7 +17,7 @@ import com.soh3il.core.database.entity.ReminderEntity
         OccasionEntity::class
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(DatabaseConverters::class)
 abstract class Soh3ilDatabase : RoomDatabase() {
@@ -37,7 +37,7 @@ abstract class Soh3ilDatabase : RoomDatabase() {
                     context.applicationContext,
                     Soh3ilDatabase::class.java,
                     DB_NAME
-                ).fallbackToDestructiveMigration().build()
+                ).fallbackToDestructiveMigrationOnDowngrade().build()
                 INSTANCE = instance
                 instance
             }

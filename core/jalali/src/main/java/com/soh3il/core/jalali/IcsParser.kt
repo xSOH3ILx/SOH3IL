@@ -8,6 +8,9 @@ import java.time.LocalDate
 
 object IcsParser {
 
+    const val MAX_EVENTS = 5_000
+    const val MAX_STREAM_BYTES = 10 * 1024 * 1024L // 10MB limit
+
     /**
      * صدور رویدادها در قالب فایل استاندارد جهانی iCalendar (RFC 5545)
      */
@@ -22,7 +25,6 @@ object IcsParser {
         val nowStr = "20261108T000000Z"
 
         reminders.forEach { rem ->
-            // Convert Jalali date of reminder to Gregorian
             val gDate = runCatching {
                 DateConverter.fromJalali(rem.jalaliYear, rem.jalaliMonth, rem.jalaliDay).gregorian
             }.getOrDefault(LocalDate.now())
@@ -42,7 +44,6 @@ object IcsParser {
                 sb.append("DESCRIPTION:${escapeIcs(rem.description)}\r\n")
             }
 
-            // Recurrence Rule
             when (rem.recurrence.type) {
                 RecurrenceType.DAILY -> sb.append("RRULE:FREQ=DAILY;INTERVAL=${rem.recurrence.interval}\r\n")
                 RecurrenceType.WEEKLY -> sb.append("RRULE:FREQ=WEEKLY;INTERVAL=${rem.recurrence.interval}\r\n")
@@ -59,11 +60,32 @@ object IcsParser {
     }
 
     /**
-     * خواندن رویدادها از فایل ICS ورودی
+     * خواندن ایمن رویدادها از فایل ICS ورودی مطابق با RFC 5545 (با پشتیبانی از Line Unfolding،
+     * مهار سرریز حافظه با سقف ۱۰ مگابایت و حداکثر ۵,۰۰۰ رویداد، و پاک‌سازی کاراکترهای کنترلی).
      */
-    fun importFromIcsStream(inputStream: InputStream): List<Reminder> {
+    fun importFromIcsStream(inputStream: InputStream, maxEvents: Int = MAX_EVENTS): List<Reminder> {
         val reminders = mutableListOf<Reminder>()
-        val lines = inputStream.bufferedReader(Charsets.UTF_8).readLines()
+        var bytesRead = 0L
+
+        val reader = inputStream.bufferedReader(Charsets.UTF_8)
+        val unfoldedLines = mutableListOf<String>()
+        var currentBuilder: StringBuilder? = null
+
+        for (rawLine in reader.lineSequence()) {
+            bytesRead += rawLine.length + 1
+            if (bytesRead > MAX_STREAM_BYTES) {
+                break
+            }
+
+            // RFC 5545 Section 3.1: Line unfolding
+            if (rawLine.startsWith(" ") || rawLine.startsWith("\t")) {
+                currentBuilder?.append(rawLine.substring(1))
+            } else {
+                currentBuilder?.let { unfoldedLines.add(it.toString()) }
+                currentBuilder = StringBuilder(rawLine)
+            }
+        }
+        currentBuilder?.let { unfoldedLines.add(it.toString()) }
 
         var inEvent = false
         var currentSummary = ""
@@ -71,27 +93,39 @@ object IcsParser {
         var currentDtStart = ""
         var currentRrule = ""
 
-        for (rawLine in lines) {
-            val line = rawLine.trim()
-            if (line == "BEGIN:VEVENT") {
+        for (line in unfoldedLines) {
+            val trimmed = line.trim()
+            if (trimmed.equals("BEGIN:VEVENT", ignoreCase = true)) {
                 inEvent = true
                 currentSummary = ""
                 currentDescription = ""
                 currentDtStart = ""
                 currentRrule = ""
-            } else if (line == "END:VEVENT") {
+            } else if (trimmed.equals("END:VEVENT", ignoreCase = true)) {
                 if (inEvent && currentSummary.isNotBlank() && currentDtStart.length >= 8) {
-                    val parsed = parseEventToReminder(currentSummary, currentDescription, currentDtStart, currentRrule)
-                    if (parsed != null) reminders.add(parsed)
+                    val sanitizedSummary = sanitizeText(currentSummary)
+                    val sanitizedDescription = sanitizeText(currentDescription)
+                    val parsed = parseEventToReminder(sanitizedSummary, sanitizedDescription, currentDtStart, currentRrule)
+                    if (parsed != null) {
+                        reminders.add(parsed)
+                        if (reminders.size >= maxEvents) {
+                            break
+                        }
+                    }
                 }
                 inEvent = false
             } else if (inEvent) {
                 when {
-                    line.startsWith("SUMMARY:") -> currentSummary = unescapeIcs(line.removePrefix("SUMMARY:"))
-                    line.startsWith("DESCRIPTION:") -> currentDescription = unescapeIcs(line.removePrefix("DESCRIPTION:"))
-                    line.startsWith("DTSTART:") -> currentDtStart = line.removePrefix("DTSTART:")
-                    line.startsWith("DTSTART;") -> currentDtStart = line.substringAfter(":")
-                    line.startsWith("RRULE:") -> currentRrule = line.removePrefix("RRULE:")
+                    trimmed.startsWith("SUMMARY:", ignoreCase = true) ->
+                        currentSummary = unescapeIcs(trimmed.substring(8))
+                    trimmed.startsWith("DESCRIPTION:", ignoreCase = true) ->
+                        currentDescription = unescapeIcs(trimmed.substring(12))
+                    trimmed.startsWith("DTSTART:", ignoreCase = true) ->
+                        currentDtStart = trimmed.substring(8)
+                    trimmed.startsWith("DTSTART;", ignoreCase = true) ->
+                        currentDtStart = trimmed.substringAfter(":")
+                    trimmed.startsWith("RRULE:", ignoreCase = true) ->
+                        currentRrule = trimmed.substring(6)
                 }
             }
         }
@@ -118,23 +152,21 @@ object IcsParser {
                 minute = timePart.substring(2, 4).toIntOrNull() ?: 0
             }
 
-            // Convert Gregorian date to Jalali
             val jResult = DateConverter.fromGregorian(year, month, day)
 
-            // Parse RRULE
             var recType = RecurrenceType.NONE
             var recInterval = 1
-            if (rrule.contains("FREQ=DAILY")) {
+            if (rrule.contains("FREQ=DAILY", ignoreCase = true)) {
                 recType = RecurrenceType.DAILY
-            } else if (rrule.contains("FREQ=WEEKLY")) {
+            } else if (rrule.contains("FREQ=WEEKLY", ignoreCase = true)) {
                 recType = RecurrenceType.WEEKLY
-            } else if (rrule.contains("FREQ=MONTHLY")) {
+            } else if (rrule.contains("FREQ=MONTHLY", ignoreCase = true)) {
                 recType = RecurrenceType.MONTHLY_JALALI
-            } else if (rrule.contains("FREQ=YEARLY")) {
+            } else if (rrule.contains("FREQ=YEARLY", ignoreCase = true)) {
                 recType = RecurrenceType.YEARLY_JALALI
             }
 
-            if (rrule.contains("INTERVAL=")) {
+            if (rrule.contains("INTERVAL=", ignoreCase = true)) {
                 val intervalStr = rrule.substringAfter("INTERVAL=").substringBefore(";")
                 recInterval = intervalStr.toIntOrNull() ?: 1
             }
@@ -156,17 +188,27 @@ object IcsParser {
         }.getOrNull()
     }
 
-    private fun escapeIcs(text: String): String {
-        return text.replace("\\", "\\\\")
-            .replace(",", "\\,")
+    fun escapeIcs(text: String): String {
+        return text
+            .replace("\\", "\\\\")
             .replace(";", "\\;")
+            .replace(",", "\\,")
+            .replace("\r\n", "\n")
+            .replace("\r", "\n")
             .replace("\n", "\\n")
     }
 
-    private fun unescapeIcs(text: String): String {
-        return text.replace("\\n", "\n")
+    fun unescapeIcs(text: String): String {
+        return text
+            .replace("\\n", "\n", ignoreCase = true)
             .replace("\\;", ";")
             .replace("\\,", ",")
             .replace("\\\\", "\\")
+    }
+
+    fun sanitizeText(text: String): String {
+        return text.filter { ch ->
+            ch == '\n' || ch == '\t' || (!ch.isISOControl() && ch != '\uFEFF')
+        }
     }
 }

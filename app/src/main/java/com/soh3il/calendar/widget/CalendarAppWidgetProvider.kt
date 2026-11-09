@@ -38,6 +38,21 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             "رمضان", "شوال", "ذی‌القعده", "ذی‌الحجه"
         )
 
+        fun requestUpdate(context: Context) {
+            try {
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val thisWidget = ComponentName(context, CalendarAppWidgetProvider::class.java)
+                val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
+                if (allWidgetIds != null && allWidgetIds.isNotEmpty()) {
+                    val updateIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
+                        component = thisWidget
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds)
+                    }
+                    context.sendBroadcast(updateIntent)
+                }
+            } catch (_: Exception) {}
+        }
+
         fun updateAllWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val thisWidget = ComponentName(context, CalendarAppWidgetProvider::class.java)
@@ -79,16 +94,16 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             }
 
             // 4. Click opens MainActivity
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-            if (launchIntent != null) {
-                val pendingIntent = PendingIntent.getActivity(
-                    context,
-                    appWidgetId,
-                    launchIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-                views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+            val launchIntent = Intent(context, Class.forName("com.soh3il.calendar.MainActivity")).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId,
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
             // Immediate initial update
             appWidgetManager.updateAppWidget(appWidgetId, views)
