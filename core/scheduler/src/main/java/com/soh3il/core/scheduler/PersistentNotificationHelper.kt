@@ -20,7 +20,11 @@ import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.jalali.DateConverter
 import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
+import com.soh3il.core.jalali.matchesDate
 import com.soh3il.core.model.Reminder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object PersistentNotificationHelper {
 
@@ -192,13 +196,8 @@ object PersistentNotificationHelper {
         val occasions = IranianHolidays.getOccasionsForMonth(today.year, today.month)
             .filter { it.jalaliDate == todayStr }
 
-        // Today's active reminders count
-        val todayRemindersCount = reminders.count {
-            it.jalaliYear == today.year &&
-                    it.jalaliMonth == today.month &&
-                    it.jalaliDay == today.day &&
-                    it.isEnabled
-        }
+        // Today's active reminders count (including recurring reminders)
+        val todayRemindersCount = reminders.count { it.matchesDate(today) }
 
         // تفکیک خطوط به شکل ساختاریافته، کاملاً راست‌چین و بدون فشردگی خطی
         val lineJalali = "$rlm☀️ تقویم خورشیدی: ${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
@@ -301,14 +300,14 @@ object PersistentNotificationHelper {
     }
 
     fun updateNotification(context: Context) {
-        try {
-            val db = com.soh3il.core.database.Soh3ilDatabase.getInstance(context)
-            kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val db = com.soh3il.core.database.Soh3ilDatabase.getInstance(context)
                 val activeReminders = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
                 updateNotification(context, activeReminders)
+            } catch (_: Exception) {
+                updateNotification(context, emptyList())
             }
-        } catch (_: Exception) {
-            updateNotification(context, emptyList())
         }
     }
 

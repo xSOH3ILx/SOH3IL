@@ -7,6 +7,7 @@ import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
 import com.soh3il.core.model.ShortMonthPolicy
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -393,5 +394,46 @@ class JalaliRecurrenceEngineTest {
         assertNotNull(t3)
         val d3 = JalaliDate.fromEpochMillis(t3!!)
         assertEquals(7, d3.day)
+    }
+
+    @Test
+    fun testMatchesDate() {
+        val dailyReminder = Reminder(
+            id = 1L,
+            title = "Daily Medicine",
+            jalaliYear = 1403,
+            jalaliMonth = 8,
+            jalaliDay = 1,
+            hour = 8,
+            minute = 0,
+            recurrence = RecurrenceRule(type = RecurrenceType.DAILY, interval = 2)
+        )
+        // Day 1: matches
+        assertTrue(JalaliRecurrenceEngine.matchesDate(dailyReminder, JalaliDate(1403, 8, 1)))
+        // Day 2: does not match (interval = 2)
+        assertFalse(JalaliRecurrenceEngine.matchesDate(dailyReminder, JalaliDate(1403, 8, 2)))
+        // Day 3: matches
+        assertTrue(JalaliRecurrenceEngine.matchesDate(dailyReminder, JalaliDate(1403, 8, 3)))
+
+        val monthlyReminder = Reminder(
+            id = 2L,
+            title = "Monthly Bill",
+            jalaliYear = 1403,
+            jalaliMonth = 1,
+            jalaliDay = 31,
+            hour = 10,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.MONTHLY_JALALI,
+                interval = 1,
+                dayOfMonth = 31,
+                shortMonthPolicy = ShortMonthPolicy.SNAP_TO_LAST_DAY
+            )
+        )
+        // Month 1 (Farvardin): day 31 matches
+        assertTrue(JalaliRecurrenceEngine.matchesDate(monthlyReminder, JalaliDate(1403, 1, 31)))
+        // Month 7 (Mehr has 30 days): day 30 snapped
+        assertTrue(JalaliRecurrenceEngine.matchesDate(monthlyReminder, JalaliDate(1403, 7, 30)))
+        assertFalse(JalaliRecurrenceEngine.matchesDate(monthlyReminder, JalaliDate(1403, 7, 29)))
     }
 }

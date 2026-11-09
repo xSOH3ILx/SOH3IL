@@ -27,7 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.soh3il.core.designsystem.utils.toIntStandardOrNull
 import com.soh3il.core.designsystem.utils.toPersianDigits
+import com.soh3il.core.designsystem.utils.toStandardDigits
 import com.soh3il.core.jalali.JalaliDate
 import com.soh3il.core.model.RecurrenceType
 
@@ -81,7 +83,7 @@ fun CustomRecurrenceDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val parsed = intervalInput.toIntOrNull()
+                    val parsed = intervalInput.toIntStandardOrNull()
                     if (parsed != null && parsed > 0) {
                         onConfirm(parsed)
                     }
@@ -144,7 +146,7 @@ fun CustomRecurrenceDialog(
                 OutlinedTextField(
                     value = intervalInput,
                     onValueChange = { input ->
-                        if (input.all { it.isDigit() } && input.length <= 3) {
+                        if (input.toStandardDigits().all { it.isDigit() } && input.length <= 3) {
                             intervalInput = input
                         }
                     },
@@ -157,7 +159,7 @@ fun CustomRecurrenceDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                val valInt = intervalInput.toIntOrNull() ?: 1
+                val valInt = intervalInput.toIntStandardOrNull() ?: 1
                 val previewDetail = when (recurrenceType) {
                     RecurrenceType.MONTHLY_JALALI -> "هر ${valInt.toPersianDigits()} ماه شمسی در تاریخ ${initialDate.day.toPersianDigits()} هر ماه"
                     RecurrenceType.DAILY -> "هر ${valInt.toPersianDigits()} روز یکبار"

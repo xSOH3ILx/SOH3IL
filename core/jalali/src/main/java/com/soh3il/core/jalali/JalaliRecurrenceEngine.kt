@@ -206,4 +206,68 @@ object JalaliRecurrenceEngine {
             if (trigger > 0) trigger else null
         }.sorted()
     }
+
+    /**
+     * Determines whether a reminder should occur on a given Jalali date,
+     * taking into account its recurrence rules, start date, interval, and solar calendar rules.
+     */
+    fun matchesDate(reminder: Reminder, date: JalaliDate): Boolean {
+        if (!reminder.isEnabled) return false
+
+        val baseDate = JalaliDate(reminder.jalaliYear, reminder.jalaliMonth, reminder.jalaliDay)
+        if (date.toJdn() < baseDate.toJdn()) return false
+
+        return when (reminder.recurrence.type) {
+            RecurrenceType.NONE -> {
+                date == baseDate
+            }
+
+            RecurrenceType.DAILY -> {
+                val interval = reminder.recurrence.interval.coerceAtLeast(1)
+                val daysDiff = date.toJdn() - baseDate.toJdn()
+                daysDiff >= 0 && (daysDiff % interval == 0L)
+            }
+
+            RecurrenceType.WEEKLY -> {
+                val interval = reminder.recurrence.interval.coerceAtLeast(1)
+                val targetDaysOfWeek = if (reminder.recurrence.daysOfWeek.isNotEmpty()) {
+                    reminder.recurrence.daysOfWeek
+                } else {
+                    setOf(baseDate.dayOfWeek)
+                }
+                if (date.dayOfWeek !in targetDaysOfWeek) return false
+
+                val daysDiff = date.toJdn() - baseDate.toJdn()
+                val weeksDiff = daysDiff / 7
+                weeksDiff >= 0 && (interval == 1 || weeksDiff % interval == 0L)
+            }
+
+            RecurrenceType.MONTHLY_JALALI -> {
+                val interval = reminder.recurrence.interval.coerceAtLeast(1)
+                val monthsDiff = (date.year - baseDate.year) * 12 + (date.month - baseDate.month)
+                if (monthsDiff < 0 || monthsDiff % interval != 0) return false
+
+                val targetDay = reminder.recurrence.dayOfMonth ?: baseDate.day
+                val maxDaysInMonth = JalaliDate.getDaysInMonth(date.year, date.month)
+                val effectiveDay = resolveDayForMonth(targetDay, maxDaysInMonth, reminder.recurrence.shortMonthPolicy)
+                effectiveDay != null && date.day == effectiveDay
+            }
+
+            RecurrenceType.YEARLY_JALALI -> {
+                val interval = reminder.recurrence.interval.coerceAtLeast(1)
+                val yearsDiff = date.year - baseDate.year
+                if (yearsDiff < 0 || yearsDiff % interval != 0) return false
+                if (date.month != baseDate.month) return false
+
+                val maxDaysInMonth = JalaliDate.getDaysInMonth(date.year, date.month)
+                val effectiveDay = resolveDayForMonth(baseDate.day, maxDaysInMonth, reminder.recurrence.shortMonthPolicy)
+                effectiveDay != null && date.day == effectiveDay
+            }
+        }
+    }
 }
+
+/**
+ * Extension helper to check if a reminder occurs on a specific Jalali date
+ */
+fun Reminder.matchesDate(date: JalaliDate): Boolean = JalaliRecurrenceEngine.matchesDate(this, date)

@@ -18,7 +18,11 @@ object AlarmScheduler {
      * Schedules the next exact alarm using setAlarmClock (or setExactAndAllowWhileIdle)
      */
     fun scheduleReminder(context: Context, reminder: Reminder) {
-        val nextTrigger = JalaliRecurrenceEngine.calculateNextTrigger(reminder) ?: return
+        val nextTrigger = if (reminder.nextTriggerEpochMillis != null && reminder.nextTriggerEpochMillis > System.currentTimeMillis()) {
+            reminder.nextTriggerEpochMillis
+        } else {
+            JalaliRecurrenceEngine.calculateNextTrigger(reminder)
+        } ?: return
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 

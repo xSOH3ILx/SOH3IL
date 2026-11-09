@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.soh3il.core.jalali.JalaliDate
+import com.soh3il.core.jalali.matchesDate
 import com.soh3il.core.model.Occasion
 import com.soh3il.core.model.Reminder
 
@@ -45,9 +46,7 @@ fun MonthGridView(
                 val isToday = cellDate == today
                 val dateStr = cellDate.format("YYYY-MM-DD")
                 val isHoliday = cellDate.dayOfWeek == 7 || occasions.any { it.jalaliDate == dateStr && it.isHoliday }
-                val hasReminder = reminders.any {
-                    it.jalaliYear == year && it.jalaliMonth == month && it.jalaliDay == dayNumber && it.isEnabled
-                }
+                val hasReminder = reminders.any { it.matchesDate(cellDate) }
 
                 DayCell(
                     dayNumber = dayNumber,

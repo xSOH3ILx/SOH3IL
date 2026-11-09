@@ -13,6 +13,7 @@ import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.jalali.DateConverter
 import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
+import com.soh3il.core.jalali.matchesDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -96,12 +97,8 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     val db = Soh3ilDatabase.getInstance(context)
-                    val activeReminders = db.reminderDao().getAllActiveRemindersSync()
-                    val count = activeReminders.count {
-                        it.jalaliYear == today.year &&
-                                it.jalaliMonth == today.month &&
-                                it.jalaliDay == today.day
-                    }
+                    val activeReminders = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
+                    val count = activeReminders.count { it.matchesDate(today) }
                     val reminderText = if (count > 0) {
                         "⏰ ${count.toPersianDigits()} یادآور فعال برای امروز"
                     } else {

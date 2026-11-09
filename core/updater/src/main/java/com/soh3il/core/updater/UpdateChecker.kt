@@ -169,6 +169,7 @@ object UpdateChecker {
         versionName: String,
         onProgress: (progress: Float, downloadedBytes: Long, totalBytes: Long) -> Unit
     ): Result<File> = withContext(Dispatchers.IO) {
+        var apkFile: File? = null
         try {
             val request = Request.Builder()
                 .url(downloadUrl)
@@ -186,14 +187,19 @@ object UpdateChecker {
             if (!updateDir.exists()) {
                 updateDir.mkdirs()
             }
-            val apkFile = File(updateDir, "SOH3IL-v$versionName.apk")
-            if (apkFile.exists()) {
-                apkFile.delete()
+            // Clean up any stale APKs in cache before downloading
+            updateDir.listFiles()?.forEach { file ->
+                if (file.name.endsWith(".apk")) {
+                    runCatching { file.delete() }
+                }
             }
+
+            val targetApk = File(updateDir, "SOH3IL-v$versionName.apk")
+            apkFile = targetApk
 
             var downloadedBytes = 0L
             body.byteStream().use { input ->
-                apkFile.outputStream().use { output ->
+                targetApk.outputStream().use { output ->
                     val buffer = ByteArray(16 * 1024)
                     var bytesRead: Int
                     while (input.read(buffer).also { bytesRead = it } != -1) {
@@ -206,8 +212,9 @@ object UpdateChecker {
                 }
             }
 
-            Result.success(apkFile)
+            Result.success(targetApk)
         } catch (e: Exception) {
+            apkFile?.let { runCatching { it.delete() } }
             Result.failure(e)
         }
     }

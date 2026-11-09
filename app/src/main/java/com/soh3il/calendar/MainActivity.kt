@@ -37,6 +37,7 @@ import com.soh3il.core.model.AppTheme
 import com.soh3il.core.scheduler.AlarmScheduler
 import com.soh3il.feature.calendar.CalendarScreen
 import com.soh3il.feature.reminder.AddReminderSheet
+import android.content.Intent
 import com.soh3il.feature.settings.SettingsScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,6 +46,16 @@ class MainActivity : ComponentActivity() {
 
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* handled */ }
+
+    private var openAddReminderTrigger by mutableStateOf(false)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)) {
+            openAddReminderTrigger = true
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +73,10 @@ class MainActivity : ComponentActivity() {
         }
 
         val db = Soh3ilDatabase.getInstance(this)
+
+        if (intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)) {
+            openAddReminderTrigger = true
+        }
 
         setContent {
             val context = LocalContext.current
@@ -97,10 +112,11 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Check if opened from notification "+ یادآور جدید" action
-                androidx.compose.runtime.LaunchedEffect(Unit) {
-                    if (intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)) {
+                androidx.compose.runtime.LaunchedEffect(openAddReminderTrigger) {
+                    if (openAddReminderTrigger) {
                         editingReminder = null
                         showAddSheet = true
+                        openAddReminderTrigger = false
                     }
                 }
 

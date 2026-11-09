@@ -39,7 +39,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.designsystem.components.FarsiCard
+import com.soh3il.core.designsystem.utils.toIntStandardOrNull
 import com.soh3il.core.designsystem.utils.toPersianDigits
+import com.soh3il.core.designsystem.utils.toStandardDigits
 import com.soh3il.core.jalali.DateConverter
 import com.soh3il.core.jalali.JalaliDate
 import java.time.LocalDate
@@ -64,16 +66,16 @@ fun DateConverterDialog(
     val conversionResult = remember(mode, jYear, jMonth, jDay, gYear, gMonth, gDay) {
         runCatching {
             if (mode == 0) {
-                val y = jYear.toIntOrNull() ?: todayJ.year
-                val m = (jMonth.toIntOrNull() ?: todayJ.month).coerceIn(1, 12)
+                val y = jYear.toIntStandardOrNull() ?: todayJ.year
+                val m = (jMonth.toIntStandardOrNull() ?: todayJ.month).coerceIn(1, 12)
                 val maxD = JalaliDate.getDaysInMonth(y, m)
-                val d = (jDay.toIntOrNull() ?: todayJ.day).coerceIn(1, maxD)
+                val d = (jDay.toIntStandardOrNull() ?: todayJ.day).coerceIn(1, maxD)
                 DateConverter.fromJalali(y, m, d)
             } else {
-                val y = gYear.toIntOrNull() ?: todayG.year
-                val m = (gMonth.toIntOrNull() ?: todayG.monthValue).coerceIn(1, 12)
+                val y = gYear.toIntStandardOrNull() ?: todayG.year
+                val m = (gMonth.toIntStandardOrNull() ?: todayG.monthValue).coerceIn(1, 12)
                 val maxD = runCatching { LocalDate.of(y, m, 1).lengthOfMonth() }.getOrDefault(31)
-                val d = (gDay.toIntOrNull() ?: todayG.dayOfMonth).coerceIn(1, maxD)
+                val d = (gDay.toIntStandardOrNull() ?: todayG.dayOfMonth).coerceIn(1, maxD)
                 DateConverter.fromGregorian(y, m, d)
             }
         }.getOrNull()
@@ -152,7 +154,7 @@ fun DateConverterDialog(
                     ) {
                         OutlinedTextField(
                             value = jDay,
-                            onValueChange = { if (it.length <= 2 && it.all { c -> c.isDigit() }) jDay = it },
+                            onValueChange = { if (it.length <= 2 && it.toStandardDigits().all { c -> c.isDigit() }) jDay = it },
                             label = { Text("روز") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -160,7 +162,7 @@ fun DateConverterDialog(
                         )
                         OutlinedTextField(
                             value = jMonth,
-                            onValueChange = { if (it.length <= 2 && it.all { c -> c.isDigit() }) jMonth = it },
+                            onValueChange = { if (it.length <= 2 && it.toStandardDigits().all { c -> c.isDigit() }) jMonth = it },
                             label = { Text("ماه") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -168,7 +170,7 @@ fun DateConverterDialog(
                         )
                         OutlinedTextField(
                             value = jYear,
-                            onValueChange = { if (it.length <= 4 && it.all { c -> c.isDigit() }) jYear = it },
+                            onValueChange = { if (it.length <= 4 && it.toStandardDigits().all { c -> c.isDigit() }) jYear = it },
                             label = { Text("سال") },
                             modifier = Modifier.weight(1.5f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -189,7 +191,7 @@ fun DateConverterDialog(
                     ) {
                         OutlinedTextField(
                             value = gDay,
-                            onValueChange = { if (it.length <= 2 && it.all { c -> c.isDigit() }) gDay = it },
+                            onValueChange = { if (it.length <= 2 && it.toStandardDigits().all { c -> c.isDigit() }) gDay = it },
                             label = { Text("Day") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -197,7 +199,7 @@ fun DateConverterDialog(
                         )
                         OutlinedTextField(
                             value = gMonth,
-                            onValueChange = { if (it.length <= 2 && it.all { c -> c.isDigit() }) gMonth = it },
+                            onValueChange = { if (it.length <= 2 && it.toStandardDigits().all { c -> c.isDigit() }) gMonth = it },
                             label = { Text("Month") },
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -205,7 +207,7 @@ fun DateConverterDialog(
                         )
                         OutlinedTextField(
                             value = gYear,
-                            onValueChange = { if (it.length <= 4 && it.all { c -> c.isDigit() }) gYear = it },
+                            onValueChange = { if (it.length <= 4 && it.toStandardDigits().all { c -> c.isDigit() }) gYear = it },
                             label = { Text("Year") },
                             modifier = Modifier.weight(1.5f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

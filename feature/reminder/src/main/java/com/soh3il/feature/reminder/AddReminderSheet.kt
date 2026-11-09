@@ -1,11 +1,8 @@
 package com.soh3il.feature.reminder
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,27 +15,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.automirrored.filled.Notes
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -52,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.soh3il.core.designsystem.components.FarsiCard
 import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.jalali.JalaliDate
 import com.soh3il.core.model.PreReminder
@@ -63,9 +50,13 @@ import com.soh3il.core.model.Reminder
 import com.soh3il.feature.reminder.components.CustomPreReminderDialog
 import com.soh3il.feature.reminder.components.CustomRecurrenceDialog
 import com.soh3il.feature.reminder.components.DeleteReminderDialog
+import com.soh3il.feature.reminder.components.ReminderFormFields
+import com.soh3il.feature.reminder.components.ReminderPreNotificationSection
+import com.soh3il.feature.reminder.components.ReminderRecurrenceSection
+import com.soh3il.feature.reminder.components.ReminderTimeCard
 import com.soh3il.feature.reminder.components.ReminderTimePickerDialog
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddReminderSheet(
     initialDate: JalaliDate = JalaliDate.now(),
@@ -150,310 +141,57 @@ fun AddReminderSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2. Title Input
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("عنوان یادآور") },
-                placeholder = { Text("مثال: تمدید بیمه ماشین، سالگرد ازدواج...") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(14.dp)
+            // 2. Title & Description Input Fields
+            ReminderFormFields(
+                title = title,
+                onTitleChange = { title = it },
+                description = description,
+                onDescriptionChange = { description = it }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // 3. Description Input
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("توضیحات یا یادداشت (اختیاری)") },
-                leadingIcon = {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Notes,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            // 3. Time Picker Card
+            ReminderTimeCard(
+                hour = selectedHour,
+                minute = selectedMinute,
+                onPickTimeClick = { showTimePickerDialog = true }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 4. Solar Recurrence Section
+            ReminderRecurrenceSection(
+                recurrenceType = recurrenceType,
+                recurrenceInterval = recurrenceInterval,
+                onRecurrenceTypeChange = { type ->
+                    recurrenceType = type
+                    if (type == RecurrenceType.NONE) recurrenceInterval = 1
                 },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                maxLines = 3,
-                shape = RoundedCornerShape(14.dp)
+                onCustomizeIntervalClick = { showCustomRecurrenceDialog = true }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 4. Time Picker Section
-            FarsiCard(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.AccessTime,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = "زمان یادآوری:",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            val timeStr = "%02d:%02d".format(selectedHour, selectedMinute).toPersianDigits()
-                            Text(
-                                text = "ساعت $timeStr",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
-                    OutlinedButton(
-                        onClick = { showTimePickerDialog = true },
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("تغییر ساعت", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 5. Recurrence Section
-            FarsiCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Repeat,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "تکرار بر اساس گاه‌شمار خورشیدی",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(start = 6.dp)
-                            )
-                        }
-
-                        if (recurrenceType != RecurrenceType.NONE) {
-                            val intervalText = if (recurrenceInterval == 1) "هر دوره" else "هر ${recurrenceInterval.toPersianDigits()} دوره"
-                            Text(
-                                text = intervalText,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val recurrenceOptions = listOf(
-                            RecurrenceType.NONE to "بدون تکرار (یکبار)",
-                            RecurrenceType.DAILY to "روزانه",
-                            RecurrenceType.WEEKLY to "هفتگی",
-                            RecurrenceType.MONTHLY_JALALI to "ماهانه شمسی",
-                            RecurrenceType.YEARLY_JALALI to "سالانه خورشیدی"
-                        )
-
-                        recurrenceOptions.forEach { (type, label) ->
-                            val isSelected = recurrenceType == type
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = {
-                                    recurrenceType = type
-                                    if (type == RecurrenceType.NONE) recurrenceInterval = 1
-                                },
-                                label = {
-                                    Text(
-                                        text = label,
-                                        fontSize = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                leadingIcon = if (isSelected) {
-                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                                } else null,
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-
-                        // Customize Recurrence Interval Button
-                        if (recurrenceType != RecurrenceType.NONE) {
-                            FilterChip(
-                                selected = recurrenceInterval > 1,
-                                onClick = { showCustomRecurrenceDialog = true },
-                                label = {
-                                    val label = if (recurrenceInterval > 1) "بازه: ${recurrenceInterval.toPersianDigits()}" else "تنظیم بازه..."
-                                    Text(label, fontSize = 12.sp, fontWeight = if (recurrenceInterval > 1) FontWeight.Bold else FontWeight.Normal)
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 6. Pre-Reminder Section
-            FarsiCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.NotificationsActive,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "پیش‌یادآور (اعلان قبل از زمان اصلی)",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(start = 6.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val preOptions = listOf(
-                            null to "بدون پیش‌یادآور",
-                            15 to "۱۵ دقیقه قبل",
-                            30 to "۳۰ دقیقه قبل",
-                            60 to "۱ ساعت قبل",
-                            1440 to "۱ روز قبل",
-                            2880 to "۲ روز قبل"
-                        )
-
-                        preOptions.forEach { (mins, label) ->
-                            val isSelected = !isCustomPreReminderSelected && selectedPreReminderMinutes == mins
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = {
-                                    isCustomPreReminderSelected = false
-                                    selectedPreReminderMinutes = mins
-                                },
-                                label = {
-                                    Text(
-                                        text = label,
-                                        fontSize = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                leadingIcon = if (isSelected) {
-                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                                } else null,
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-
-                        // Custom Pre-reminder Chip
-                        if (customPreReminder != null) {
-                            val unitName = when (customPreReminder!!.unit) {
-                                PreReminderUnit.DAYS -> "روز"
-                                PreReminderUnit.HOURS -> "ساعت"
-                                PreReminderUnit.MINUTES -> "دقیقه"
-                            }
-                            val customLabel = "${customPreReminder!!.value.toPersianDigits()} $unitName قبل (سفارشی)"
-
-                            FilterChip(
-                                selected = isCustomPreReminderSelected,
-                                onClick = {
-                                    isCustomPreReminderSelected = true
-                                    selectedPreReminderMinutes = null
-                                },
-                                label = {
-                                    Text(
-                                        text = customLabel,
-                                        fontSize = 12.sp,
-                                        fontWeight = if (isCustomPreReminderSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                leadingIcon = if (isCustomPreReminderSelected) {
-                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                                } else null,
-                                trailingIcon = {
-                                    Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = "ویرایش",
-                                        modifier = Modifier
-                                            .size(14.dp)
-                                            .clickable { showCustomPreReminderDialog = true }
-                                    )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-
-                        // Button to add / customize
-                        FilterChip(
-                            selected = false,
-                            onClick = { showCustomPreReminderDialog = true },
-                            label = { Text("+ زمان دلخواه...", fontSize = 12.sp) },
-                            leadingIcon = {
-                                Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
-                            },
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                    }
-                }
-            }
+            // 5. Pre-Reminder Section
+            ReminderPreNotificationSection(
+                selectedPreReminderMinutes = selectedPreReminderMinutes,
+                customPreReminder = customPreReminder,
+                isCustomPreReminderSelected = isCustomPreReminderSelected,
+                onPresetSelected = { mins ->
+                    isCustomPreReminderSelected = false
+                    selectedPreReminderMinutes = mins
+                },
+                onCustomChipSelected = {
+                    isCustomPreReminderSelected = true
+                    selectedPreReminderMinutes = null
+                },
+                onCustomizeClick = { showCustomPreReminderDialog = true }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 7. Save CTA Button (M3 Pill shape)
+            // 6. Save CTA Button (M3 Pill shape)
             Button(
                 onClick = {
                     if (title.isNotBlank()) {

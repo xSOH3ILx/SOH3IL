@@ -37,6 +37,7 @@ import com.soh3il.core.designsystem.theme.FarsiPrimary
 import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
+import com.soh3il.core.jalali.matchesDate
 import com.soh3il.core.model.Occasion
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
@@ -67,12 +68,7 @@ fun AgendaView(
             val monthOccasions = IranianHolidays.getOccasionsForMonth(date.year, date.month)
             val dayOccasions = monthOccasions.filter { it.jalaliDate == dateStr }
 
-            val dayReminders = reminders.filter { rem ->
-                rem.jalaliYear == date.year &&
-                        rem.jalaliMonth == date.month &&
-                        rem.jalaliDay == date.day &&
-                        rem.isEnabled
-            }
+            val dayReminders = reminders.filter { rem -> rem.matchesDate(date) }
 
             // Only show days that have reminders, occasions, or are today/tomorrow
             if (dayReminders.isNotEmpty() || dayOccasions.isNotEmpty() || i in 0..2) {

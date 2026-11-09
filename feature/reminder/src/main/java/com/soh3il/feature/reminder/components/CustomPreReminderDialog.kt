@@ -24,7 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.soh3il.core.designsystem.utils.toIntStandardOrNull
 import com.soh3il.core.designsystem.utils.toPersianDigits
+import com.soh3il.core.designsystem.utils.toStandardDigits
 import com.soh3il.core.model.PreReminder
 import com.soh3il.core.model.PreReminderUnit
 
@@ -42,7 +44,7 @@ fun CustomPreReminderDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val amount = amountText.toIntOrNull() ?: 1
+                    val amount = amountText.toIntStandardOrNull() ?: 1
                     if (amount > 0) {
                         onConfirm(PreReminder(amount, selectedUnit))
                     }
@@ -76,7 +78,7 @@ fun CustomPreReminderDialog(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { input ->
-                        if (input.all { it.isDigit() } && input.length <= 4) {
+                        if (input.toStandardDigits().all { it.isDigit() } && input.length <= 4) {
                             amountText = input
                         }
                     },

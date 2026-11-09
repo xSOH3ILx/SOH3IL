@@ -27,6 +27,25 @@ object LiveIconHelper {
             val targetDayComponent = ComponentName(context.packageName, "$ALIAS_NAME_PREFIX$currentDay")
             val flags = PackageManager.DONT_KILL_APP
 
+            // Quick check: If the desired state is already active, exit immediately to avoid launcher re-indexing
+            val targetState = pm.getComponentEnabledSetting(targetDayComponent)
+            val mainState = pm.getComponentEnabledSetting(mainComponent)
+
+            if (isEnabled) {
+                if (targetState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED &&
+                    mainState == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                ) {
+                    return
+                }
+            } else {
+                if ((mainState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED ||
+                     mainState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) &&
+                    targetState != PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                ) {
+                    return
+                }
+            }
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val actions = mutableListOf<PackageManager.ComponentEnabledSetting>()
 
