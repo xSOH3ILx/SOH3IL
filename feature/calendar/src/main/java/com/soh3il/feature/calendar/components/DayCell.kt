@@ -35,21 +35,22 @@ fun DayCell(
     hasReminder: Boolean,
     onClick: () -> Unit
 ) {
+    val cellBackground = when {
+        isSelected && isHoliday -> FarsiHolidayRed // [LOCKED RULE] Selected holidays are RED instead of Blue
+        isSelected -> MaterialTheme.colorScheme.primary
+        isToday -> MaterialTheme.colorScheme.surfaceVariant
+        else -> Color.Transparent
+    }
+
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .padding(3.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(
-                when {
-                    isSelected -> MaterialTheme.colorScheme.primary
-                    isToday -> MaterialTheme.colorScheme.surfaceVariant
-                    else -> Color.Transparent
-                }
-            )
+            .background(cellBackground)
             .border(
                 width = if (isToday && !isSelected) 1.dp else 0.dp,
-                color = MaterialTheme.colorScheme.primary,
+                color = if (isHoliday) FarsiHolidayRed else MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable { onClick() },
@@ -64,7 +65,7 @@ fun DayCell(
                 fontSize = 14.sp,
                 fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
                 color = when {
-                    isSelected -> MaterialTheme.colorScheme.onPrimary
+                    isSelected -> Color.White
                     isHoliday -> FarsiHolidayRed
                     else -> MaterialTheme.colorScheme.onBackground
                 }
@@ -76,7 +77,8 @@ fun DayCell(
                         .size(4.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isSelected) MaterialTheme.colorScheme.onPrimary
+                            if (isSelected) Color.White
+                            else if (isHoliday) FarsiHolidayRed
                             else MaterialTheme.colorScheme.primary
                         )
                 )

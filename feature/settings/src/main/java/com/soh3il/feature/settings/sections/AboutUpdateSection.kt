@@ -224,7 +224,7 @@ fun AboutUpdateSection(
                             if (!canInstall) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "⚠️ برای نصب نسخه جدید، مجوز «نصب برنامه‌های ناشناخته» نیاز است. لطفاً روی دکمه زیر زده و تیک اجازه را فعال کنید:",
+                                    text = "برای نصب نسخه جدید، مجوز «نصب برنامه‌های ناشناخته» نیاز است. لطفاً روی دکمه زیر زده و اجازه را فعال کنید:",
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.error,
                                     lineHeight = 18.sp

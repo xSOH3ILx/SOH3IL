@@ -199,21 +199,21 @@ object PersistentNotificationHelper {
         // Today's active reminders count (including recurring reminders)
         val todayRemindersCount = reminders.count { it.matchesDate(today) }
 
-        // تفکیک خطوط به شکل ساختاریافته، کاملاً راست‌چین و بدون فشردگی خطی
-        val lineJalali = "$rlm☀️ تقویم خورشیدی: ${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
-        val lineGregorian = "$rlm🌍 تقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth} ${conv.dayOfWeekNameEn} ${conv.gregorian.year})"
-        val lineHijri = if (hijriStr != null) "$rlm🌙 تقویم هجری قمری: $hijriStr" else null
+        // تفکیک خطوط به شکل ساختاریافته، کاملاً راست‌چین و بدون فشردگی خطی (بدون ایموجی طبق قوانین طراحی سهیل)
+        val lineJalali = "$rlmتقویم خورشیدی: ${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
+        val lineGregorian = "$rlmتقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth} ${conv.dayOfWeekNameEn} ${conv.gregorian.year})"
+        val lineHijri = if (hijriStr != null) "$rlmتقویم هجری قمری: $hijriStr" else null
 
         val lineOccasions = if (occasions.isNotEmpty()) {
-            "$rlm📌 رویدادها: " + occasions.joinToString("، ") { it.titleFa }
+            "$rlmرویدادها: " + occasions.joinToString("، ") { it.titleFa }
         } else {
-            "$rlm📌 رویدادها: بدون رویداد تعطیل"
+            "$rlmرویدادها: بدون رویداد تعطیل"
         }
 
         val lineReminders = if (todayRemindersCount > 0) {
-            "$rlm⏰ یادآورها: ${todayRemindersCount.toPersianDigits()} یادآور برای امروز"
+            "$rlmیادآورها: ${todayRemindersCount.toPersianDigits()} یادآور برای امروز"
         } else {
-            "$rlm⏰ یادآورها: بدون یادآور برای امروز"
+            "$rlmیادآورها: بدون یادآور برای امروز"
         }
 
         val bigTextFormatted = listOfNotNull(

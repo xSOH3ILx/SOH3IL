@@ -79,7 +79,8 @@ fun CalendarScreen(
                 Icon(Icons.Default.Add, contentDescription = "افزودن یادآور")
             }
         },
-        floatingActionButtonPosition = FabPosition.End
+        // [LOCKED RULE] DO NOT CHANGE: FAB position strictly locked to FabPosition.Start (Right side in RTL) per user requirement
+        floatingActionButtonPosition = FabPosition.Start
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -87,7 +88,7 @@ fun CalendarScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // View Mode Selector (Material 3 SingleChoiceSegmentedButtonRow with centered text)
+            // View Mode Selector (Material 3 SingleChoiceSegmentedButtonRow with centered text, without checkmark)
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -96,7 +97,8 @@ fun CalendarScreen(
                 SegmentedButton(
                     selected = viewMode == 0,
                     onClick = { viewMode = 0 },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    icon = {} // [LOCKED RULE] Checkmark removed per user requirement
                 ) {
                     Text(
                         text = "تقویم ماهانه",
@@ -109,7 +111,8 @@ fun CalendarScreen(
                 SegmentedButton(
                     selected = viewMode == 1,
                     onClick = { viewMode = 1 },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    icon = {} // [LOCKED RULE] Checkmark removed per user requirement
                 ) {
                     Text(
                         text = "دستور کار (رویدادها)",
@@ -145,11 +148,13 @@ fun CalendarScreen(
                                 onDragStart = { totalDragDistance = 0f },
                                 onDragEnd = {
                                     val threshold = 40.dp.toPx()
-                                    // In RTL: Dragging Right (>0) goes to past (Previous Month), Dragging Left (<0) goes to future (Next Month)
+                                    // [LOCKED RULE] DO NOT CHANGE: Swipe gesture mapping strictly locked per user requirement:
+                                    // Positive drag (>0) -> plusMonths(1)
+                                    // Negative drag (<0) -> plusMonths(-1)
                                     if (totalDragDistance > threshold) {
-                                        displayedDate = displayedDate.plusMonths(-1)
-                                    } else if (totalDragDistance < -threshold) {
                                         displayedDate = displayedDate.plusMonths(1)
+                                    } else if (totalDragDistance < -threshold) {
+                                        displayedDate = displayedDate.plusMonths(-1)
                                     }
                                 },
                                 onHorizontalDrag = { _, dragAmount ->

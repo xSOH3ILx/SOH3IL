@@ -73,9 +73,9 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
 
             if (occasions.isNotEmpty()) {
                 val occTitle = occasions.joinToString("، ") { it.titleFa }
-                views.setTextViewText(R.id.widget_occasion, "📌 $occTitle")
+                views.setTextViewText(R.id.widget_occasion, occTitle)
             } else {
-                views.setTextViewText(R.id.widget_occasion, "📌 بدون مناسبت تعطیل")
+                views.setTextViewText(R.id.widget_occasion, "بدون مناسبت تعطیل")
             }
 
             // 4. Click opens MainActivity
@@ -100,9 +100,9 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
                     val activeReminders = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
                     val count = activeReminders.count { it.matchesDate(today) }
                     val reminderText = if (count > 0) {
-                        "⏰ ${count.toPersianDigits()} یادآور فعال برای امروز"
+                        "${count.toPersianDigits()} یادآور فعال برای امروز"
                     } else {
-                        "⏰ بدون یادآور برای امروز"
+                        "بدون یادآور برای امروز"
                     }
                     views.setTextViewText(R.id.widget_reminders_summary, reminderText)
                     appWidgetManager.updateAppWidget(appWidgetId, views)

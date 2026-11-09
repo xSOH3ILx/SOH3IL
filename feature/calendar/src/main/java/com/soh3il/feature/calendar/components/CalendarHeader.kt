@@ -42,7 +42,8 @@ fun CalendarHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Right side of screen (Start in RTL): Previous Month button (arrow points right into past)
+        // [LOCKED RULE] DO NOT CHANGE: Button directions strictly locked per user requirement:
+        // Right side of screen (Start in RTL): Previous Month button (ChevronRight)
         IconButton(onClick = onPreviousMonth) {
             Icon(
                 imageVector = Icons.Default.ChevronRight,
@@ -84,7 +85,8 @@ fun CalendarHeader(
             )
         }
 
-        // Left side of screen (End in RTL): Next Month button (arrow points left into future)
+        // [LOCKED RULE] DO NOT CHANGE: Button directions strictly locked per user requirement:
+        // Left side of screen (End in RTL): Next Month button (ChevronLeft)
         IconButton(onClick = onNextMonth) {
             Icon(
                 imageVector = Icons.Default.ChevronLeft,
