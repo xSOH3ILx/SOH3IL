@@ -1,5 +1,6 @@
 package com.soh3il.core.designsystem.theme
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,10 +10,13 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.view.WindowCompat
 import com.soh3il.core.model.AppTheme
 
 private val DarkColorScheme = darkColorScheme(
@@ -34,12 +38,17 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = Color(0xFFF4F4F5),
     surfaceVariant = FarsiDarkSurfaceVariant,
     onSurfaceVariant = Color(0xFFA1A1AA),
+    surfaceContainerLowest = DarkSurfaceContainerLowest,
+    surfaceContainerLow = DarkSurfaceContainerLow,
+    surfaceContainer = DarkSurfaceContainer,
+    surfaceContainerHigh = DarkSurfaceContainerHigh,
+    surfaceContainerHighest = DarkSurfaceContainerHighest,
     outline = FarsiDarkBorder,
     outlineVariant = Color(0xFF3F3F46),
-    error = Color(0xFFF87171),
+    error = DarkHolidayText,
     onError = Color(0xFF450A0A),
-    errorContainer = Color(0xFF7F1D1D),
-    onErrorContainer = Color(0xFFFECACA)
+    errorContainer = DarkHolidayContainer,
+    onErrorContainer = DarkHolidayText
 )
 
 private val AmoledColorScheme = darkColorScheme(
@@ -61,12 +70,17 @@ private val AmoledColorScheme = darkColorScheme(
     onSurface = Color.White,
     surfaceVariant = Color(0xFF18181B),
     onSurfaceVariant = Color(0xFFA1A1AA),
+    surfaceContainerLowest = AmoledSurfaceContainerLowest,
+    surfaceContainerLow = AmoledSurfaceContainerLow,
+    surfaceContainer = AmoledSurfaceContainer,
+    surfaceContainerHigh = AmoledSurfaceContainerHigh,
+    surfaceContainerHighest = AmoledSurfaceContainerHighest,
     outline = Color(0xFF27272A),
     outlineVariant = Color(0xFF3F3F46),
-    error = Color(0xFFF87171),
+    error = DarkHolidayText,
     onError = Color.Black,
-    errorContainer = Color(0xFF7F1D1D),
-    onErrorContainer = Color(0xFFFECACA)
+    errorContainer = DarkHolidayContainer,
+    onErrorContainer = DarkHolidayText
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -88,12 +102,17 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFF09090B),
     surfaceVariant = FarsiLightSurfaceVariant,
     onSurfaceVariant = Color(0xFF64748B),
+    surfaceContainerLowest = LightSurfaceContainerLowest,
+    surfaceContainerLow = LightSurfaceContainerLow,
+    surfaceContainer = LightSurfaceContainer,
+    surfaceContainerHigh = LightSurfaceContainerHigh,
+    surfaceContainerHighest = LightSurfaceContainerHighest,
     outline = FarsiLightBorder,
     outlineVariant = Color(0xFFCBD5E1),
-    error = Color(0xFFDC2626),
+    error = LightHolidayText,
     onError = Color.White,
-    errorContainer = Color(0xFFFEE2E2),
-    onErrorContainer = Color(0xFF991B1B)
+    errorContainer = LightHolidayContainer,
+    onErrorContainer = LightHolidayText
 )
 
 @Composable
@@ -121,12 +140,28 @@ fun Soh3ilTheme(
         else -> LightColorScheme
     }
 
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window
+            if (window != null) {
+                WindowCompat.getInsetsController(window, view).apply {
+                    isAppearanceLightStatusBars = !isDark
+                    isAppearanceLightNavigationBars = !isDark
+                }
+            }
+        }
+    }
+
     // Force RTL layout direction for true Persian experience
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = Soh3ilTypography,
-            content = content
-        )
+            typography = Soh3ilTypography
+        ) {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                content()
+            }
+        }
     }
 }

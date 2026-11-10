@@ -7,7 +7,7 @@ package com.soh3il.core.jalali.engine
  */
 object LookupTableConverter {
     private const val startingYear = 1304
-    private val yearsStartingJdn = LongArray(1498 - startingYear)
+    private val yearsStartingJdn = LongArray(1500 - startingYear)
 
     private val daysToMonth =
         intArrayOf(0, 31, 62, 93, 124, 155, 186, 216, 246, 276, 306, 336, 366)

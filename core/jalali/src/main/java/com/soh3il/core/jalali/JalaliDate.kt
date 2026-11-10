@@ -17,6 +17,7 @@ data class JalaliDate(
 ) : Comparable<JalaliDate> {
 
     init {
+        require(year in 1..9999) { "سال شمسی باید بین ۱ تا ۹۹۹۹ باشد (مقدار دریافتی: $year)" }
         require(month in 1..12) { "ماه باید بین ۱ تا ۱۲ باشد (مقدار دریافتی: $month)" }
         val maxDays = getDaysInMonth(year, month)
         require(day in 1..maxDays) { "روز ماه $month در سال $year باید بین ۱ تا $maxDays باشد (مقدار دریافتی: $day)" }
@@ -138,11 +139,15 @@ data class JalaliDate(
         val TEHRAN_ZONE: ZoneId = ZoneId.of("Asia/Tehran")
 
         fun isLeap(year: Int): Boolean {
-            if (year in 1304..1497) {
+            if (year in 1304..1498) {
                 return com.soh3il.core.jalali.engine.LookupTableConverter.isLeap(year)
             }
             return persianLeapYear(year, 52.5)
         }
+
+        fun isLeapYear(year: Int): Boolean = isLeap(year)
+
+        fun daysInMonth(year: Int, month: Int): Int = getDaysInMonth(year, month)
 
         fun getDaysInMonth(year: Int, month: Int): Int = when (month) {
             in 1..6 -> 31
@@ -154,7 +159,11 @@ data class JalaliDate(
         fun fromJdn(jdn: Long): JalaliDate {
             val (y, m, d) = com.soh3il.core.jalali.engine.LookupTableConverter.fromJdn(jdn)
                 ?: persianFromJdn(jdn)
-            return JalaliDate(y, m, d)
+            val safeYear = y.coerceIn(1, 9999)
+            val safeMonth = m.coerceIn(1, 12)
+            val maxDays = getDaysInMonth(safeYear, safeMonth)
+            val safeDay = d.coerceIn(1, maxDays)
+            return JalaliDate(safeYear, safeMonth, safeDay)
         }
 
         fun fromEpochMillis(epochMillis: Long, zoneId: ZoneId = TEHRAN_ZONE): JalaliDate {

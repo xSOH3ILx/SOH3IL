@@ -88,34 +88,11 @@ object JalaliRecurrenceEngine {
             }
 
             RecurrenceType.YEARLY_JALALI -> {
-                val interval = reminder.recurrence.interval.coerceAtLeast(1)
-                val targetMonth = reminder.jalaliMonth
-                val targetDay = reminder.jalaliDay
-                var targetYear = todayJalali.year
-
-                val yearDiff = targetYear - baseDate.year
-                if (yearDiff >= 0 && yearDiff % interval == 0) {
-                    val maxDaysThisYear = JalaliDate.getDaysInMonth(targetYear, targetMonth)
-                    val dayThisYear = targetDay.coerceAtMost(maxDaysThisYear)
-                    val thisYearEpoch = JalaliDate(targetYear, targetMonth, dayThisYear)
-                        .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
-                    if (thisYearEpoch > referenceEpochMillis) {
-                        return thisYearEpoch
-                    }
-                }
-
-                val step = if (yearDiff >= 0) {
-                    val rem = yearDiff % interval
-                    if (rem == 0) interval else interval - rem
-                } else {
-                    -yearDiff
-                }
-
-                targetYear += step
-                val maxDaysNextYear = JalaliDate.getDaysInMonth(targetYear, targetMonth)
-                val dayNextYear = targetDay.coerceAtMost(maxDaysNextYear)
-                JalaliDate(targetYear, targetMonth, dayNextYear)
-                    .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                calculateNextYearlyJalaliTrigger(
+                    reminder = reminder,
+                    referenceEpochMillis = referenceEpochMillis,
+                    zoneId = zoneId
+                )
             }
         }
     }
@@ -164,7 +141,7 @@ object JalaliRecurrenceEngine {
             val nextTotalMonths = currentTotalMonths + step
             val nextYear = nextTotalMonths / 12
             val nextMonth = (nextTotalMonths % 12) + 1
-            val daysInNextMonth = JalaliDate.getDaysInMonth(nextYear, nextMonth)
+            val daysInNextMonth = JalaliDate.daysInMonth(nextYear, nextMonth)
 
             val resolvedDay = resolveDayForMonth(targetDayOfMonth, daysInNextMonth, policy)
             if (resolvedDay != null) {
@@ -175,6 +152,53 @@ object JalaliRecurrenceEngine {
                 }
             }
             step += interval
+        }
+    }
+
+    private fun calculateNextYearlyJalaliTrigger(
+        reminder: Reminder,
+        referenceEpochMillis: Long,
+        zoneId: ZoneId
+    ): Long {
+        val todayJalali = JalaliDate.fromEpochMillis(referenceEpochMillis, zoneId)
+        val baseDate = JalaliDate(reminder.jalaliYear, reminder.jalaliMonth, reminder.jalaliDay)
+        val interval = reminder.recurrence.interval.coerceAtLeast(1)
+        val targetMonth = reminder.jalaliMonth
+        val anchorDay = reminder.recurrence.dayOfMonth ?: reminder.jalaliDay
+        val targetYear = todayJalali.year
+
+        val yearDiff = targetYear - baseDate.year
+        if (yearDiff >= 0 && yearDiff % interval == 0) {
+            val maxDaysThisYear = JalaliDate.daysInMonth(targetYear, targetMonth)
+            val effectiveDay = resolveDayForMonth(anchorDay, maxDaysThisYear, reminder.recurrence.shortMonthPolicy)
+            if (effectiveDay != null) {
+                val thisYearEpoch = JalaliDate(targetYear, targetMonth, effectiveDay)
+                    .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                if (thisYearEpoch > referenceEpochMillis) {
+                    return thisYearEpoch
+                }
+            }
+        }
+
+        val step = if (yearDiff >= 0) {
+            val rem = yearDiff % interval
+            if (rem == 0) interval else interval - rem
+        } else {
+            -yearDiff
+        }
+
+        var nextYear = targetYear + step
+        while (true) {
+            val maxDaysNextYear = JalaliDate.daysInMonth(nextYear, targetMonth)
+            val effectiveDay = resolveDayForMonth(anchorDay, maxDaysNextYear, reminder.recurrence.shortMonthPolicy)
+            if (effectiveDay != null) {
+                val nextEpoch = JalaliDate(nextYear, targetMonth, effectiveDay)
+                    .toEpochMillis(reminder.hour, reminder.minute, 0, zoneId)
+                if (nextEpoch > referenceEpochMillis) {
+                    return nextEpoch
+                }
+            }
+            nextYear += interval
         }
     }
 
@@ -247,9 +271,9 @@ object JalaliRecurrenceEngine {
                 val monthsDiff = (date.year - baseDate.year) * 12 + (date.month - baseDate.month)
                 if (monthsDiff < 0 || monthsDiff % interval != 0) return false
 
-                val targetDay = reminder.recurrence.dayOfMonth ?: baseDate.day
-                val maxDaysInMonth = JalaliDate.getDaysInMonth(date.year, date.month)
-                val effectiveDay = resolveDayForMonth(targetDay, maxDaysInMonth, reminder.recurrence.shortMonthPolicy)
+                val anchorDay = reminder.recurrence.dayOfMonth ?: baseDate.day
+                val maxDaysInMonth = JalaliDate.daysInMonth(date.year, date.month)
+                val effectiveDay = resolveDayForMonth(anchorDay, maxDaysInMonth, reminder.recurrence.shortMonthPolicy)
                 effectiveDay != null && date.day == effectiveDay
             }
 
@@ -259,8 +283,9 @@ object JalaliRecurrenceEngine {
                 if (yearsDiff < 0 || yearsDiff % interval != 0) return false
                 if (date.month != baseDate.month) return false
 
-                val maxDaysInMonth = JalaliDate.getDaysInMonth(date.year, date.month)
-                val effectiveDay = resolveDayForMonth(baseDate.day, maxDaysInMonth, reminder.recurrence.shortMonthPolicy)
+                val anchorDay = reminder.recurrence.dayOfMonth ?: baseDate.day
+                val maxDaysInMonth = JalaliDate.daysInMonth(date.year, date.month)
+                val effectiveDay = resolveDayForMonth(anchorDay, maxDaysInMonth, reminder.recurrence.shortMonthPolicy)
                 effectiveDay != null && date.day == effectiveDay
             }
         }

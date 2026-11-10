@@ -1,15 +1,18 @@
 package com.soh3il.feature.calendar
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,8 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.designsystem.components.FarsiBadge
 import com.soh3il.core.designsystem.components.FarsiCard
-import com.soh3il.core.designsystem.theme.FarsiHolidayRed
-import com.soh3il.core.designsystem.theme.FarsiPrimary
 import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
@@ -107,10 +108,15 @@ fun AgendaView(
             }
         }
     } else {
+        val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 8.dp,
+                bottom = 88.dp + navBarBottom
+            )
         ) {
             items(agendaItems) { item ->
                 AgendaDaySection(
@@ -153,7 +159,7 @@ fun AgendaDaySection(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(if (item.isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                            .background(if (item.isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLow)
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
@@ -170,7 +176,7 @@ fun AgendaDaySection(
                     text = "${date.dayOfWeekNameFa}، ${date.day.toPersianDigits()} ${date.monthNameFa}",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isDayOff) FarsiHolidayRed else MaterialTheme.colorScheme.onSurface
+                    color = if (isDayOff) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -210,7 +216,7 @@ fun AgendaDaySection(
                             modifier = Modifier
                                 .size(10.dp)
                                 .clip(CircleShape)
-                                .background(FarsiPrimary)
+                                .background(MaterialTheme.colorScheme.primary)
                         )
                         Column(
                             modifier = Modifier
@@ -240,7 +246,7 @@ fun AgendaDaySection(
                         }
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "ویرایش",
+                            contentDescription = "ویرایش یادآور",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             modifier = Modifier.size(18.dp)
                         )

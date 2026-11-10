@@ -1,6 +1,7 @@
 package com.soh3il.core.scheduler
 
 import android.app.AlarmManager
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -25,10 +26,21 @@ object AlarmScheduler {
     }
 
     /**
+     * Alias matching AGENTS.md Rule 3.4
+     */
+    fun alarmRequestCode(reminderId: Long, preOffsetMinutes: Int): Int =
+        computeAlarmRequestCode(reminderId, preOffsetMinutes)
+
+    /**
      * Schedules the next exact alarm using setAlarmClock (or setExactAndAllowWhileIdle fallback).
      */
     fun scheduleReminder(context: Context, reminder: Reminder) {
-        val nextTrigger = if (reminder.nextTriggerEpochMillis != null && reminder.nextTriggerEpochMillis > System.currentTimeMillis()) {
+        if (!reminder.isEnabled) {
+            cancelReminder(context, reminder)
+            return
+        }
+
+        val nextTrigger = if (reminder.nextTriggerEpochMillis > System.currentTimeMillis()) {
             reminder.nextTriggerEpochMillis
         } else {
             JalaliRecurrenceEngine.calculateNextTrigger(reminder)
@@ -52,7 +64,7 @@ object AlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        scheduleExact(alarmManager, context, nextTrigger, pendingIntent)
+        scheduleExact(alarmManager, nextTrigger, pendingIntent)
 
         // 2. Schedule Pre-Reminders with unique composite request codes
         reminder.preReminders.forEach { preReminder ->
@@ -72,14 +84,13 @@ object AlarmScheduler {
                     preIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-                scheduleExact(alarmManager, context, preEpoch, prePendingIntent)
+                scheduleExact(alarmManager, preEpoch, prePendingIntent)
             }
         }
     }
 
     private fun scheduleExact(
         alarmManager: AlarmManager,
-        context: Context,
         triggerAtMillis: Long,
         pendingIntent: PendingIntent
     ) {
@@ -128,5 +139,9 @@ object AlarmScheduler {
             pendingIntent.cancel()
             NotificationHelper.cancelReminderNotification(context, reminderId, offset)
         }
+
+        // Also cancel base notification ID defensively
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        notificationManager?.cancel(reminderId.toInt())
     }
 }

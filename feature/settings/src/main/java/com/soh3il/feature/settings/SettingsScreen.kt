@@ -1,34 +1,51 @@
 package com.soh3il.feature.settings
 
 import android.app.Activity
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.soh3il.core.database.Soh3ilDatabase
 import com.soh3il.core.database.preferences.UserPreferences
 import com.soh3il.core.model.AppTheme
+import com.soh3il.core.scheduler.LiveIconHelper
+import com.soh3il.core.scheduler.PersistentNotificationHelper
 import com.soh3il.feature.settings.dialogs.AutoStartDialog
 import com.soh3il.feature.settings.dialogs.InstallPermissionDialog
 import com.soh3il.feature.settings.sections.AboutUpdateSection
@@ -37,6 +54,8 @@ import com.soh3il.feature.settings.sections.BatterySection
 import com.soh3il.feature.settings.sections.NotificationsSection
 import com.soh3il.feature.settings.sections.ToolsSection
 import com.soh3il.feature.settings.util.AutoStartHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -47,9 +66,11 @@ fun SettingsScreen(
     currentVersionName: String = "1.0.0",
     onPersistentNotificationToggled: ((Boolean) -> Unit)? = null,
     onExportIcsClick: (() -> Unit)? = null,
-    onImportIcsUri: ((Uri) -> Unit)? = null
+    onImportIcsUri: ((Uri) -> Unit)? = null,
+    onBackClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     // Dialog state
     var showDateConverterDialog by remember { mutableStateOf(false) }
@@ -69,6 +90,38 @@ fun SettingsScreen(
     }
     var selectedSoundTitle by remember {
         mutableStateOf(UserPreferences.getNotificationSoundTitle(context))
+    }
+
+    fun syncAllWidgetsAndNotifications() {
+        // 1. Broadcast widget update
+        try {
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val component = ComponentName(context.packageName, "com.soh3il.calendar.widget.CalendarAppWidgetProvider")
+            val ids = appWidgetManager.getAppWidgetIds(component)
+            if (ids != null && ids.isNotEmpty()) {
+                val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
+                    this.component = component
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                }
+                context.sendBroadcast(intent)
+            }
+        } catch (_: Exception) {}
+
+        // 2. Refresh Persistent Notification
+        scope.launch(Dispatchers.IO) {
+            try {
+                if (UserPreferences.isPersistentNotificationEnabled(context)) {
+                    val db = Soh3ilDatabase.getInstance(context)
+                    val active = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
+                    PersistentNotificationHelper.updateNotification(context, active)
+                }
+            } catch (_: Exception) {}
+        }
+
+        // 3. Update Live Icon
+        try {
+            LiveIconHelper.updateLiveIcon(context)
+        } catch (_: Exception) {}
     }
 
     val importIcsLauncher = rememberLauncherForActivityResult(
@@ -103,6 +156,7 @@ fun SettingsScreen(
 
             UserPreferences.setNotificationSound(context, uri?.toString(), title)
             selectedSoundTitle = title
+            syncAllWidgetsAndNotifications()
         }
     }
 
@@ -116,15 +170,35 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text(
-            text = "تنظیمات برنامه",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "تنظیمات برنامه",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            if (onBackClick != null) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = "بازگشت",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -132,14 +206,21 @@ fun SettingsScreen(
         AppearanceSection(
             context = context,
             currentTheme = currentTheme,
-            onThemeSelected = onThemeSelected,
+            onThemeSelected = { newTheme ->
+                onThemeSelected(newTheme)
+                syncAllWidgetsAndNotifications()
+            },
             isAmoled = isAmoled,
-            onAmoledToggled = onAmoledToggled,
+            onAmoledToggled = { newAmoled ->
+                onAmoledToggled(newAmoled)
+                syncAllWidgetsAndNotifications()
+            },
             isLiveIconEnabled = isLiveIconEnabled,
             onLiveIconToggled = { newVal ->
                 isLiveIconEnabled = newVal
                 UserPreferences.setLiveIconEnabled(context, newVal)
-                com.soh3il.core.scheduler.LiveIconHelper.updateLiveIcon(context)
+                LiveIconHelper.updateLiveIcon(context)
+                syncAllWidgetsAndNotifications()
             }
         )
 
@@ -153,12 +234,14 @@ fun SettingsScreen(
                 isPersistentNotificationEnabled = enabled
                 UserPreferences.setPersistentNotificationEnabled(context, enabled)
                 onPersistentNotificationToggled?.invoke(enabled)
+                syncAllWidgetsAndNotifications()
             },
             isDynamicNotifIconEnabled = isDynamicNotifIconEnabled,
             onDynamicNotifIconToggled = { newVal ->
                 isDynamicNotifIconEnabled = newVal
                 UserPreferences.setDynamicNotificationIconEnabled(context, newVal)
                 onPersistentNotificationToggled?.invoke(isPersistentNotificationEnabled)
+                syncAllWidgetsAndNotifications()
             },
             selectedSoundTitle = selectedSoundTitle,
             ringtonePickerLauncher = ringtonePickerLauncher

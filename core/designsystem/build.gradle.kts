@@ -28,6 +28,7 @@ android {
 
 dependencies {
     api(project(":core:model"))
+    api(libs.androidx.core.ktx)
 
     api(platform(libs.compose.bom))
     api(libs.compose.ui)

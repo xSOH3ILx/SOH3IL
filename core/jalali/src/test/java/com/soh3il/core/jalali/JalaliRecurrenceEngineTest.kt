@@ -470,4 +470,75 @@ class JalaliRecurrenceEngineTest {
         assertEquals(12, nextDate.month)
         assertEquals(29, nextDate.day)
     }
+
+    @Test
+    fun testMonthlyReminderDay31AcrossLeapAndNonLeapMonths() {
+        val reminder = Reminder(
+            id = 99,
+            title = "تست یادآور ۳۱ام ماه",
+            jalaliYear = 1403,
+            jalaliMonth = 6,
+            jalaliDay = 31,
+            hour = 10,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.MONTHLY_JALALI,
+                dayOfMonth = 31,
+                shortMonthPolicy = ShortMonthPolicy.SNAP_TO_LAST_DAY
+            )
+        )
+
+        // 1403/07/30 (Mehr has 30 days)
+        assertTrue("باید در ۱۴۰۳/۰۷/۳۰ مچ شود", reminder.matchesDate(JalaliDate(1403, 7, 30)))
+        // 1403/12/30 (Esfand 1403 is a leap year with 30 days)
+        assertTrue("باید در ۱۴۰۳/۱۲/۳۰ مچ شود", reminder.matchesDate(JalaliDate(1403, 12, 30)))
+        // 1404/01/31 (Farvardin 1404 has 31 days)
+        assertTrue("باید در ۱۴۰۴/۰۱/۳۱ مچ شود", reminder.matchesDate(JalaliDate(1404, 1, 31)))
+        // 1404/12/29 (Esfand 1404 is non-leap with 29 days)
+        assertTrue("باید در ۱۴۰۴/۱۲/۲۹ مچ شود", reminder.matchesDate(JalaliDate(1404, 12, 29)))
+
+        // Next trigger from 1403/06/31 11:00 -> 1403/07/30 10:00
+        val tMehr = JalaliRecurrenceEngine.calculateNextTrigger(
+            reminder,
+            JalaliDate(1403, 6, 31).toEpochMillis(11, 0, 0)
+        )
+        assertNotNull(tMehr)
+        val dMehr = JalaliDate.fromEpochMillis(tMehr!!)
+        assertEquals(1403, dMehr.year)
+        assertEquals(7, dMehr.month)
+        assertEquals(30, dMehr.day)
+
+        // Next trigger from 1403/11/30 11:00 -> 1403/12/30 10:00
+        val tEsfand1403 = JalaliRecurrenceEngine.calculateNextTrigger(
+            reminder,
+            JalaliDate(1403, 11, 30).toEpochMillis(11, 0, 0)
+        )
+        assertNotNull(tEsfand1403)
+        val dEsfand1403 = JalaliDate.fromEpochMillis(tEsfand1403!!)
+        assertEquals(1403, dEsfand1403.year)
+        assertEquals(12, dEsfand1403.month)
+        assertEquals(30, dEsfand1403.day)
+
+        // Next trigger from 1403/12/30 11:00 -> 1404/01/31 10:00
+        val tFarvardin1404 = JalaliRecurrenceEngine.calculateNextTrigger(
+            reminder,
+            JalaliDate(1403, 12, 30).toEpochMillis(11, 0, 0)
+        )
+        assertNotNull(tFarvardin1404)
+        val dFarvardin1404 = JalaliDate.fromEpochMillis(tFarvardin1404!!)
+        assertEquals(1404, dFarvardin1404.year)
+        assertEquals(1, dFarvardin1404.month)
+        assertEquals(31, dFarvardin1404.day)
+
+        // Next trigger from 1404/11/30 11:00 -> 1404/12/29 10:00 (non-leap year)
+        val tEsfand1404 = JalaliRecurrenceEngine.calculateNextTrigger(
+            reminder,
+            JalaliDate(1404, 11, 30).toEpochMillis(11, 0, 0)
+        )
+        assertNotNull(tEsfand1404)
+        val dEsfand1404 = JalaliDate.fromEpochMillis(tEsfand1404!!)
+        assertEquals(1404, dEsfand1404.year)
+        assertEquals(12, dEsfand1404.month)
+        assertEquals(29, dEsfand1404.day)
+    }
 }

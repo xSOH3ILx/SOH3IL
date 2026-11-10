@@ -30,10 +30,19 @@ object DateConverter {
         val relativeDescriptionFa: String
     )
 
+    fun isLeapYear(year: Int): Boolean = JalaliDate.isLeapYear(year)
+
+    fun daysInMonth(year: Int, month: Int): Int = JalaliDate.daysInMonth(year, month)
+
     /**
      * تبدیل از تاریخ شمسی
      */
     fun fromJalali(year: Int, month: Int, day: Int): ConversionResult {
+        require(year in 1..9999) { "سال شمسی باید بین ۱ تا ۹۹۹۹ باشد (مقدار دریافتی: $year)" }
+        require(month in 1..12) { "ماه شمسی باید بین ۱ تا ۱۲ باشد (مقدار دریافتی: $month)" }
+        val maxDays = JalaliDate.daysInMonth(year, month)
+        require(day in 1..maxDays) { "روز ماه $month در سال $year باید بین ۱ تا $maxDays باشد (مقدار دریافتی: $day)" }
+
         val jDate = JalaliDate(year, month, day)
         val jdn = jDate.toJdn()
         val (gy, gm, gd) = civilFromJdn(jdn)
@@ -45,6 +54,11 @@ object DateConverter {
      * تبدیل از تاریخ میلادی
      */
     fun fromGregorian(year: Int, month: Int, day: Int): ConversionResult {
+        require(year in 1..9999) { "سال میلادی باید بین ۱ تا ۹۹۹۹ باشد (مقدار دریافتی: $year)" }
+        require(month in 1..12) { "ماه میلادی باید بین ۱ تا ۱۲ باشد (مقدار دریافتی: $month)" }
+        val maxDays = runCatching { java.time.YearMonth.of(year, month).lengthOfMonth() }.getOrDefault(31)
+        require(day in 1..maxDays) { "روز ماه میلادی $month در سال $year باید بین ۱ تا $maxDays باشد (مقدار دریافتی: $day)" }
+
         val gDate = LocalDate.of(year, month, day)
         val jdn = jdnFromCivil(year, month, day)
         val jDate = JalaliDate.fromJdn(jdn)
@@ -55,7 +69,15 @@ object DateConverter {
      * تبدیل از تاریخ هجری قمری
      */
     fun fromHijri(year: Int, month: Int, day: Int): ConversionResult {
-        val hDate = HijrahDate.of(year, month, day)
+        require(year in 1..9999) { "سال قمری باید بین ۱ تا ۹۹۹۹ باشد (مقدار دریافتی: $year)" }
+        require(month in 1..12) { "ماه قمری باید بین ۱ تا ۱۲ باشد (مقدار دریافتی: $month)" }
+        require(day in 1..30) { "روز ماه قمری باید بین ۱ تا ۳۰ باشد (مقدار دریافتی: $day)" }
+
+        val hDate = try {
+            HijrahDate.of(year, month, day)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("تاریخ هجری قمری نامعتبر است: $year/$month/$day", e)
+        }
         val gDate = LocalDate.from(hDate)
         val jdn = jdnFromCivil(gDate.year, gDate.monthValue, gDate.dayOfMonth)
         val jDate = JalaliDate.fromJdn(jdn)

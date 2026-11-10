@@ -13,20 +13,29 @@ object MidnightScheduler {
     private const val REQUEST_CODE_MIDNIGHT = 9999
 
     /**
-     * Schedules the next exact midnight tick (00:00:01) to update the persistent notification,
+     * Schedules the next exact midnight tick (00:00:05) to update the persistent notification,
      * widget, and launcher live icon when the date rolls over.
+     * Cleanly handles DST and timezone shifts by anchoring to next day 00:00:05.
      */
     fun scheduleMidnightAlarm(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
+        val now = System.currentTimeMillis()
         val cal = Calendar.getInstance().apply {
+            timeInMillis = now
             add(Calendar.DAY_OF_YEAR, 1)
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 1)
+            set(Calendar.SECOND, 5)
             set(Calendar.MILLISECOND, 0)
         }
-        val triggerAtMillis = cal.timeInMillis
+        var triggerAtMillis = cal.timeInMillis
+
+        // Guard against any timezone/DST jump that results in a past timestamp
+        if (triggerAtMillis <= now) {
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+            triggerAtMillis = cal.timeInMillis
+        }
 
         val intent = Intent(context, MidnightReceiver::class.java).apply {
             action = ACTION_MIDNIGHT_TICK
@@ -51,8 +60,28 @@ object MidnightScheduler {
             } else {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
             }
+        } catch (_: SecurityException) {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
         } catch (_: Exception) {
             alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
         }
+    }
+
+    /**
+     * Cancels any scheduled midnight rollover alarm.
+     */
+    fun cancelMidnightAlarm(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(context, MidnightReceiver::class.java).apply {
+            action = ACTION_MIDNIGHT_TICK
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            REQUEST_CODE_MIDNIGHT,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+        pendingIntent.cancel()
     }
 }

@@ -3,8 +3,6 @@ package com.soh3il.feature.settings.sections
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ColorLens
@@ -23,10 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import com.soh3il.core.database.preferences.UserPreferences
 import com.soh3il.core.designsystem.components.FarsiCard
 import com.soh3il.core.model.AppTheme
 import com.soh3il.feature.settings.components.SettingsSectionHeader
@@ -85,13 +85,14 @@ fun AppearanceSection(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // AMOLED Switch
+            // AMOLED Switch Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { onAmoledToggled(!isAmoled) }
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(role = Role.Switch) { onAmoledToggled(!isAmoled) }
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -115,22 +116,22 @@ fun AppearanceSection(
 
                 Switch(
                     checked = isAmoled,
-                    onCheckedChange = onAmoledToggled
+                    onCheckedChange = null
                 )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Live Launcher Icon Switch
+            // Live Launcher Icon Switch Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable {
-                        val newVal = !isLiveIconEnabled
-                        onLiveIconToggled(newVal)
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(role = Role.Switch) {
+                        onLiveIconToggled(!isLiveIconEnabled)
                     }
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -151,7 +152,7 @@ fun AppearanceSection(
 
                 Switch(
                     checked = isLiveIconEnabled,
-                    onCheckedChange = onLiveIconToggled
+                    onCheckedChange = null
                 )
             }
         }

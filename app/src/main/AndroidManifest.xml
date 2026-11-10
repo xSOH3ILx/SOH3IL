@@ -517,13 +517,19 @@
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
 
         <!-- Receivers for Exact Alarms and Device Reboots -->
         <receiver
             android:name="com.soh3il.core.scheduler.AlarmReceiver"
-            android:exported="false" />
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.soh3il.calendar.ACTION_ALARM_TRIGGER" />
+            </intent-filter>
+        </receiver>
 
         <!-- Material 3 Calendar Home Screen Widget -->
         <receiver

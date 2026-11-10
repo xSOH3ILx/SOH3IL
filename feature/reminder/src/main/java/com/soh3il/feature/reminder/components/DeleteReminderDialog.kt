@@ -24,7 +24,8 @@ fun DeleteReminderDialog(
             Button(
                 onClick = onConfirmDelete,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
                 )
             ) {
                 Text("بله، حذف شود", fontWeight = FontWeight.Bold)

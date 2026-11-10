@@ -16,12 +16,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,9 +67,17 @@ fun NotificationsSection(
 
     FarsiCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Persistent Status Bar Notification Switch
+            // Persistent Status Bar Notification Switch Row
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(role = Role.Switch) {
+                        onPersistentNotificationToggled(!isPersistentNotificationEnabled)
+                    }
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -88,21 +98,22 @@ fun NotificationsSection(
 
                 Switch(
                     checked = isPersistentNotificationEnabled,
-                    onCheckedChange = onPersistentNotificationToggled
+                    onCheckedChange = null
                 )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Dynamic Status Bar Icon Switch
+            // Dynamic Status Bar Icon Switch Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable {
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(role = Role.Switch) {
                         onDynamicNotifIconToggled(!isDynamicNotifIconEnabled)
                     }
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -123,18 +134,18 @@ fun NotificationsSection(
 
                 Switch(
                     checked = isDynamicNotifIconEnabled,
-                    onCheckedChange = onDynamicNotifIconToggled
+                    onCheckedChange = null
                 )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Notification Sound Setting
+            // Notification Sound Setting Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -170,10 +181,11 @@ fun NotificationsSection(
                                     isPlayingPreview = true
                                 }
                             } catch (_: Exception) {}
-                        }
+                        },
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
-                            imageVector = if (isPlayingPreview) Icons.Default.Stop else Icons.Default.VolumeUp,
+                            imageVector = if (isPlayingPreview) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = "پخش نمونه صدا",
                             tint = MaterialTheme.colorScheme.primary
                         )
