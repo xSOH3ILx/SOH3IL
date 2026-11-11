@@ -35,6 +35,7 @@ import com.soh3il.core.database.Soh3ilDatabase
 import com.soh3il.core.database.entity.ReminderEntity
 import com.soh3il.core.database.preferences.UserPreferences
 import com.soh3il.core.designsystem.theme.Soh3ilTheme
+import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.model.AppTheme
 import com.soh3il.core.scheduler.AlarmScheduler
 import com.soh3il.feature.calendar.CalendarScreen
@@ -43,6 +44,7 @@ import android.content.Intent
 import com.soh3il.feature.settings.SettingsScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
@@ -50,13 +52,25 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* handled */ }
 
     private var openAddReminderTrigger by mutableStateOf(false)
+    private var openConverterTrigger by mutableStateOf(false)
+    private var openTodayTrigger by mutableStateOf(false)
+
+    private fun handleIncomingIntent(intent: Intent?) {
+        if (intent == null) return
+        if (intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)) {
+            openAddReminderTrigger = true
+        }
+        when (intent.getStringExtra("extra_action")) {
+            "ADD_REMINDER" -> openAddReminderTrigger = true
+            "OPEN_TODAY" -> openTodayTrigger = true
+            "OPEN_CONVERTER" -> openConverterTrigger = true
+        }
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)) {
-            openAddReminderTrigger = true
-        }
+        handleIncomingIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,10 +89,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val db = Soh3ilDatabase.getInstance(this)
-
-        if (intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)) {
-            openAddReminderTrigger = true
-        }
+        handleIncomingIntent(intent)
 
         setContent {
             val context = LocalContext.current
@@ -114,13 +125,21 @@ class MainActivity : ComponentActivity() {
                     com.soh3il.core.scheduler.MidnightScheduler.scheduleMidnightAlarm(context)
                 }
 
-                // Check if opened from notification "+ یادآور جدید" action
-                androidx.compose.runtime.LaunchedEffect(openAddReminderTrigger) {
+                // Check if opened from notification or app shortcut
+                androidx.compose.runtime.LaunchedEffect(openAddReminderTrigger, openTodayTrigger, openConverterTrigger) {
                     if (openAddReminderTrigger) {
+                        currentTab = 0
                         editingReminder = null
                         selectedCalendarDate = com.soh3il.core.jalali.JalaliDate.now()
                         showAddSheet = true
                         openAddReminderTrigger = false
+                    } else if (openTodayTrigger) {
+                        currentTab = 0
+                        selectedCalendarDate = com.soh3il.core.jalali.JalaliDate.now()
+                        openTodayTrigger = false
+                    } else if (openConverterTrigger) {
+                        currentTab = 1
+                        openConverterTrigger = false
                     }
                 }
 
@@ -191,18 +210,44 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onExportIcsClick = {
                                     com.soh3il.core.scheduler.IcsHelper.shareIcsFile(this@MainActivity, reminders)
+                                    android.widget.Toast.makeText(
+                                        this@MainActivity,
+                                        "${reminders.size.toPersianDigits()} یادآور برای صدور آماده شد",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
                                 },
                                 onImportIcsUri = { uri ->
                                     coroutineScope.launch(Dispatchers.IO) {
                                         val imported = com.soh3il.core.scheduler.IcsHelper.importFromIcsUri(this@MainActivity, uri)
+                                        val existing = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
+                                        var addedCount = 0
                                         imported.forEach { rem ->
-                                            val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(rem))
-                                            val saved = rem.copy(id = id)
-                                            AlarmScheduler.scheduleReminder(this@MainActivity, saved)
+                                            val isDuplicate = existing.any {
+                                                it.title == rem.title &&
+                                                    it.jalaliYear == rem.jalaliYear &&
+                                                    it.jalaliMonth == rem.jalaliMonth &&
+                                                    it.jalaliDay == rem.jalaliDay &&
+                                                    it.hour == rem.hour &&
+                                                    it.minute == rem.minute
+                                            }
+                                            if (!isDuplicate) {
+                                                val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(rem))
+                                                val saved = rem.copy(id = id)
+                                                AlarmScheduler.scheduleReminder(this@MainActivity, saved)
+                                                addedCount++
+                                            }
                                         }
                                         com.soh3il.calendar.widget.CalendarAppWidgetProvider.requestUpdate(this@MainActivity)
                                         if (UserPreferences.isPersistentNotificationEnabled(this@MainActivity)) {
                                             com.soh3il.core.scheduler.PersistentNotificationHelper.updateNotification(this@MainActivity)
+                                        }
+                                        withContext(Dispatchers.Main) {
+                                            val msg = if (imported.size > addedCount) {
+                                                "${addedCount.toPersianDigits()} یادآور جدید وارد شد (${(imported.size - addedCount).toPersianDigits()} مورد تکراری نادیده گرفته شد)"
+                                            } else {
+                                                "${addedCount.toPersianDigits()} یادآور با موفقیت وارد شدند"
+                                            }
+                                            android.widget.Toast.makeText(this@MainActivity, msg, android.widget.Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }

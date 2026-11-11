@@ -70,6 +70,29 @@ data class Reminder(
 )
 
 /**
+ * Pre-defined reminder categories with dedicated brand colors
+ */
+data class ReminderCategory(
+    val id: String,
+    val nameFa: String,
+    val colorHex: String
+) {
+    companion object {
+        val ALL = listOf(
+            ReminderCategory("work", "کاری", "#2563EB"),
+            ReminderCategory("personal", "شخصی", "#10B981"),
+            ReminderCategory("birthday", "تولد", "#F59E0B"),
+            ReminderCategory("finance", "مالی", "#8B5CF6"),
+            ReminderCategory("study", "تحصیلی", "#06B6D4"),
+            ReminderCategory("general", "عمومی", "#64748B")
+        )
+
+        fun findByColor(colorHex: String): ReminderCategory =
+            ALL.firstOrNull { it.colorHex.equals(colorHex, ignoreCase = true) } ?: ALL.first()
+    }
+}
+
+/**
  * Occasions & Holidays sourced from FarsiUI dataset
  */
 data class Occasion(

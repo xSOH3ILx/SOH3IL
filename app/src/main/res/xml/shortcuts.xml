@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_reminder"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_add_reminder_short"
+        android:shortcutLongLabel="@string/shortcut_add_reminder_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.soh3il.calendar"
+            android:targetClass="com.soh3il.calendar.MainActivity">
+            <extra
+                android:name="extra_action"
+                android:value="ADD_REMINDER" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="open_today"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_today_short"
+        android:shortcutLongLabel="@string/shortcut_today_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.soh3il.calendar"
+            android:targetClass="com.soh3il.calendar.MainActivity">
+            <extra
+                android:name="extra_action"
+                android:value="OPEN_TODAY" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="open_converter"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_converter_short"
+        android:shortcutLongLabel="@string/shortcut_converter_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.soh3il.calendar"
+            android:targetClass="com.soh3il.calendar.MainActivity">
+            <extra
+                android:name="extra_action"
+                android:value="OPEN_CONVERTER" />
+        </intent>
+    </shortcut>
+</shortcuts>

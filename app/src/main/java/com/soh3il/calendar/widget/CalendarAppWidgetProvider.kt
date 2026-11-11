@@ -14,15 +14,30 @@ import com.soh3il.core.jalali.DateConverter
 import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
 import com.soh3il.core.jalali.matchesDate
+import com.soh3il.core.model.Reminder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import java.util.Calendar
 
 class CalendarAppWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
+        val pendingResult = goAsync()
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                withTimeoutOrNull(8_500L) {
+                    val db = Soh3ilDatabase.getInstance(context)
+                    val activeReminders = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
+                    for (appWidgetId in appWidgetIds) {
+                        updateAppWidget(context, appWidgetManager, appWidgetId, activeReminders)
+                    }
+                }
+            } finally {
+                pendingResult.finish()
+            }
         }
     }
 
@@ -53,16 +68,21 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             } catch (_: Exception) {}
         }
 
-        fun updateAllWidgets(context: Context) {
+        fun updateAllWidgets(context: Context, reminders: List<Reminder>? = null) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val thisWidget = ComponentName(context, CalendarAppWidgetProvider::class.java)
-            val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
+            val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget) ?: return
             for (widgetId in allWidgetIds) {
-                updateAppWidget(context, appWidgetManager, widgetId)
+                updateAppWidget(context, appWidgetManager, widgetId, reminders)
             }
         }
 
-        fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+        fun updateAppWidget(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+            cachedReminders: List<Reminder>? = null
+        ) {
             val views = RemoteViews(context.packageName, R.layout.widget_calendar_m3)
             val today = JalaliDate.now()
 
@@ -105,23 +125,40 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
-            // Immediate initial update
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            // 5. Build Reminders Summary with next upcoming reminder
+            fun applyReminderSummary(activeList: List<Reminder>) {
+                val todayReminders = activeList.filter { it.matchesDate(today) }
+                    .sortedWith(compareBy({ it.hour }, { it.minute }))
 
-            // 5. Query active reminders asynchronously for count
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val db = Soh3ilDatabase.getInstance(context)
-                    val activeReminders = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
-                    val count = activeReminders.count { it.matchesDate(today) }
-                    val reminderText = if (count > 0) {
-                        "${count.toPersianDigits()} یادآور فعال برای امروز"
-                    } else {
-                        "بدون یادآور برای امروز"
-                    }
-                    views.setTextViewText(R.id.widget_reminders_summary, reminderText)
-                    appWidgetManager.updateAppWidget(appWidgetId, views)
-                } catch (_: Exception) {}
+                val nowCal = Calendar.getInstance()
+                val currentMinutes = nowCal.get(Calendar.HOUR_OF_DAY) * 60 + nowCal.get(Calendar.MINUTE)
+
+                val summaryText = if (todayReminders.isNotEmpty()) {
+                    val upcoming = todayReminders.firstOrNull { (it.hour * 60 + it.minute) >= currentMinutes }
+                        ?: todayReminders.first()
+                    val timeStr = "\u200E${upcoming.hour.toPersianDigits().padStart(2, '۰')}:${upcoming.minute.toPersianDigits().padStart(2, '۰')}"
+                    "یادآور بعدی: ${upcoming.title} (ساعت $timeStr)"
+                } else {
+                    "بدون یادآور برای امروز"
+                }
+
+                views.setTextViewText(R.id.widget_reminders_summary, summaryText)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            }
+
+            if (cachedReminders != null) {
+                applyReminderSummary(cachedReminders)
+            } else {
+                // Immediate display
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val db = Soh3ilDatabase.getInstance(context)
+                        val active = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
+                        applyReminderSummary(active)
+                    } catch (_: Exception) {}
+                }
             }
         }
     }

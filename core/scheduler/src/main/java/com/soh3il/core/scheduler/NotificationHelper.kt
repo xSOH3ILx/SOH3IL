@@ -18,8 +18,11 @@ object NotificationHelper {
     const val CHANNEL_NAME = "یادآورهای تقویم شمسی"
 
     const val ACTION_MARK_DONE = "com.soh3il.calendar.ACTION_MARK_DONE"
+    const val ACTION_DISMISS_REMINDER = "com.soh3il.calendar.ACTION_DISMISS_REMINDER"
+    const val ACTION_SNOOZE_REMINDER = "com.soh3il.calendar.ACTION_SNOOZE_REMINDER"
     const val ACTION_SNOOZE_15 = "com.soh3il.calendar.ACTION_SNOOZE_15"
     const val EXTRA_REMINDER_ID = "extra_reminder_id"
+    const val EXTRA_SNOOZE_MINUTES = "extra_snooze_minutes"
 
     private fun getEffectiveSoundUri(context: Context): Uri {
         val saved = UserPreferences.getNotificationSoundUri(context)
@@ -109,9 +112,9 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Action: Mark Done
+        // Action 1: Dismiss / Mark Done
         val doneIntent = Intent(context, AlarmReceiver::class.java).apply {
-            action = ACTION_MARK_DONE
+            action = ACTION_DISMISS_REMINDER
             putExtra(EXTRA_REMINDER_ID, reminderId)
             putExtra(AlarmScheduler.EXTRA_PRE_OFFSET_MINUTES, preOffsetMinutes)
         }
@@ -122,10 +125,11 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Action: Snooze 15 minutes
+        // Action 2: Snooze 10 minutes
         val snoozeIntent = Intent(context, AlarmReceiver::class.java).apply {
-            action = ACTION_SNOOZE_15
+            action = ACTION_SNOOZE_REMINDER
             putExtra(EXTRA_REMINDER_ID, reminderId)
+            putExtra(EXTRA_SNOOZE_MINUTES, 10)
             putExtra(AlarmScheduler.EXTRA_PRE_OFFSET_MINUTES, preOffsetMinutes)
         }
         val snoozePendingIntent = PendingIntent.getBroadcast(
@@ -147,7 +151,7 @@ object NotificationHelper {
             .setSound(soundUri)
             .setContentIntent(contentPendingIntent)
             .addAction(0, "انجام شد", donePendingIntent)
-            .addAction(0, "تعویق ۱۵ دقیقه", snoozePendingIntent)
+            .addAction(0, "تعویق ۱۰ دقیقه‌ای", snoozePendingIntent)
 
         notificationManager.notify(notificationId, builder.build())
     }

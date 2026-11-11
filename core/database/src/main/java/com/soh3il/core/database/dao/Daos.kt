@@ -25,6 +25,9 @@ interface ReminderDao {
     @Query("SELECT * FROM reminders WHERE id = :id LIMIT 1")
     suspend fun getReminderById(id: Long): ReminderEntity?
 
+    @Query("SELECT * FROM reminders WHERE title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%' ORDER BY jalaliYear DESC, jalaliMonth DESC, jalaliDay DESC")
+    fun searchReminders(query: String): Flow<List<ReminderEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReminder(reminder: ReminderEntity): Long
 
@@ -49,6 +52,9 @@ interface OccasionDao {
 
     @Query("SELECT * FROM occasions WHERE jalaliDate = :date")
     suspend fun getOccasionsByDateSync(date: String): List<OccasionEntity>
+
+    @Query("SELECT * FROM occasions WHERE titleFa LIKE '%' || :query || '%' ORDER BY jalaliYear DESC, jalaliMonth DESC, jalaliDay DESC")
+    fun searchOccasions(query: String): Flow<List<OccasionEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOccasions(occasions: List<OccasionEntity>)

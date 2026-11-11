@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">SOH3IL</string>
+    <string name="app_name">سهیل</string>
+    <string name="shortcut_add_reminder_short">یادآور جدید</string>
+    <string name="shortcut_add_reminder_long">افزودن یادآور جدید</string>
+    <string name="shortcut_today_short">امروز</string>
+    <string name="shortcut_today_long">مشاهده وقایع امروز</string>
+    <string name="shortcut_converter_short">مبدل تاریخ</string>
+    <string name="shortcut_converter_long">مبدل پیشرفته تاریخ</string>
 </resources>

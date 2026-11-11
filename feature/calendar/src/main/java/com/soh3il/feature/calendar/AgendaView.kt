@@ -26,15 +26,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.designsystem.components.FarsiBadge
 import com.soh3il.core.designsystem.components.FarsiCard
+import com.soh3il.core.designsystem.utils.toEnglishDigits
 import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
@@ -42,6 +47,7 @@ import com.soh3il.core.jalali.matchesDate
 import com.soh3il.core.model.Occasion
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
+import com.soh3il.feature.calendar.components.CalendarSearchBar
 
 data class AgendaDayItem(
     val date: JalaliDate,
@@ -58,21 +64,45 @@ fun AgendaView(
     onReminderClick: (Reminder) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Generate agenda items for the next 45 days
-    val agendaItems = remember(today, reminders) {
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategoryColor by remember { mutableStateOf<String?>(null) }
+
+    val normalizedQuery = remember(searchQuery) {
+        searchQuery.trim().toEnglishDigits().lowercase()
+    }
+
+    // Generate agenda items for the next 45 days with real-time query and category filtering
+    val agendaItems = remember(today, reminders, normalizedQuery, selectedCategoryColor) {
         val list = mutableListOf<AgendaDayItem>()
         val tomorrow = today.plusDays(1)
 
-        for (i in 0..45) {
+        val daysToInspect = if (normalizedQuery.isNotEmpty()) 180 else 45
+        for (i in 0..daysToInspect) {
             val date = today.plusDays(i.toLong())
             val dateStr = date.format("YYYY-MM-DD")
             val monthOccasions = IranianHolidays.getOccasionsForMonth(date.year, date.month)
-            val dayOccasions = monthOccasions.filter { it.jalaliDate == dateStr }
+            var dayOccasions = monthOccasions.filter { it.jalaliDate == dateStr }
 
-            val dayReminders = reminders.filter { rem -> rem.matchesDate(date) }
+            var dayReminders = reminders.filter { rem -> rem.matchesDate(date) }
 
-            // Only show days that have reminders, occasions, or are today/tomorrow
-            if (dayReminders.isNotEmpty() || dayOccasions.isNotEmpty() || i in 0..2) {
+            // Category filter
+            if (selectedCategoryColor != null) {
+                dayReminders = dayReminders.filter { it.colorHex.equals(selectedCategoryColor, ignoreCase = true) }
+            }
+
+            // Search query filter
+            if (normalizedQuery.isNotEmpty()) {
+                dayReminders = dayReminders.filter { rem ->
+                    rem.title.toEnglishDigits().lowercase().contains(normalizedQuery) ||
+                        rem.description.toEnglishDigits().lowercase().contains(normalizedQuery)
+                }
+                dayOccasions = dayOccasions.filter { occ ->
+                    occ.titleFa.toEnglishDigits().lowercase().contains(normalizedQuery)
+                }
+            }
+
+            // Only show days that have reminders, occasions, or (if no search) are today/tomorrow
+            if (dayReminders.isNotEmpty() || dayOccasions.isNotEmpty() || (normalizedQuery.isEmpty() && selectedCategoryColor == null && i in 0..2)) {
                 list.add(
                     AgendaDayItem(
                         date = date,
@@ -87,43 +117,55 @@ fun AgendaView(
         list
     }
 
-    if (agendaItems.isEmpty()) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    Icons.AutoMirrored.Filled.EventNote,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "هیچ رویداد یا یادآوری برای روزهای آینده ثبت نشده است",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp
-                )
+    Column(modifier = modifier.fillMaxSize()) {
+        CalendarSearchBar(
+            query = searchQuery,
+            onQueryChange = { searchQuery = it },
+            selectedCategoryColor = selectedCategoryColor,
+            onCategorySelected = { selectedCategoryColor = it }
+        )
+
+        if (agendaItems.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.EventNote,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = if (normalizedQuery.isNotEmpty() || selectedCategoryColor != null)
+                            "هیچ نتیجه‌ای مطابق با فیلتر یا جستجو یافت نشد"
+                        else
+                            "هیچ رویداد یا یادآوری برای روزهای آینده ثبت نشده است",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 14.sp
+                    )
+                }
             }
-        }
-    } else {
-        val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 8.dp,
-                bottom = 88.dp + navBarBottom
-            )
-        ) {
-            items(agendaItems) { item ->
-                AgendaDaySection(
-                    item = item,
-                    onReminderClick = onReminderClick
+        } else {
+            val navBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 4.dp,
+                    bottom = 88.dp + navBarBottom
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+            ) {
+                items(agendaItems) { item ->
+                    AgendaDaySection(
+                        item = item,
+                        onReminderClick = onReminderClick
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
         }
     }
@@ -212,11 +254,17 @@ fun AgendaDaySection(
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val reminderColor = try {
+                            Color(android.graphics.Color.parseColor(rem.colorHex))
+                        } catch (_: Exception) {
+                            MaterialTheme.colorScheme.primary
+                        }
+
                         Box(
                             modifier = Modifier
                                 .size(10.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
+                                .background(reminderColor)
                         )
                         Column(
                             modifier = Modifier

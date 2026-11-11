@@ -49,9 +49,11 @@ import com.soh3il.core.model.PreReminderUnit
 import com.soh3il.core.model.RecurrenceRule
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
+import com.soh3il.core.model.ReminderCategory
 import com.soh3il.feature.reminder.components.CustomPreReminderDialog
 import com.soh3il.feature.reminder.components.CustomRecurrenceDialog
 import com.soh3il.feature.reminder.components.DeleteReminderDialog
+import com.soh3il.feature.reminder.components.ReminderCategorySection
 import com.soh3il.feature.reminder.components.ReminderFormFields
 import com.soh3il.feature.reminder.components.ReminderPreNotificationSection
 import com.soh3il.feature.reminder.components.ReminderRecurrenceSection
@@ -73,6 +75,7 @@ fun AddReminderSheet(
     var description by remember { mutableStateOf(existingReminder?.description ?: "") }
     var selectedHour by remember { mutableIntStateOf(existingReminder?.hour ?: 9) }
     var selectedMinute by remember { mutableIntStateOf(existingReminder?.minute ?: 0) }
+    var selectedColorHex by remember { mutableStateOf(existingReminder?.colorHex ?: "#2563EB") }
     var showTimePickerDialog by remember { mutableStateOf(false) }
 
     var recurrenceType by remember { mutableStateOf(existingReminder?.recurrence?.type ?: RecurrenceType.NONE) }
@@ -193,9 +196,19 @@ fun AddReminderSheet(
                 onCustomizeClick = { showCustomPreReminderDialog = true }
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 6. Category & Color Section
+            ReminderCategorySection(
+                selectedColorHex = selectedColorHex,
+                onCategorySelected = { cat ->
+                    selectedColorHex = cat.colorHex
+                }
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 6. Save CTA Button (M3 Pill shape)
+            // 7. Save CTA Button (M3 Pill shape)
             Button(
                 onClick = {
                     if (title.isNotBlank()) {
@@ -229,7 +242,8 @@ fun AddReminderSheet(
                                 dayOfMonth = if (recurrenceType == RecurrenceType.MONTHLY_JALALI) (existingReminder?.jalaliDay ?: initialDate.day) else null
                             ),
                             preReminders = preList,
-                            isEnabled = true
+                            isEnabled = true,
+                            colorHex = selectedColorHex
                         )
                         onSaveReminder(reminder)
                         onDismiss()

@@ -21,6 +21,8 @@ class AlarmReceiver : BroadcastReceiver() {
         // Strict whitelist for internal alarm and notification action triggers
         if (action != AlarmScheduler.ACTION_ALARM_TRIGGER &&
             action != NotificationHelper.ACTION_MARK_DONE &&
+            action != NotificationHelper.ACTION_DISMISS_REMINDER &&
+            action != NotificationHelper.ACTION_SNOOZE_REMINDER &&
             action != NotificationHelper.ACTION_SNOOZE_15
         ) {
             return
@@ -72,7 +74,8 @@ class AlarmReceiver : BroadcastReceiver() {
                             }
                         }
 
-                        NotificationHelper.ACTION_MARK_DONE -> {
+                        NotificationHelper.ACTION_MARK_DONE,
+                        NotificationHelper.ACTION_DISMISS_REMINDER -> {
                             if (entity != null) {
                                 val domain = entity.toDomain()
                                 if (domain.recurrence.type == RecurrenceType.NONE) {
@@ -83,14 +86,14 @@ class AlarmReceiver : BroadcastReceiver() {
                             }
                         }
 
+                        NotificationHelper.ACTION_SNOOZE_REMINDER,
                         NotificationHelper.ACTION_SNOOZE_15 -> {
                             if (entity != null) {
-                                val domain = entity.toDomain()
-                                val snoozeTrigger = System.currentTimeMillis() + (15 * 60 * 1000L)
-                                AlarmScheduler.scheduleReminder(
-                                    context,
-                                    domain.copy(nextTriggerEpochMillis = snoozeTrigger)
+                                val snoozeMinutes = intent.getIntExtra(
+                                    NotificationHelper.EXTRA_SNOOZE_MINUTES,
+                                    if (action == NotificationHelper.ACTION_SNOOZE_15) 15 else 10
                                 )
+                                AlarmScheduler.scheduleSnooze(context, reminderId, snoozeMinutes)
                                 val preOffsetMinutes = intent.getIntExtra(AlarmScheduler.EXTRA_PRE_OFFSET_MINUTES, 0)
                                 NotificationHelper.cancelReminderNotification(context, reminderId, preOffsetMinutes)
                             }

@@ -30,6 +30,40 @@ object DateConverter {
         val relativeDescriptionFa: String
     )
 
+    val GREGORIAN_MONTHS_EN = listOf(
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    )
+
+    val GREGORIAN_MONTHS_FA = listOf(
+        "ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن",
+        "ژوئیه", "اوت", "سپتامبر", "اکتبر", "نوامبر", "دسامبر"
+    )
+
+    val HIJRI_MONTHS_FA = listOf(
+        "محرم", "صفر", "ربیع‌الاول", "ربیع‌الثانی",
+        "جمادی‌الاول", "جمادی‌الثانی", "رجب", "شعبان",
+        "رمضان", "شوال", "ذی‌القعده", "ذی‌الحجه"
+    )
+
+    fun getGregorianFormatted(jalaliDate: JalaliDate): String {
+        val conv = fromJalali(jalaliDate.year, jalaliDate.month, jalaliDate.day)
+        val monthName = GREGORIAN_MONTHS_EN.getOrElse(conv.gregorian.monthValue - 1) { "" }
+        return "${conv.gregorian.year} $monthName ${conv.gregorian.dayOfMonth}"
+    }
+
+    fun getGregorianFormattedFa(jalaliDate: JalaliDate): String {
+        val conv = fromJalali(jalaliDate.year, jalaliDate.month, jalaliDate.day)
+        val monthName = GREGORIAN_MONTHS_FA.getOrElse(conv.gregorian.monthValue - 1) { "" }
+        return "${conv.gregorian.dayOfMonth} $monthName ${conv.gregorian.year}"
+    }
+
+    fun getHijriFormatted(jalaliDate: JalaliDate): String {
+        val conv = fromJalali(jalaliDate.year, jalaliDate.month, jalaliDate.day)
+        val monthName = HIJRI_MONTHS_FA.getOrElse(conv.hijriMonth - 1) { "" }
+        return "${conv.hijriDay} $monthName ${conv.hijriYear}"
+    }
+
     fun isLeapYear(year: Int): Boolean = JalaliDate.isLeapYear(year)
 
     fun daysInMonth(year: Int, month: Int): Int = JalaliDate.daysInMonth(year, month)

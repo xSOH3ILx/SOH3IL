@@ -1,5 +1,7 @@
 package com.soh3il.core.jalali
 
+import com.soh3il.core.model.PreReminder
+import com.soh3il.core.model.PreReminderUnit
 import com.soh3il.core.model.RecurrenceRule
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
@@ -52,6 +54,22 @@ object IcsParser {
                 RecurrenceType.NONE -> { /* No RRULE */ }
             }
 
+            // Export VALARM for pre-reminders
+            rem.preReminders.forEach { pre ->
+                val minutes = pre.toMinutes()
+                sb.append("BEGIN:VALARM\r\n")
+                sb.append("ACTION:DISPLAY\r\n")
+                sb.append("DESCRIPTION:${escapeIcs(rem.title)}\r\n")
+                if (minutes % 1440 == 0L) {
+                    sb.append("TRIGGER:-P${minutes / 1440}D\r\n")
+                } else if (minutes % 60 == 0L) {
+                    sb.append("TRIGGER:-PT${minutes / 60}H\r\n")
+                } else {
+                    sb.append("TRIGGER:-PT${minutes}M\r\n")
+                }
+                sb.append("END:VALARM\r\n")
+            }
+
             sb.append("END:VEVENT\r\n")
         }
 
@@ -88,24 +106,38 @@ object IcsParser {
         currentBuilder?.let { unfoldedLines.add(it.toString()) }
 
         var inEvent = false
+        var inAlarm = false
         var currentSummary = ""
         var currentDescription = ""
         var currentDtStart = ""
         var currentRrule = ""
+        val currentPreReminders = mutableListOf<PreReminder>()
 
         for (line in unfoldedLines) {
             val trimmed = line.trim()
             if (trimmed.equals("BEGIN:VEVENT", ignoreCase = true)) {
                 inEvent = true
+                inAlarm = false
                 currentSummary = ""
                 currentDescription = ""
                 currentDtStart = ""
                 currentRrule = ""
+                currentPreReminders.clear()
+            } else if (trimmed.equals("BEGIN:VALARM", ignoreCase = true)) {
+                inAlarm = true
+            } else if (trimmed.equals("END:VALARM", ignoreCase = true)) {
+                inAlarm = false
             } else if (trimmed.equals("END:VEVENT", ignoreCase = true)) {
                 if (inEvent && currentSummary.isNotBlank() && currentDtStart.length >= 8) {
                     val sanitizedSummary = sanitizeText(currentSummary)
                     val sanitizedDescription = sanitizeText(currentDescription)
-                    val parsed = parseEventToReminder(sanitizedSummary, sanitizedDescription, currentDtStart, currentRrule)
+                    val parsed = parseEventToReminder(
+                        summary = sanitizedSummary,
+                        description = sanitizedDescription,
+                        dtStart = currentDtStart,
+                        rrule = currentRrule,
+                        preReminders = currentPreReminders.toList()
+                    )
                     if (parsed != null) {
                         reminders.add(parsed)
                         if (reminders.size >= maxEvents) {
@@ -114,18 +146,36 @@ object IcsParser {
                     }
                 }
                 inEvent = false
+                inAlarm = false
             } else if (inEvent) {
-                when {
-                    trimmed.startsWith("SUMMARY:", ignoreCase = true) ->
-                        currentSummary = unescapeIcs(trimmed.substring(8))
-                    trimmed.startsWith("DESCRIPTION:", ignoreCase = true) ->
-                        currentDescription = unescapeIcs(trimmed.substring(12))
-                    trimmed.startsWith("DTSTART:", ignoreCase = true) ->
-                        currentDtStart = trimmed.substring(8)
-                    trimmed.startsWith("DTSTART;", ignoreCase = true) ->
-                        currentDtStart = trimmed.substringAfter(":")
-                    trimmed.startsWith("RRULE:", ignoreCase = true) ->
-                        currentRrule = trimmed.substring(6)
+                if (inAlarm) {
+                    if (trimmed.startsWith("TRIGGER:", ignoreCase = true)) {
+                        val triggerStr = trimmed.substring(8).trim()
+                        val clean = triggerStr.removePrefix("-").removePrefix("P")
+                        if (clean.endsWith("D", ignoreCase = true)) {
+                            val days = clean.dropLast(1).toIntOrNull() ?: 1
+                            currentPreReminders.add(PreReminder(days, PreReminderUnit.DAYS))
+                        } else if (clean.startsWith("T", ignoreCase = true) && clean.endsWith("H", ignoreCase = true)) {
+                            val hours = clean.drop(1).dropLast(1).toIntOrNull() ?: 1
+                            currentPreReminders.add(PreReminder(hours, PreReminderUnit.HOURS))
+                        } else if (clean.startsWith("T", ignoreCase = true) && clean.endsWith("M", ignoreCase = true)) {
+                            val mins = clean.drop(1).dropLast(1).toIntOrNull() ?: 15
+                            currentPreReminders.add(PreReminder(mins, PreReminderUnit.MINUTES))
+                        }
+                    }
+                } else {
+                    when {
+                        trimmed.startsWith("SUMMARY:", ignoreCase = true) ->
+                            currentSummary = unescapeIcs(trimmed.substring(8))
+                        trimmed.startsWith("DESCRIPTION:", ignoreCase = true) ->
+                            currentDescription = unescapeIcs(trimmed.substring(12))
+                        trimmed.startsWith("DTSTART:", ignoreCase = true) ->
+                            currentDtStart = trimmed.substring(8)
+                        trimmed.startsWith("DTSTART;", ignoreCase = true) ->
+                            currentDtStart = trimmed.substringAfter(":")
+                        trimmed.startsWith("RRULE:", ignoreCase = true) ->
+                            currentRrule = trimmed.substring(6)
+                    }
                 }
             }
         }
@@ -137,7 +187,8 @@ object IcsParser {
         summary: String,
         description: String,
         dtStart: String,
-        rrule: String
+        rrule: String,
+        preReminders: List<PreReminder> = emptyList()
     ): Reminder? {
         return runCatching {
             val year = dtStart.substring(0, 4).toInt()
@@ -183,6 +234,7 @@ object IcsParser {
                     type = recType,
                     interval = recInterval
                 ),
+                preReminders = preReminders,
                 isEnabled = true
             )
         }.getOrNull()

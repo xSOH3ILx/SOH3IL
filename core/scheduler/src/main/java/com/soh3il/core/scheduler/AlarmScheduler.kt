@@ -32,6 +32,31 @@ object AlarmScheduler {
         computeAlarmRequestCode(reminderId, preOffsetMinutes)
 
     /**
+     * Schedules a snooze alarm for a reminder (default: 10 minutes from now).
+     */
+    fun scheduleSnooze(context: Context, reminderId: Long, snoozeMinutes: Int = 10) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val triggerAtMillis = System.currentTimeMillis() + (snoozeMinutes * 60 * 1000L)
+
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            action = ACTION_ALARM_TRIGGER
+            putExtra(EXTRA_REMINDER_ID, reminderId)
+            putExtra(EXTRA_IS_PRE_REMINDER, false)
+            putExtra(EXTRA_PRE_OFFSET_MINUTES, 0)
+        }
+
+        val requestCode = computeAlarmRequestCode(reminderId, 0)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        scheduleExact(alarmManager, triggerAtMillis, pendingIntent)
+    }
+
+    /**
      * Schedules the next exact alarm using setAlarmClock (or setExactAndAllowWhileIdle fallback).
      */
     fun scheduleReminder(context: Context, reminder: Reminder) {

@@ -44,6 +44,7 @@ import com.soh3il.feature.calendar.components.CalendarHeader
 import com.soh3il.feature.calendar.components.MonthGridView
 import com.soh3il.feature.calendar.components.SelectedDayDetails
 import com.soh3il.feature.calendar.components.WeekdaysRow
+import com.soh3il.feature.calendar.dialogs.YearMonthPickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +59,7 @@ fun CalendarScreen(
     var selectedDate by remember { mutableStateOf(today) }
     var totalDragDistance by remember { mutableFloatStateOf(0f) }
     var viewMode by remember { mutableIntStateOf(0) } // 0=Month Grid, 1=Agenda View
+    var showYearMonthPicker by remember { mutableStateOf(false) }
 
     val monthOccasions = remember(displayedDate.year, displayedDate.month, occasions) {
         if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(displayedDate.year, displayedDate.month)
@@ -136,8 +138,25 @@ fun CalendarScreen(
                     onTodayClick = {
                         displayedDate = today
                         selectedDate = today
-                    }
+                    },
+                    onHeaderTitleClick = { showYearMonthPicker = true }
                 )
+
+                if (showYearMonthPicker) {
+                    YearMonthPickerDialog(
+                        currentYear = displayedDate.year,
+                        currentMonth = displayedDate.month,
+                        onDismiss = { showYearMonthPicker = false },
+                        onConfirm = { year, month ->
+                            val maxDays = com.soh3il.core.jalali.JalaliDate.daysInMonth(year, month)
+                            val safeDay = minOf(selectedDate.day, maxDays)
+                            val newDate = com.soh3il.core.jalali.JalaliDate(year, month, safeDay)
+                            displayedDate = newDate
+                            selectedDate = newDate
+                            showYearMonthPicker = false
+                        }
+                    )
+                }
 
                 // 2. Weekdays bar
                 WeekdaysRow()
