@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
-import com.soh3il.core.jalali.matchesDate
+import com.soh3il.core.jalali.visibleOn
 import com.soh3il.core.model.Occasion
 import com.soh3il.core.model.Reminder
 import com.soh3il.feature.calendar.components.CalendarHeader
@@ -202,9 +202,10 @@ fun CalendarScreen(
                 SelectedDayDetails(
                     selectedDate = selectedDate,
                     occasions = selectedDayOccasions,
-                    reminders = reminders.filter { it.matchesDate(selectedDate) },
+                    reminders = reminders.filter { it.visibleOn(selectedDate) },
                     onReminderClick = onReminderClick,
-                    onAddReminderClick = onAddReminderClick
+                    onAddReminderClick = onAddReminderClick,
+                    modifier = Modifier.weight(1f)
                 )
             } else {
                 // Agenda / Schedule View

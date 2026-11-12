@@ -44,7 +44,7 @@ fun DayCell(
     onClick: () -> Unit
 ) {
     val cellBackground = when {
-        // [LOCKED RULE] Selected holidays are strictly FarsiHolidayRed (#EF4444), never blue
+        // Selected holidays stay red, never blue. #B91C1C keeps white text above 4.5:1.
         isSelected && isHoliday -> FarsiHolidayRed
         isSelected -> MaterialTheme.colorScheme.primary
         isToday -> MaterialTheme.colorScheme.surfaceVariant
@@ -96,7 +96,7 @@ fun DayCell(
                 fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
                 color = when {
                     isSelected -> Color.White // [LOCKED RULE] White text for selected cells
-                    isHoliday -> FarsiHolidayRed
+                    isHoliday -> MaterialTheme.colorScheme.error
                     else -> MaterialTheme.colorScheme.onBackground
                 }
             )
@@ -108,7 +108,7 @@ fun DayCell(
                         .clip(CircleShape)
                         .background(
                             if (isSelected) Color.White
-                            else if (isHoliday) FarsiHolidayRed
+                            else if (isHoliday) MaterialTheme.colorScheme.error
                             else MaterialTheme.colorScheme.primary
                         )
                 )

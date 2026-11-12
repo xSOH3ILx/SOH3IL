@@ -296,3 +296,13 @@ object JalaliRecurrenceEngine {
  * Extension helper to check if a reminder occurs on a specific Jalali date
  */
 fun Reminder.matchesDate(date: JalaliDate): Boolean = JalaliRecurrenceEngine.matchesDate(this, date)
+
+/**
+ * Calendar visibility. Completed one-off reminders stay on their own date so they can be reopened.
+ * Disabled recurring reminders stay hidden; they are not a single completed occurrence.
+ */
+fun Reminder.visibleOn(date: JalaliDate): Boolean {
+    if (isEnabled) return matchesDate(date)
+    if (recurrence.type != com.soh3il.core.model.RecurrenceType.NONE) return false
+    return jalaliYear == date.year && jalaliMonth == date.month && jalaliDay == date.day
+}

@@ -124,7 +124,7 @@ object DateConverter {
         val hMonth = hDate?.get(ChronoField.MONTH_OF_YEAR) ?: 0
         val hDay = hDate?.get(ChronoField.DAY_OF_MONTH) ?: 0
 
-        val todayG = LocalDate.now()
+        val todayG = LocalDate.now(JalaliDate.TEHRAN_ZONE)
         val diffDays = java.time.temporal.ChronoUnit.DAYS.between(todayG, gDate)
 
         val relativeFa = when {

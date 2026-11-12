@@ -176,6 +176,9 @@ object PersistentNotificationHelper {
             notificationManager.cancel(NOTIFICATION_ID)
             return
         }
+        if (!NotificationHelper.canPostNotifications(context)) {
+            return
+        }
 
         createNotificationChannel(context)
 
@@ -296,7 +299,11 @@ object PersistentNotificationHelper {
         builder.setLargeIcon(dateBadgeBitmap)
 
         val notification = builder.build()
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        try {
+            notificationManager.notify(NOTIFICATION_ID, notification)
+        } catch (_: SecurityException) {
+            return
+        }
 
         // Ensure next midnight alarm is scheduled for exact date rollover
         MidnightScheduler.scheduleMidnightAlarm(context)

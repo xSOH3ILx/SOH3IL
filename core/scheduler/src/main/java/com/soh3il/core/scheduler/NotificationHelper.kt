@@ -4,12 +4,14 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.soh3il.core.database.preferences.UserPreferences
 
 object NotificationHelper {
@@ -57,25 +59,20 @@ object NotificationHelper {
         }
     }
 
+    fun canPostNotifications(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
     fun updateNotificationChannelSound(context: Context, newSoundUri: Uri?) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val soundUri = newSoundUri ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val audioAttributes = AudioAttributes.Builder()
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .build()
-
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "اعلان‌های زنده و فوری یادآورهای تقویم سهیل"
-                enableVibration(true)
-                setSound(soundUri, audioAttributes)
-            }
-            manager.createNotificationChannel(channel)
+            // Existing channels ignore sound changes. Recreate so the chosen ringtone applies.
+            manager.deleteNotificationChannel(CHANNEL_ID)
+            createNotificationChannel(context, newSoundUri)
         }
     }
 
@@ -92,7 +89,8 @@ object NotificationHelper {
         description: String,
         isPreReminder: Boolean = false,
         preOffsetMinutes: Int = 0
-    ) {
+    ): Boolean {
+        if (!canPostNotifications(context)) return false
         val soundUri = getEffectiveSoundUri(context)
         createNotificationChannel(context, soundUri)
 
@@ -120,7 +118,7 @@ object NotificationHelper {
         }
         val donePendingIntent = PendingIntent.getBroadcast(
             context,
-            AlarmScheduler.computeAlarmRequestCode(reminderId, preOffsetMinutes * 100 + 1),
+            AlarmScheduler.actionRequestCode(reminderId, preOffsetMinutes, 1),
             doneIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -134,7 +132,7 @@ object NotificationHelper {
         }
         val snoozePendingIntent = PendingIntent.getBroadcast(
             context,
-            AlarmScheduler.computeAlarmRequestCode(reminderId, preOffsetMinutes * 100 + 2),
+            AlarmScheduler.actionRequestCode(reminderId, preOffsetMinutes, 2),
             snoozeIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -153,6 +151,11 @@ object NotificationHelper {
             .addAction(0, "انجام شد", donePendingIntent)
             .addAction(0, "تعویق ۱۰ دقیقه‌ای", snoozePendingIntent)
 
-        notificationManager.notify(notificationId, builder.build())
+        return try {
+            notificationManager.notify(notificationId, builder.build())
+            true
+        } catch (_: SecurityException) {
+            false
+        }
     }
 }

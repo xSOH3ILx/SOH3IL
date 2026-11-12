@@ -39,6 +39,9 @@
     <application
         android:name=".Soh3ilApp"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -50,6 +53,7 @@
             android:name=".MainActivity"
             android:enabled="true"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -510,13 +514,21 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Midnight Rollover, Date Change, and Notification Lifecycle Receiver -->
+        <!-- In-app signals only. Other packages cannot send these. -->
         <receiver
             android:name="com.soh3il.core.scheduler.MidnightReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.soh3il.calendar.ACTION_MIDNIGHT_TICK" />
                 <action android:name="com.soh3il.calendar.ACTION_NOTIFICATION_DISMISSED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- System broadcasts only. Custom actions are rejected in code. -->
+        <receiver
+            android:name="com.soh3il.core.scheduler.SystemEventReceiver"
+            android:exported="true">
+            <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.DATE_CHANGED" />

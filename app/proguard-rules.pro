@@ -10,6 +10,7 @@
 # Keep Manifest-declared BroadcastReceivers
 -keep class com.soh3il.core.scheduler.AlarmReceiver { *; }
 -keep class com.soh3il.core.scheduler.MidnightReceiver { *; }
+-keep class com.soh3il.core.scheduler.SystemEventReceiver { *; }
 
 # Keep Updater, FileProvider and Domain Models
 -keep class com.soh3il.core.updater.** { *; }

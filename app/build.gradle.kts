@@ -22,13 +22,10 @@ val resolvedStoreFilePath = envKeystoreFile
     ?: "signing/release.jks"
 val resolvedStorePassword = envKeystorePassword
     ?: keystoreProperties.getProperty("storePassword")
-    ?: "soh3il_release_pass"
 val resolvedKeyAlias = envKeyAlias
     ?: keystoreProperties.getProperty("keyAlias")
-    ?: "soh3il"
 val resolvedKeyPassword = envKeyPassword
     ?: keystoreProperties.getProperty("keyPassword")
-    ?: "soh3il_release_pass"
 
 val versionPropertiesFile = rootProject.file("version.properties")
 val versionProperties = Properties()
@@ -39,7 +36,12 @@ val vMajor = versionProperties.getProperty("VERSION_MAJOR", "1").toInt()
 val vMinor = versionProperties.getProperty("VERSION_MINOR", "0").toInt()
 val vPatch = versionProperties.getProperty("VERSION_PATCH", "0").toInt()
 val vBuild = versionProperties.getProperty("VERSION_BUILD", "1").toInt()
-val computedVersionCode = vMajor * 10000 + vMinor * 100 + vPatch + vBuild
+// major*10_000_000 + minor*100_000 + patch*1_000 + build
+// 1.3.1 build 1 stays above 1.3.0 build 21. Do not add patch and build together.
+require(vMinor in 0..99 && vPatch in 0..99 && vBuild in 0..999) {
+    "version.properties exceeds versionCode limits (minor/patch 0..99, build 0..999)"
+}
+val computedVersionCode = vMajor * 10_000_000 + vMinor * 100_000 + vPatch * 1_000 + vBuild
 val computedVersionName = "$vMajor.$vMinor.$vPatch"
 
 android {
@@ -72,11 +74,17 @@ android {
 
     signingConfigs {
         if (hasReleaseKeystore) {
+            val storePassword = resolvedStorePassword
+                ?: error("Release signing requires KEYSTORE_PASSWORD or signing/keystore.properties storePassword")
+            val keyAlias = resolvedKeyAlias
+                ?: error("Release signing requires KEY_ALIAS or signing/keystore.properties keyAlias")
+            val keyPassword = resolvedKeyPassword
+                ?: error("Release signing requires KEY_PASSWORD or signing/keystore.properties keyPassword")
             create("release") {
                 storeFile = keyStoreFile
-                storePassword = resolvedStorePassword
-                keyAlias = resolvedKeyAlias
-                keyPassword = resolvedKeyPassword
+                this.storePassword = storePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
             }
         }
     }
@@ -89,11 +97,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = if (hasReleaseKeystore) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            if (!hasReleaseKeystore) {
+                throw GradleException(
+                    "Refusing to sign the release APK with the debug certificate. " +
+                        "Set KEYSTORE_FILE or add an untracked signing/release.jks."
+                )
             }
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"

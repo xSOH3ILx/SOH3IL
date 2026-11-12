@@ -19,6 +19,9 @@ interface ReminderDao {
     @Query("SELECT * FROM reminders WHERE isEnabled = 1 ORDER BY nextTriggerEpochMillis ASC")
     suspend fun getAllActiveRemindersSync(): List<ReminderEntity>
 
+    @Query("SELECT * FROM reminders")
+    suspend fun getAllRemindersSync(): List<ReminderEntity>
+
     @Query("SELECT * FROM reminders WHERE jalaliYear = :year AND jalaliMonth = :month AND jalaliDay = :day")
     fun getRemindersForDate(year: Int, month: Int, day: Int): Flow<List<ReminderEntity>>
 

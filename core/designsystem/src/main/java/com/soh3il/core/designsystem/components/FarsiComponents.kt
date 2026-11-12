@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.designsystem.theme.FarsiEventGray
 import com.soh3il.core.designsystem.theme.FarsiEventGrayContainer
-import com.soh3il.core.designsystem.theme.FarsiHolidayRed
 import com.soh3il.core.designsystem.theme.FarsiHolidayRedContainer
 
 @Composable
@@ -31,8 +30,8 @@ fun FarsiBadge(
     modifier: Modifier = Modifier
 ) {
     val bgColor = if (isHoliday) FarsiHolidayRedContainer else FarsiEventGrayContainer
-    val textColor = if (isHoliday) FarsiHolidayRed else FarsiEventGray
-    val dotColor = if (isHoliday) FarsiHolidayRed else FarsiEventGray
+    val textColor = if (isHoliday) MaterialTheme.colorScheme.error else FarsiEventGray
+    val dotColor = if (isHoliday) MaterialTheme.colorScheme.error else FarsiEventGray
 
     Row(
         modifier = modifier

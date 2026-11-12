@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soh3il.core.designsystem.components.FarsiBadge
@@ -43,7 +44,7 @@ import com.soh3il.core.designsystem.utils.toEnglishDigits
 import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.jalali.IranianHolidays
 import com.soh3il.core.jalali.JalaliDate
-import com.soh3il.core.jalali.matchesDate
+import com.soh3il.core.jalali.visibleOn
 import com.soh3il.core.model.Occasion
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
@@ -76,14 +77,16 @@ fun AgendaView(
         val list = mutableListOf<AgendaDayItem>()
         val tomorrow = today.plusDays(1)
 
-        val daysToInspect = if (normalizedQuery.isNotEmpty()) 180 else 45
-        for (i in 0..daysToInspect) {
+        val searching = normalizedQuery.isNotEmpty() || selectedCategoryColor != null
+        val startOffset = if (searching) -365 else 0
+        val endOffset = if (searching) 730 else 45
+        for (i in startOffset..endOffset) {
             val date = today.plusDays(i.toLong())
             val dateStr = date.format("YYYY-MM-DD")
             val monthOccasions = IranianHolidays.getOccasionsForMonth(date.year, date.month)
             var dayOccasions = monthOccasions.filter { it.jalaliDate == dateStr }
 
-            var dayReminders = reminders.filter { rem -> rem.matchesDate(date) }
+            var dayReminders = reminders.filter { rem -> rem.visibleOn(date) }
 
             // Category filter
             if (selectedCategoryColor != null) {
@@ -102,7 +105,7 @@ fun AgendaView(
             }
 
             // Only show days that have reminders, occasions, or (if no search) are today/tomorrow
-            if (dayReminders.isNotEmpty() || dayOccasions.isNotEmpty() || (normalizedQuery.isEmpty() && selectedCategoryColor == null && i in 0..2)) {
+            if (dayReminders.isNotEmpty() || dayOccasions.isNotEmpty() || (!searching && i in 0..2)) {
                 list.add(
                     AgendaDayItem(
                         date = date,
@@ -124,6 +127,16 @@ fun AgendaView(
             selectedCategoryColor = selectedCategoryColor,
             onCategorySelected = { selectedCategoryColor = it }
         )
+        val missingLunarYear = (0..45).map { today.plusDays(it.toLong()).year }.distinct()
+            .firstOrNull { !IranianHolidays.hasOfficialLunarHolidays(it) }
+        if (missingLunarYear != null && normalizedQuery.isEmpty()) {
+            Text(
+                text = "تعطیلات قمری سال ${missingLunarYear.toPersianDigits()} ثبت نشده است.",
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+        }
 
         if (agendaItems.isEmpty()) {
             Box(
@@ -275,7 +288,8 @@ fun AgendaDaySection(
                                 text = rem.title,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (rem.isEnabled) 1f else 0.55f),
+                                textDecoration = if (rem.isEnabled) null else TextDecoration.LineThrough
                             )
                             val timeStr = "\u200E${rem.hour.toPersianDigits().padStart(2, '۰')}:${rem.minute.toPersianDigits().padStart(2, '۰')}"
                             val recurrenceDetail = when (rem.recurrence.type) {
@@ -285,7 +299,11 @@ fun AgendaDaySection(
                                 RecurrenceType.MONTHLY_JALALI -> if (rem.recurrence.interval <= 1) "ماهانه" else "هر ${rem.recurrence.interval.toPersianDigits()} ماه یکبار"
                                 RecurrenceType.YEARLY_JALALI -> if (rem.recurrence.interval <= 1) "سالانه" else "هر ${rem.recurrence.interval.toPersianDigits()} سال یکبار"
                             }
-                            val subtitle = if (recurrenceDetail != null) "ساعت $timeStr • $recurrenceDetail" else "ساعت $timeStr"
+                            val subtitle = listOfNotNull(
+                                "ساعت $timeStr",
+                                recurrenceDetail,
+                                if (rem.isEnabled) null else "انجام‌شده"
+                            ).joinToString(" • ")
                             Text(
                                 text = subtitle,
                                 fontSize = 12.sp,

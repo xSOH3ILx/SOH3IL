@@ -42,7 +42,28 @@ object UpdateChecker {
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
+        .followRedirects(false)
+        .followSslRedirects(false)
         .build()
+
+    private fun executeAllowed(initial: Request): okhttp3.Response {
+        var request = initial
+        repeat(5) {
+            val response = client.newCall(request).execute()
+            if (response.code !in 300..399) return response
+            val location = response.header("Location")
+            response.close()
+            if (location.isNullOrBlank()) {
+                throw IOException("پاسخ تغییر مسیر بدون مقصد بود")
+            }
+            val next = request.url.resolve(location) ?: throw IOException("مقصد تغییر مسیر نامعتبر است")
+            if (!UpdateUrlPolicy.isAllowed(next.toString())) {
+                throw SecurityException("مقصد به‌روزرسانی خارج از GitHub مجاز نیست")
+            }
+            request = request.newBuilder().url(next).build()
+        }
+        throw IOException("تغییر مسیر به‌روزرسانی بیش از حد تکرار شد")
+    }
 
     suspend fun checkForUpdates(currentVersionName: String): UpdateInfo = withContext(Dispatchers.IO) {
         try {
@@ -51,8 +72,12 @@ object UpdateChecker {
                 .header("Accept", "application/vnd.github.v3+json")
                 .build()
 
-            val response = client.newCall(request).execute()
+            if (!UpdateUrlPolicy.isAllowed(GITHUB_API_URL)) {
+                return@withContext UpdateInfo(false, currentVersionName, "", "")
+            }
+            val response = executeAllowed(request)
             if (!response.isSuccessful) {
+                response.close()
                 return@withContext UpdateInfo(false, currentVersionName, "", "")
             }
 
@@ -83,12 +108,14 @@ object UpdateChecker {
             }
 
             val chosenAsset = selectBestApkAsset(apkAssets)
+            val downloadUrl = chosenAsset?.downloadUrl ?: ""
             val isNewer = isVersionNewer(tagName, currentVersionName)
+            val safeUrl = downloadUrl.isNotBlank() && UpdateUrlPolicy.isAllowed(downloadUrl)
 
             UpdateInfo(
-                hasUpdate = isNewer && chosenAsset != null,
+                hasUpdate = isNewer && chosenAsset != null && safeUrl,
                 latestVersionName = tagName,
-                downloadUrl = chosenAsset?.downloadUrl ?: "",
+                downloadUrl = if (safeUrl) downloadUrl else "",
                 changelog = changelog,
                 matchedApkName = chosenAsset?.name ?: "",
                 releaseHtmlUrl = releaseHtmlUrl
@@ -105,7 +132,7 @@ object UpdateChecker {
 
         // 1. Exact CPU ABI match
         for (abi in supportedAbis) {
-            val match = assets.find { it.name.lowercase().contains(abi) }
+            val match = assets.find { apkNameMatchesAbi(it.name, abi) }
             if (match != null) return match
         }
 
@@ -114,7 +141,18 @@ object UpdateChecker {
         if (universal != null) return universal
 
         // 3. First available APK
-        return assets.firstOrNull()
+        return assets.firstOrNull { UpdateUrlPolicy.isAllowed(it.downloadUrl) }
+    }
+
+    private fun apkNameMatchesAbi(name: String, abi: String): Boolean {
+        val normalized = name.lowercase()
+        val token = abi.lowercase()
+        return normalized.contains("-$token.") ||
+            normalized.contains("-$token-") ||
+            normalized.contains("_$token.") ||
+            normalized.contains("_$token-") ||
+            normalized.endsWith("-$token.apk") ||
+            normalized.endsWith("_$token.apk")
     }
 
     private fun isVersionNewer(latest: String, current: String): Boolean {
@@ -174,13 +212,18 @@ object UpdateChecker {
         var partFile: File? = null
         var apkFile: File? = null
         try {
+            if (!UpdateUrlPolicy.isAllowed(downloadUrl)) {
+                return@withContext Result.failure(SecurityException("نشانی دریافت به‌روزرسانی مجاز نیست"))
+            }
             val request = Request.Builder()
                 .url(downloadUrl)
                 .build()
 
-            val response = client.newCall(request).execute()
+            val response = executeAllowed(request)
             if (!response.isSuccessful) {
-                return@withContext Result.failure(IOException("خطا در دریافت فایل از سرور: کد ${response.code}"))
+                val code = response.code
+                response.close()
+                return@withContext Result.failure(IOException("خطا در دریافت فایل از سرور: کد $code"))
             }
 
             val body = response.body ?: return@withContext Result.failure(IOException("محتوای دریافتی خالی است"))
@@ -346,6 +389,7 @@ object UpdateChecker {
      * Opens the browser download link as a safe secondary fallback.
      */
     fun openBrowserDownload(context: Context, url: String) {
+        if (!UpdateUrlPolicy.isAllowed(url)) return
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

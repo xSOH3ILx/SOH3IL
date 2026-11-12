@@ -3,6 +3,7 @@ package com.soh3il.core.jalali
 import com.soh3il.core.model.RecurrenceRule
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
+import com.soh3il.core.model.ShortMonthPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -53,7 +54,36 @@ class IcsParserTest {
         assertEquals(10, imported[0].hour)
         assertEquals(30, imported[0].minute)
         assertEquals(RecurrenceType.MONTHLY_JALALI, imported[0].recurrence.type)
+        assertEquals(15, imported[0].jalaliDay)
         assertEquals("پرداخت شهریه", imported[1].title)
+        assertTrue(!icsText.contains("DTSTAMP:20261108T000000Z"))
+        assertTrue(icsText.contains("DTSTART;TZID=Asia/Tehran:"))
+    }
+
+    @Test
+    fun testWeeklyByDayAndShortMonthRoundTrip() {
+        val reminder = Reminder(
+            id = 7,
+            title = "بازدید",
+            jalaliYear = 1404,
+            jalaliMonth = 1,
+            jalaliDay = 6,
+            hour = 9,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.WEEKLY,
+                interval = 2,
+                daysOfWeek = setOf(1, 3),
+                shortMonthPolicy = ShortMonthPolicy.SKIP_MONTH
+            )
+        )
+        val ics = IcsParser.exportToIcsString(listOf(reminder))
+        assertTrue(ics.contains("BYDAY=SA,MO"))
+        val imported = IcsParser.importFromIcsStream(ByteArrayInputStream(ics.toByteArray(Charsets.UTF_8)))
+        assertEquals(1, imported.size)
+        assertEquals(setOf(1, 3), imported[0].recurrence.daysOfWeek)
+        assertEquals(2, imported[0].recurrence.interval)
+        assertEquals(ShortMonthPolicy.SKIP_MONTH, imported[0].recurrence.shortMonthPolicy)
     }
 
     @Test

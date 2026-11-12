@@ -49,7 +49,15 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     private val requestNotificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* handled */ }
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (!granted) {
+                android.widget.Toast.makeText(
+                    this,
+                    "بدون مجوز اعلان، یادآورها نمایش داده نمی‌شوند و انجام‌شده حساب نمی‌شوند.",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
     private var openAddReminderTrigger by mutableStateOf(false)
     private var openConverterTrigger by mutableStateOf(false)
@@ -219,7 +227,7 @@ class MainActivity : ComponentActivity() {
                                 onImportIcsUri = { uri ->
                                     coroutineScope.launch(Dispatchers.IO) {
                                         val imported = com.soh3il.core.scheduler.IcsHelper.importFromIcsUri(this@MainActivity, uri)
-                                        val existing = db.reminderDao().getAllActiveRemindersSync().map { it.toDomain() }
+                                        val existing = db.reminderDao().getAllRemindersSync().map { it.toDomain() }
                                         var addedCount = 0
                                         imported.forEach { rem ->
                                             val isDuplicate = existing.any {
@@ -269,8 +277,11 @@ class MainActivity : ComponentActivity() {
                                 onSaveReminder = { reminder ->
                                     coroutineScope.launch(Dispatchers.IO) {
                                         if (reminder.id != 0L) {
+                                            val previous = db.reminderDao().getReminderById(reminder.id)?.toDomain()
+                                            if (previous != null) {
+                                                AlarmScheduler.cancelReminder(this@MainActivity, previous)
+                                            }
                                             db.reminderDao().updateReminder(ReminderEntity.fromDomain(reminder))
-                                            AlarmScheduler.cancelReminder(this@MainActivity, reminder)
                                             AlarmScheduler.scheduleReminder(this@MainActivity, reminder)
                                         } else {
                                             val id = db.reminderDao().insertReminder(ReminderEntity.fromDomain(reminder))

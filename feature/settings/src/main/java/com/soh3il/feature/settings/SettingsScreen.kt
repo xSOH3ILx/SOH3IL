@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
+import com.soh3il.core.scheduler.NotificationHelper
 import android.os.Build
 import android.os.PowerManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -155,6 +156,7 @@ fun SettingsScreen(
             }
 
             UserPreferences.setNotificationSound(context, uri?.toString(), title)
+            NotificationHelper.updateNotificationChannelSound(context, uri)
             selectedSoundTitle = title
             syncAllWidgetsAndNotifications()
         }

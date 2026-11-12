@@ -30,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,6 +51,7 @@ import com.soh3il.core.model.RecurrenceRule
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
 import com.soh3il.core.model.ReminderCategory
+import com.soh3il.core.model.ShortMonthPolicy
 import com.soh3il.feature.reminder.components.CustomPreReminderDialog
 import com.soh3il.feature.reminder.components.CustomRecurrenceDialog
 import com.soh3il.feature.reminder.components.DeleteReminderDialog
@@ -71,6 +73,11 @@ fun AddReminderSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    var selectedDate by remember {
+        mutableStateOf(
+            existingReminder?.let { JalaliDate(it.jalaliYear, it.jalaliMonth, it.jalaliDay) } ?: initialDate
+        )
+    }
     var title by remember { mutableStateOf(existingReminder?.title ?: "") }
     var description by remember { mutableStateOf(existingReminder?.description ?: "") }
     var selectedHour by remember { mutableIntStateOf(existingReminder?.hour ?: 9) }
@@ -129,12 +136,20 @@ fun AddReminderSheet(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "${initialDate.dayOfWeekNameFa}، ${initialDate.day.toPersianDigits()} ${initialDate.monthNameFa} ${initialDate.year.toPersianDigits()}",
+                        text = "${selectedDate.dayOfWeekNameFa}، ${selectedDate.day.toPersianDigits()} ${selectedDate.monthNameFa} ${selectedDate.year.toPersianDigits()}",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(top = 2.dp)
                     )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { selectedDate = selectedDate.plusDays(-1) }) {
+                            Text("روز قبل", fontSize = 12.sp)
+                        }
+                        TextButton(onClick = { selectedDate = selectedDate.plusDays(1) }) {
+                            Text("روز بعد", fontSize = 12.sp)
+                        }
+                    }
                 }
 
                 IconButton(onClick = onDismiss) {
@@ -231,15 +246,25 @@ fun AddReminderSheet(
                             id = existingReminder?.id ?: 0L,
                             title = title.trim(),
                             description = description.trim(),
-                            jalaliYear = existingReminder?.jalaliYear ?: initialDate.year,
-                            jalaliMonth = existingReminder?.jalaliMonth ?: initialDate.month,
-                            jalaliDay = existingReminder?.jalaliDay ?: initialDate.day,
+                            jalaliYear = selectedDate.year,
+                            jalaliMonth = selectedDate.month,
+                            jalaliDay = selectedDate.day,
                             hour = selectedHour,
                             minute = selectedMinute,
                             recurrence = RecurrenceRule(
                                 type = recurrenceType,
                                 interval = recurrenceInterval.coerceAtLeast(1),
-                                dayOfMonth = if (recurrenceType == RecurrenceType.MONTHLY_JALALI) (existingReminder?.jalaliDay ?: initialDate.day) else null
+                                dayOfMonth = if (recurrenceType == RecurrenceType.MONTHLY_JALALI) selectedDate.day else null,
+                                daysOfWeek = existingReminder
+                                    ?.takeIf {
+                                        recurrenceType == RecurrenceType.WEEKLY &&
+                                            it.recurrence.type == RecurrenceType.WEEKLY
+                                    }
+                                    ?.recurrence
+                                    ?.daysOfWeek
+                                    ?: emptySet(),
+                                shortMonthPolicy = existingReminder?.recurrence?.shortMonthPolicy
+                                    ?: ShortMonthPolicy.SNAP_TO_LAST_DAY
                             ),
                             preReminders = preList,
                             isEnabled = true,
@@ -325,7 +350,7 @@ fun AddReminderSheet(
         CustomRecurrenceDialog(
             recurrenceType = recurrenceType,
             initialInterval = recurrenceInterval,
-            initialDate = initialDate,
+            initialDate = selectedDate,
             onDismiss = { showCustomRecurrenceDialog = false },
             onConfirm = { interval ->
                 recurrenceInterval = interval

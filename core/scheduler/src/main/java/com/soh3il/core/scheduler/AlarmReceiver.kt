@@ -42,9 +42,10 @@ class AlarmReceiver : BroadcastReceiver() {
                     when (action) {
                         AlarmScheduler.ACTION_ALARM_TRIGGER -> {
                             val isPre = intent.getBooleanExtra(AlarmScheduler.EXTRA_IS_PRE_REMINDER, false)
+                            val isSnooze = intent.getBooleanExtra(AlarmScheduler.EXTRA_IS_SNOOZE, false)
                             val preOffsetMinutes = intent.getIntExtra(AlarmScheduler.EXTRA_PRE_OFFSET_MINUTES, 0)
                             if (entity != null && entity.isEnabled) {
-                                NotificationHelper.showReminderNotification(
+                                val posted = NotificationHelper.showReminderNotification(
                                     context = context,
                                     reminderId = entity.id,
                                     title = entity.title,
@@ -52,23 +53,22 @@ class AlarmReceiver : BroadcastReceiver() {
                                     isPreReminder = isPre,
                                     preOffsetMinutes = preOffsetMinutes
                                 )
+                                // A denied notification permission must not consume the reminder.
+                                if (!posted || isPre || isSnooze) {
+                                    return@withTimeoutOrNull
+                                }
 
-                                // If this was the main trigger, calculate and schedule the next recurrence!
-                                if (!isPre) {
-                                    val domain = entity.toDomain()
-                                    if (domain.recurrence.type == RecurrenceType.NONE) {
-                                        // Mark disabled if non-recurring
-                                        db.reminderDao().updateReminder(entity.copy(isEnabled = false))
-                                    } else {
-                                        // Reschedule for next solar recurrence
-                                        val nextEpoch = JalaliRecurrenceEngine.calculateNextTrigger(
-                                            reminder = domain,
-                                            referenceEpochMillis = System.currentTimeMillis() + 1000L
-                                        )
-                                        if (nextEpoch != null) {
-                                            db.reminderDao().updateReminder(entity.copy(nextTriggerEpochMillis = nextEpoch))
-                                            AlarmScheduler.scheduleReminder(context, domain.copy(nextTriggerEpochMillis = nextEpoch))
-                                        }
+                                val domain = entity.toDomain()
+                                if (domain.recurrence.type == RecurrenceType.NONE) {
+                                    db.reminderDao().updateReminder(entity.copy(isEnabled = false))
+                                } else {
+                                    val nextEpoch = JalaliRecurrenceEngine.calculateNextTrigger(
+                                        reminder = domain,
+                                        referenceEpochMillis = System.currentTimeMillis() + 1000L
+                                    )
+                                    if (nextEpoch != null) {
+                                        db.reminderDao().updateReminder(entity.copy(nextTriggerEpochMillis = nextEpoch))
+                                        AlarmScheduler.scheduleReminder(context, domain.copy(nextTriggerEpochMillis = nextEpoch))
                                     }
                                 }
                             }
@@ -100,7 +100,8 @@ class AlarmReceiver : BroadcastReceiver() {
                         }
                     }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                android.util.Log.e("AlarmReceiver", "alarm handling failed: ${e.javaClass.simpleName}")
             } finally {
                 pendingResult.finish()
             }

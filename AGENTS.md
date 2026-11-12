@@ -64,7 +64,7 @@ The project follows a strict multi-module Clean Architecture pattern:
 
 ### Rule 2.1: Secret & Keystore Isolation
 - NEVER commit `.jks`, `.keystore`, or `keystore.properties` files to version control.
-- Signing configurations in `app/build.gradle.kts` must always read from environment variables (`KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`) first, with a safe local fallback for untracked files or debug signing.
+- Signing configurations in `app/build.gradle.kts` must read from environment variables (`KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`) first, then untracked `signing/keystore.properties`. Release builds must fail if that keystore is missing. Never sign a release APK with the debug certificate or a password committed in source.
 - Never log user reminder titles, descriptions, or file paths in release builds.
 
 ### Rule 2.2: PendingIntent & BroadcastReceiver Hardening
@@ -113,9 +113,7 @@ The project follows a strict multi-module Clean Architecture pattern:
 - **Invariant 3 (Startup Self-Healing):** On app startup (`Soh3ilApp.onCreate`), verify that exactly one launcher alias is enabled. If 0 or >1 are enabled, automatically repair the state.
 
 ### Rule 3.3: Exact Alarms & Android 12–15+ Compliance (AlarmScheduler.kt, MidnightScheduler.kt)
-- On Android 12+ (API 31+), NEVER call `alarmManager.setExactAndAllowWhileIdle(...)` or `setAlarmClock(...)` without:
-  - Checking `alarmManager.canScheduleExactAlarms()`.
-  - Wrapping the call in a `try { ... } catch (e: SecurityException)` block that degrades gracefully to `setAndAllowWhileIdle(...)`.
+- Do not use `AlarmManager.setAlarmClock(...)` for reminders or the midnight tick. Its status-bar show intent fires the PendingIntent. Use `setExactAndAllowWhileIdle(...)` only after `canScheduleExactAlarms()` on API 31+, inside `try/catch (SecurityException)` that falls back to `setAndAllowWhileIdle(...)`.
 - Always reschedule active alarms and midnight tasks upon receiving:
   - `Intent.ACTION_BOOT_COMPLETED`
   - `Intent.ACTION_MY_PACKAGE_REPLACED`

@@ -151,6 +151,8 @@ object IranianHolidays {
     /**
      * استخراج تمامی مناسبت‌ها و تعطیلات برای یک ماه خاص جلالی
      */
+    fun hasOfficialLunarHolidays(year: Int): Boolean = year in LUNAR_HOLIDAYS_MAP
+
     fun getOccasionsForMonth(year: Int, month: Int): List<Occasion> {
         val list = mutableListOf<Occasion>()
 
