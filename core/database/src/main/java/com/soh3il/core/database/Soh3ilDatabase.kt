@@ -37,7 +37,7 @@ abstract class Soh3ilDatabase : RoomDatabase() {
                     context.applicationContext,
                     Soh3ilDatabase::class.java,
                     DB_NAME
-                ).fallbackToDestructiveMigrationOnDowngrade().build()
+                ).build()
                 INSTANCE = instance
                 instance
             }

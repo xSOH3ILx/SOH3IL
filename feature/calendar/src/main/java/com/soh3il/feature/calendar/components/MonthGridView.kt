@@ -46,13 +46,15 @@ fun MonthGridView(
                             val dayNumber = (index - emptySlots) + 1
                             val cellDate = JalaliDate(year, month, dayNumber)
                             val dateStr = cellDate.format("YYYY-MM-DD")
-                            val isHoliday = cellDate.dayOfWeek == 7 || occasions.any { it.jalaliDate == dateStr && it.isHoliday }
+                            val isFriday = cellDate.dayOfWeek == 7
+                            val isOfficialHoliday = occasions.any { it.jalaliDate == dateStr && it.isHoliday }
                             val eventsCount = reminders.count { it.visibleOn(cellDate) }
                             DayCell(
                                 dayNumber = dayNumber,
                                 isSelected = cellDate == selectedDate,
                                 isToday = cellDate == today,
-                                isHoliday = isHoliday,
+                                isHoliday = isFriday || isOfficialHoliday,
+                                isFriday = isFriday,
                                 hasReminder = eventsCount > 0,
                                 monthName = cellDate.monthNameFa,
                                 eventsCount = eventsCount,

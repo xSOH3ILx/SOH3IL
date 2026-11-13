@@ -38,7 +38,7 @@ object IcsHelper {
 
     fun shareIcsFile(context: Context, reminders: List<Reminder>) {
         val icsData = exportToIcsString(reminders)
-        val exportDir = File(context.cacheDir, "updates").apply { if (!exists()) mkdirs() }
+        val exportDir = File(context.cacheDir, "calendar_exports").apply { if (!exists()) mkdirs() }
         val file = File(exportDir, "SOH3IL_Calendar_Export.ics")
         file.writeText(icsData, Charsets.UTF_8)
 

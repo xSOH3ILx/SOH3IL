@@ -53,8 +53,7 @@ class AlarmReceiver : BroadcastReceiver() {
                                     isPreReminder = isPre,
                                     preOffsetMinutes = preOffsetMinutes
                                 )
-                                // A denied notification permission must not consume the reminder.
-                                if (!posted || isPre || isSnooze) {
+                                if (isPre || isSnooze) {
                                     return@withTimeoutOrNull
                                 }
 
@@ -71,6 +70,10 @@ class AlarmReceiver : BroadcastReceiver() {
                                         AlarmScheduler.scheduleReminder(context, domain.copy(nextTriggerEpochMillis = nextEpoch))
                                     }
                                 }
+                                if (!posted) {
+                                    PersistentNotificationHelper.updateNotification(context)
+                                }
+                                MidnightReceiver.requestWidgetUpdate(context)
                             }
                         }
 

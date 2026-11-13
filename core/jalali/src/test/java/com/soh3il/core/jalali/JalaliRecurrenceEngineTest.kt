@@ -261,6 +261,31 @@ class JalaliRecurrenceEngineTest {
     }
 
     @Test
+    fun weeklyIntervalDoesNotFireBeforeStartDate() {
+        val reminder = Reminder(
+            id = 11,
+            title = "شروع آینده",
+            jalaliYear = 1405,
+            jalaliMonth = 2,
+            jalaliDay = 4,
+            hour = 9,
+            minute = 0,
+            recurrence = RecurrenceRule(
+                type = RecurrenceType.WEEKLY,
+                interval = 2,
+                daysOfWeek = setOf(1)
+            )
+        )
+
+        val beforeStart = JalaliDate(1405, 2, 1).toEpochMillis(12, 0, 0)
+        val next = JalaliRecurrenceEngine.calculateNextTrigger(reminder, beforeStart)
+
+        assertNotNull(next)
+        val nextDate = JalaliDate.fromEpochMillis(next!!)
+        assertTrue(nextDate >= JalaliDate(1405, 2, 4))
+    }
+
+    @Test
     fun testLeapYearEsfandRecurrenceSnapping() {
         // Recurring reminder on 30th of Esfand (end of year)
         val reminder = Reminder(

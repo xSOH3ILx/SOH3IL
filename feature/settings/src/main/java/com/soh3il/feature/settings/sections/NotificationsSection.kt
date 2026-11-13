@@ -198,7 +198,7 @@ fun NotificationsSection(
                                 ?: Settings.System.DEFAULT_NOTIFICATION_URI
                             val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
                                 putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION or RingtoneManager.TYPE_ALARM)
-                                putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "انتخاب صدای اعلان یادآور سهیل")
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "انتخاب صدای اعلان یادآور SOH3IL")
                                 putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
                                 putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
                                 putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existingUri)

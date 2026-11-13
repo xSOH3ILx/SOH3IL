@@ -53,7 +53,7 @@ fun DateConverterDialog(
     onDismiss: () -> Unit
 ) {
     val todayJ = remember { JalaliDate.now() }
-    val todayG = remember { LocalDate.now() }
+    val todayG = remember { LocalDate.now(JalaliDate.TEHRAN_ZONE) }
 
     var mode by remember { mutableIntStateOf(0) } // 0=From Jalali, 1=From Gregorian
 
@@ -261,7 +261,7 @@ fun DateConverterDialog(
                                 ).getOrElse(conversionResult.gregorian.monthValue - 1) { "" }
                                 val gregEnMonth = conversionResult.gregorian.month.name.lowercase().replaceFirstChar { it.uppercase() }
                                 Text(
-                                    "${conversionResult.gregorian.dayOfMonth.toPersianDigits()} $gregFaMonth (${conversionResult.gregorian.dayOfMonth} $gregEnMonth ${conversionResult.gregorian.year})",
+                                    "${conversionResult.gregorian.dayOfMonth.toPersianDigits()} $gregFaMonth (${conversionResult.gregorian.dayOfMonth.toPersianDigits()} $gregEnMonth ${conversionResult.gregorian.year.toPersianDigits()})",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp
                                 )
@@ -274,7 +274,7 @@ fun DateConverterDialog(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("قمری:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("قمری محاسباتی:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     Text(
                                         "${conversionResult.hijriDay.toPersianDigits()} / ${conversionResult.hijriMonth.toPersianDigits()} / ${conversionResult.hijriYear.toPersianDigits()} هـ.ق",
                                         fontWeight = FontWeight.Bold,

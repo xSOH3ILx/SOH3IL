@@ -9,7 +9,11 @@ import com.soh3il.core.model.ShortMonthPolicy
 import java.io.InputStream
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 object IcsParser {
@@ -129,13 +133,15 @@ object IcsParser {
     fun importFromIcsStream(inputStream: InputStream, maxEvents: Int = MAX_EVENTS): List<Reminder> {
         val reminders = mutableListOf<Reminder>()
         var bytesRead = 0L
+        val eventLimit = maxEvents.coerceIn(0, MAX_EVENTS)
+        if (eventLimit == 0) return emptyList()
 
         val reader = inputStream.bufferedReader(Charsets.UTF_8)
         val unfoldedLines = mutableListOf<String>()
         var currentBuilder: StringBuilder? = null
 
         for (rawLine in reader.lineSequence()) {
-            bytesRead += rawLine.length + 1
+            bytesRead += rawLine.toByteArray(Charsets.UTF_8).size + 1L
             if (bytesRead > MAX_STREAM_BYTES) {
                 break
             }
@@ -154,6 +160,8 @@ object IcsParser {
         var currentSummary = ""
         var currentDescription = ""
         var currentDtStart = ""
+        var currentDtStartZoneId: ZoneId? = null
+        var currentDtStartIsUtc = false
         var currentRrule = ""
         var currentXRecurrence = ""
         val currentPreReminders = mutableListOf<PreReminder>()
@@ -166,6 +174,8 @@ object IcsParser {
                 currentSummary = ""
                 currentDescription = ""
                 currentDtStart = ""
+                currentDtStartZoneId = null
+                currentDtStartIsUtc = false
                 currentRrule = ""
                 currentXRecurrence = ""
                 currentPreReminders.clear()
@@ -181,13 +191,15 @@ object IcsParser {
                         summary = sanitizedSummary,
                         description = sanitizedDescription,
                         dtStart = currentDtStart,
+                        dtStartZoneId = currentDtStartZoneId,
+                        dtStartIsUtc = currentDtStartIsUtc,
                         rrule = currentRrule,
                         xRecurrence = currentXRecurrence,
                         preReminders = currentPreReminders.toList()
                     )
                     if (parsed != null) {
                         reminders.add(parsed)
-                        if (reminders.size >= maxEvents) {
+                        if (reminders.size >= eventLimit) {
                             break
                         }
                     }
@@ -216,10 +228,19 @@ object IcsParser {
                             currentSummary = unescapeIcs(trimmed.substring(8))
                         trimmed.startsWith("DESCRIPTION:", ignoreCase = true) ->
                             currentDescription = unescapeIcs(trimmed.substring(12))
-                        trimmed.startsWith("DTSTART:", ignoreCase = true) ->
+                        trimmed.startsWith("DTSTART:", ignoreCase = true) -> {
                             currentDtStart = trimmed.substring(8)
-                        trimmed.startsWith("DTSTART;", ignoreCase = true) ->
+                            currentDtStartIsUtc = currentDtStart.endsWith("Z", ignoreCase = true)
+                        }
+                        trimmed.startsWith("DTSTART;", ignoreCase = true) -> {
+                            val property = trimmed.substringBefore(":")
                             currentDtStart = trimmed.substringAfter(":")
+                            currentDtStartIsUtc = currentDtStart.endsWith("Z", ignoreCase = true)
+                            val tzid = property.split(";")
+                                .firstOrNull { it.startsWith("TZID=", ignoreCase = true) }
+                                ?.substringAfter("=")
+                            currentDtStartZoneId = tzid?.let { runCatching { ZoneId.of(it) }.getOrNull() }
+                        }
                         trimmed.startsWith("RRULE:", ignoreCase = true) ->
                             currentRrule = trimmed.substring(6)
                         trimmed.startsWith("X-SOH3IL-RECURRENCE:", ignoreCase = true) ->
@@ -237,23 +258,46 @@ object IcsParser {
         description: String,
         dtStart: String,
         rrule: String,
+        dtStartZoneId: ZoneId? = null,
+        dtStartIsUtc: Boolean = false,
         xRecurrence: String = "",
         preReminders: List<PreReminder> = emptyList()
     ): Reminder? {
         return runCatching {
-            val year = dtStart.substring(0, 4).toInt()
-            val month = dtStart.substring(4, 6).toInt()
-            val day = dtStart.substring(6, 8).toInt()
+            val normalizedDtStart = dtStart.removeSuffix("Z").removeSuffix("z")
+            val year = normalizedDtStart.substring(0, 4).toInt()
+            val month = normalizedDtStart.substring(4, 6).toInt()
+            val day = normalizedDtStart.substring(6, 8).toInt()
 
             var hour = 9
             var minute = 0
-            if (dtStart.contains("T") && dtStart.length >= 13) {
-                val timePart = dtStart.substringAfter("T")
+            val hasTime = normalizedDtStart.contains("T") && normalizedDtStart.length >= 13
+            if (hasTime) {
+                val timePart = normalizedDtStart.substringAfter("T")
                 hour = timePart.substring(0, 2).toIntOrNull() ?: 9
                 minute = timePart.substring(2, 4).toIntOrNull() ?: 0
             }
 
-            val jResult = DateConverter.fromGregorian(year, month, day)
+            val sourceDateTime = LocalDateTime.of(
+                LocalDate.of(year, month, day),
+                LocalTime.of(hour.coerceIn(0, 23), minute.coerceIn(0, 59))
+            )
+            val sourceZone = when {
+                dtStartIsUtc -> ZoneOffset.UTC
+                else -> dtStartZoneId ?: JalaliDate.TEHRAN_ZONE
+            }
+            val tehranDateTime = if (hasTime) {
+                ZonedDateTime.of(sourceDateTime, sourceZone)
+                    .withZoneSameInstant(JalaliDate.TEHRAN_ZONE)
+                    .toLocalDateTime()
+            } else {
+                sourceDateTime
+            }
+            val jResult = DateConverter.fromGregorian(
+                tehranDateTime.year,
+                tehranDateTime.monthValue,
+                tehranDateTime.dayOfMonth
+            )
             val recurrence = if (xRecurrence.isNotBlank()) {
                 parseXRecurrence(xRecurrence)
             } else {
@@ -266,8 +310,8 @@ object IcsParser {
                 jalaliYear = jResult.jalali.year,
                 jalaliMonth = jResult.jalali.month,
                 jalaliDay = jResult.jalali.day,
-                hour = hour,
-                minute = minute,
+                hour = tehranDateTime.hour,
+                minute = tehranDateTime.minute,
                 recurrence = recurrence,
                 preReminders = preReminders,
                 isEnabled = true

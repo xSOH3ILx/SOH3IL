@@ -76,13 +76,17 @@ object AlarmScheduler {
      * Schedules the next exact alarm. Uses setExactAndAllowWhileIdle, never setAlarmClock,
      * so the status-bar clock cannot fire the reminder early.
      */
-    fun scheduleReminder(context: Context, reminder: Reminder) {
+    fun scheduleReminder(
+        context: Context,
+        reminder: Reminder,
+        forceRecalculate: Boolean = false
+    ) {
         if (!reminder.isEnabled) {
             cancelReminder(context, reminder)
             return
         }
 
-        val nextTrigger = if (reminder.nextTriggerEpochMillis > System.currentTimeMillis()) {
+        val nextTrigger = if (!forceRecalculate && reminder.nextTriggerEpochMillis > System.currentTimeMillis()) {
             reminder.nextTriggerEpochMillis
         } else {
             JalaliRecurrenceEngine.calculateNextTrigger(reminder)
@@ -150,10 +154,8 @@ object AlarmScheduler {
                 } else {
                     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
                 }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
             } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
             }
         } catch (_: SecurityException) {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)

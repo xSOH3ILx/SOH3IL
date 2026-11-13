@@ -19,7 +19,7 @@ val FarsiLightSurfaceVariant = Color(0xFFF4F4F5)
 val FarsiLightBorder = Color(0xFFE4E4E7)
 
 // Status & Indicators
-val FarsiHolidayRed = Color(0xFFB91C1C) // Holiday red, white text contrast >= 4.5:1
+val FarsiHolidayRed = Color(0xFFEF4444)
 val FarsiHolidayRedContainer = Color(0x20EF4444)
 val FarsiEventGray = Color(0xFF71717A) // Event slate
 val FarsiEventGrayContainer = Color(0x2071717A)

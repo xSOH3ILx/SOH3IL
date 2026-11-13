@@ -65,6 +65,7 @@ object JalaliRecurrenceEngine {
                 val maxDaysToSearch = (7 * interval * 10).coerceAtLeast(60)
                 for (dayOffset in 0..maxDaysToSearch) {
                     val dateToCheck = todayJalali.plusDays(dayOffset.toLong())
+                    if (dateToCheck.toJdn() < baseDate.toJdn()) continue
                     if (dateToCheck.dayOfWeek in targetDaysOfWeek) {
                         val daysFromBase = dateToCheck.toJdn() - baseDate.toJdn()
                         val weeksFromBase = (daysFromBase / 7).toInt()

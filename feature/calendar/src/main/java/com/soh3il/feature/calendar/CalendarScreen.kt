@@ -23,6 +23,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,6 +46,8 @@ import com.soh3il.feature.calendar.components.MonthGridView
 import com.soh3il.feature.calendar.components.SelectedDayDetails
 import com.soh3il.feature.calendar.components.WeekdaysRow
 import com.soh3il.feature.calendar.dialogs.YearMonthPickerDialog
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,12 +57,24 @@ fun CalendarScreen(
     onAddReminderClick: (JalaliDate) -> Unit = {},
     onReminderClick: (Reminder) -> Unit = {}
 ) {
-    val today = remember { JalaliDate.now() }
+    var today by remember { mutableStateOf(JalaliDate.now()) }
     var displayedDate by remember { mutableStateOf(today) }
     var selectedDate by remember { mutableStateOf(today) }
     var totalDragDistance by remember { mutableFloatStateOf(0f) }
     var viewMode by remember { mutableIntStateOf(0) } // 0=Month Grid, 1=Agenda View
     var showYearMonthPicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            val nextToday = JalaliDate.now()
+            if (nextToday != today) {
+                if (selectedDate == today) selectedDate = nextToday
+                if (displayedDate == today) displayedDate = nextToday
+                today = nextToday
+            }
+            delay(30_000L)
+        }
+    }
 
     val monthOccasions = remember(displayedDate.year, displayedDate.month, occasions) {
         if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(displayedDate.year, displayedDate.month)

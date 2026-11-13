@@ -104,4 +104,16 @@ class JalaliDateTest {
         assertTrue(JalaliDate.isLeap(1436))
         assertEquals(30, JalaliDate.getDaysInMonth(1436, 12))
     }
+
+    @Test
+    fun testCanonicalEngineModernEraBoundary() {
+        assertTrue(JalaliDate.isLeap(1498))
+        assertEquals(30, JalaliDate.getDaysInMonth(1498, 12))
+
+        val endOfLookupEra = JalaliDate(1498, 12, 30)
+        val firstAfterLookupEra = endOfLookupEra.plusDays(1)
+        assertEquals(1499, firstAfterLookupEra.year)
+        assertEquals(1, firstAfterLookupEra.month)
+        assertEquals(1, firstAfterLookupEra.day)
+    }
 }

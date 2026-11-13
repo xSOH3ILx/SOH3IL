@@ -12,22 +12,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.OpenInBrowser
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,27 +39,20 @@ import com.soh3il.core.updater.UpdateChecker
 import com.soh3il.core.updater.UpdateInfo
 import com.soh3il.feature.settings.components.SettingsSectionHeader
 import kotlinx.coroutines.launch
-import java.io.File
 
 @Composable
 fun AboutUpdateSection(
     context: Context,
-    currentVersionName: String,
-    onShowInstallPermissionDialog: () -> Unit
+    currentVersionName: String
 ) {
     val coroutineScope = rememberCoroutineScope()
-
     var isCheckingUpdate by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
     var updateCheckMessage by remember { mutableStateOf<String?>(null) }
-    var isDownloading by remember { mutableStateOf(false) }
-    var downloadProgress by remember { mutableFloatStateOf(0f) }
-    var downloadedApkFile by remember { mutableStateOf<File?>(null) }
-    var downloadError by remember { mutableStateOf<String?>(null) }
 
     SettingsSectionHeader(
-        title = "درباره برنامه و بروزرسانی",
-        subtitle = "اطلاعات نسخه، سازنده و دریافت مستقیم جدیدترین نگارش",
+        title = "درباره برنامه و به‌روزرسانی",
+        subtitle = "اطلاعات نسخه و صفحه انتشار رسمی SOH3IL",
         icon = Icons.Default.SystemUpdate
     )
     Spacer(modifier = Modifier.height(6.dp))
@@ -77,12 +65,11 @@ fun AboutUpdateSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "گاه‌شمار و یادآور سهیل (SOH3IL)",
+                    text = "گاه‌شمار و یادآور SOH3IL",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-
                 Text(
                     text = "نسخه ${currentVersionName.toPersianDigits()}",
                     fontSize = 12.sp,
@@ -92,31 +79,29 @@ fun AboutUpdateSection(
             }
 
             Text(
-                text = "طراحی و توسعه‌یافته با کاتلین خالص و Jetpack Compose برای استفاده شخصی و خانوادگی سهیل؛ آزاد و متن‌باز برای عموم علاقه‌مندان.",
+                text = "طراحی و توسعه‌یافته با کاتلین خالص و Jetpack Compose برای استفاده شخصی و خانوادگی؛ آزاد و متن‌باز برای عموم علاقه‌مندان.",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 18.sp,
                 modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
             )
 
-            // Check Update Button
             Button(
                 onClick = {
                     coroutineScope.launch {
                         isCheckingUpdate = true
                         updateCheckMessage = null
-                        downloadError = null
                         val result = UpdateChecker.checkForUpdates(currentVersionName)
-                        isCheckingUpdate = false
                         updateInfo = result
+                        isCheckingUpdate = false
                         updateCheckMessage = if (result.hasUpdate) {
-                            "نسخه جدید ${result.latestVersionName.toPersianDigits()} در گیت‌هاب موجود است!"
+                            "نسخه جدید ${result.latestVersionName.toPersianDigits()} در صفحه انتشار رسمی موجود است."
                         } else {
-                            "شما از آخرین نسخه سهیل استفاده می‌کنید."
+                            "شما از آخرین نسخه SOH3IL استفاده می‌کنید."
                         }
                     }
                 },
-                enabled = !isCheckingUpdate && !isDownloading,
+                enabled = !isCheckingUpdate,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -127,25 +112,27 @@ fun AboutUpdateSection(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("در حال بررسی گیت‌هاب...", fontSize = 13.sp)
+                    Text("در حال بررسی نسخه...", fontSize = 13.sp)
                 } else {
-                    Text("بررسی نسخه جدید در گیت‌هاب", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text("بررسی نسخه جدید", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            updateCheckMessage?.let { msg ->
+            updateCheckMessage?.let { message ->
                 Text(
-                    text = msg,
+                    text = message,
                     fontSize = 13.sp,
-                    color = if (updateInfo?.hasUpdate == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (updateInfo?.hasUpdate == true) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
 
-            // When Update is Available
-            if (updateInfo?.hasUpdate == true) {
+            updateInfo?.takeIf { it.hasUpdate }?.let { info ->
                 Spacer(modifier = Modifier.height(12.dp))
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -155,167 +142,37 @@ fun AboutUpdateSection(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Default.Info,
+                            imageVector = Icons.Default.Info,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "تغییرات نسخه ${updateInfo!!.latestVersionName.toPersianDigits()}:",
+                            text = "تغییرات نسخه ${info.latestVersionName.toPersianDigits()}:",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(start = 6.dp)
                         )
                     }
-
                     Text(
-                        text = updateInfo!!.changelog,
+                        text = info.changelog,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp,
                         modifier = Modifier.padding(top = 4.dp)
                     )
-
-                    if (updateInfo!!.matchedApkName.isNotEmpty()) {
-                        Text(
-                            text = "فایل سازگار با پردازنده: ${updateInfo!!.matchedApkName}",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Download Progress
-                    if (isDownloading) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            LinearProgressIndicator(
-                                progress = { downloadProgress },
-                                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "در حال دریافت فایل نصبی: ${(downloadProgress * 100).toInt().toPersianDigits()}%",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    } else if (downloadedApkFile != null && downloadedApkFile!!.exists()) {
-                        // Downloaded and Ready to Install
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = "فایل نصبی آماده نصب است",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(start = 6.dp)
-                                )
-                            }
-
-                            val canInstall = UpdateChecker.canInstallUnknownPackages(context)
-
-                            if (!canInstall) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "برای نصب نسخه جدید، مجوز «نصب برنامه‌های ناشناخته» نیاز است. لطفاً روی دکمه زیر زده و اجازه را فعال کنید:",
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.error,
-                                    lineHeight = 18.sp
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Button(
-                                    onClick = { UpdateChecker.openInstallPermissionSettings(context) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp)
-                                ) {
-                                    Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("فعال‌سازی مجوز نصب در تنظیمات", fontSize = 12.sp)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Button(
-                                onClick = {
-                                    if (!UpdateChecker.canInstallUnknownPackages(context)) {
-                                        onShowInstallPermissionDialog()
-                                        UpdateChecker.openInstallPermissionSettings(context)
-                                    } else {
-                                        UpdateChecker.launchApkInstall(context, downloadedApkFile!!)
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Icon(Icons.Default.SystemUpdate, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("نصب نسخه جدید", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    } else {
-                        // Start Download Button
-                        Button(
-                            onClick = {
-                                coroutineScope.launch {
-                                    isDownloading = true
-                                    downloadProgress = 0f
-                                    downloadError = null
-                                    val result = UpdateChecker.downloadApk(
-                                        context = context,
-                                        downloadUrl = updateInfo!!.downloadUrl,
-                                        versionName = updateInfo!!.latestVersionName,
-                                        onProgress = { p, _, _ ->
-                                            downloadProgress = p
-                                        }
-                                    )
-                                    isDownloading = false
-                                    result.onSuccess { file ->
-                                        downloadedApkFile = file
-                                        if (UpdateChecker.canInstallUnknownPackages(context)) {
-                                            UpdateChecker.launchApkInstall(context, file)
-                                        }
-                                    }.onFailure { err ->
-                                        downloadError = err.message ?: "خطا در دانلود فایل"
-                                    }
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("دانلود و نصب مستقیم", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    downloadError?.let { err ->
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = err,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-
-                    // Browser Download Fallback
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(
-                        onClick = {
-                            UpdateChecker.openBrowserDownload(context, updateInfo!!.releaseHtmlUrl)
-                        },
+                        onClick = { UpdateChecker.openReleasePage(context, info.releaseHtmlUrl) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(
+                            imageVector = Icons.Default.OpenInBrowser,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("یا دانلود فایل APK از طریق مرورگر", fontSize = 12.sp)
+                        Text("مشاهده صفحه انتشار رسمی", fontSize = 12.sp)
                     }
                 }
             }

@@ -2,9 +2,6 @@ package com.soh3il.core.jalali
 
 import com.soh3il.core.jalali.engine.civilFromJdn
 import com.soh3il.core.jalali.engine.jdnFromCivil
-import com.soh3il.core.jalali.engine.jdnFromPersian
-import com.soh3il.core.jalali.engine.persianFromJdn
-import com.soh3il.core.jalali.engine.persianLeapYear
 import com.soh3il.core.model.ShortMonthPolicy
 import java.time.Instant
 import java.time.ZoneId
@@ -66,8 +63,7 @@ data class JalaliDate(
         }
 
     fun toJdn(): Long {
-        val lookup = com.soh3il.core.jalali.engine.LookupTableConverter.toJdn(year, month, day)
-        return if (lookup != -1L) lookup else jdnFromPersian(year, month, day)
+        return JalaliCalendarEngine.toJdn(year, month, day)
     }
 
     fun toEpochMillis(
@@ -139,26 +135,18 @@ data class JalaliDate(
         val TEHRAN_ZONE: ZoneId = ZoneId.of("Asia/Tehran")
 
         fun isLeap(year: Int): Boolean {
-            if (year in 1304..1498) {
-                return com.soh3il.core.jalali.engine.LookupTableConverter.isLeap(year)
-            }
-            return persianLeapYear(year, 52.5)
+            return JalaliCalendarEngine.isLeap(year)
         }
 
         fun isLeapYear(year: Int): Boolean = isLeap(year)
 
         fun daysInMonth(year: Int, month: Int): Int = getDaysInMonth(year, month)
 
-        fun getDaysInMonth(year: Int, month: Int): Int = when (month) {
-            in 1..6 -> 31
-            in 7..11 -> 30
-            12 -> if (isLeap(year)) 30 else 29
-            else -> throw IllegalArgumentException("ماه نامعتبر: $month")
-        }
+        fun getDaysInMonth(year: Int, month: Int): Int =
+            JalaliCalendarEngine.daysInMonth(year, month)
 
         fun fromJdn(jdn: Long): JalaliDate {
-            val (y, m, d) = com.soh3il.core.jalali.engine.LookupTableConverter.fromJdn(jdn)
-                ?: persianFromJdn(jdn)
+            val (y, m, d) = JalaliCalendarEngine.fromJdn(jdn)
             val safeYear = y.coerceIn(1, 9999)
             val safeMonth = m.coerceIn(1, 12)
             val maxDays = getDaysInMonth(safeYear, safeMonth)

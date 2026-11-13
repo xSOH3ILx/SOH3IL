@@ -159,9 +159,7 @@ fun Soh3ilTheme(
             colorScheme = colorScheme,
             typography = Soh3ilTypography
         ) {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                content()
-            }
+            content()
         }
     }
 }

@@ -78,12 +78,16 @@ class MidnightReceiver : BroadcastReceiver() {
 
                         if (action in RESCHEDULE_ACTIONS) {
                             activeReminders.forEach { reminder ->
-                                AlarmScheduler.scheduleReminder(context, reminder)
+                                AlarmScheduler.scheduleReminder(
+                                    context = context,
+                                    reminder = reminder,
+                                    forceRecalculate = true
+                                )
                             }
                         }
 
                         PersistentNotificationHelper.updateNotification(context, activeReminders)
-                        triggerWidgetUpdate(context)
+                        requestWidgetUpdate(context)
                         LiveIconHelper.updateLiveIcon(context)
                         MidnightScheduler.scheduleMidnightAlarm(context)
                     }
@@ -95,7 +99,7 @@ class MidnightReceiver : BroadcastReceiver() {
             }
         }
 
-        private fun triggerWidgetUpdate(context: Context) {
+        fun requestWidgetUpdate(context: Context) {
             try {
                 val component = ComponentName(
                     context.packageName,

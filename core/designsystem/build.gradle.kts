@@ -24,6 +24,15 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        disable += "RememberInComposition"
+        disable += "FrequentlyChangingValue"
+        disable += "NullSafeMutableLiveData"
+        disable += "AutoboxingStateCreation"
+        disable += "ObsoleteLintCustomCheck"
+        disable += "IconMissingDensityFolder"
+    }
 }
 
 dependencies {

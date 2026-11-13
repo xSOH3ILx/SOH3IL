@@ -100,7 +100,7 @@ fun CalendarHeader(
                 val gregConv = DateConverter.fromJalali(currentDate.year, currentDate.month, 15)
                 val gregMonthName = DateConverter.GREGORIAN_MONTHS_EN.getOrElse(gregConv.gregorian.monthValue - 1) { "" }
                 val hijriMonthName = DateConverter.HIJRI_MONTHS_FA.getOrElse(gregConv.hijriMonth - 1) { "" }
-                val companionText = "$gregMonthName ${gregConv.gregorian.year} • $hijriMonthName ${gregConv.hijriYear.toPersianDigits()}"
+                val companionText = "$gregMonthName ${gregConv.gregorian.year.toPersianDigits()} • $hijriMonthName ${gregConv.hijriYear.toPersianDigits()}"
                 Text(
                     text = companionText,
                     fontSize = 10.sp,
@@ -114,7 +114,7 @@ fun CalendarHeader(
             SuggestionChip(
                 onClick = onTodayClick,
                 modifier = Modifier
-                    .defaultMinSize(minHeight = 44.dp)
+                    .defaultMinSize(minHeight = 48.dp)
                     .semantics { contentDescription = "بازگشت به امروز" },
                 label = {
                     Text(

@@ -48,7 +48,6 @@ import com.soh3il.core.model.AppTheme
 import com.soh3il.core.scheduler.LiveIconHelper
 import com.soh3il.core.scheduler.PersistentNotificationHelper
 import com.soh3il.feature.settings.dialogs.AutoStartDialog
-import com.soh3il.feature.settings.dialogs.InstallPermissionDialog
 import com.soh3il.feature.settings.sections.AboutUpdateSection
 import com.soh3il.feature.settings.sections.AppearanceSection
 import com.soh3il.feature.settings.sections.BatterySection
@@ -76,7 +75,6 @@ fun SettingsScreen(
     // Dialog state
     var showDateConverterDialog by remember { mutableStateOf(false) }
     var showAutoStartDialog by remember { mutableStateOf(false) }
-    var showInstallPermissionDialog by remember { mutableStateOf(false) }
     val deviceGuide = remember { AutoStartHelper.getDeviceGuide() }
 
     // User preferences state
@@ -164,9 +162,7 @@ fun SettingsScreen(
 
     val powerManager = remember(context) { context.getSystemService(Context.POWER_SERVICE) as? PowerManager }
     val isIgnoringBattery = remember(context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
-        } else true
+        powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
     }
 
     Column(
@@ -269,11 +265,10 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 5. درباره برنامه و بروزرسانی (About & Direct Update)
+        // 5. درباره برنامه و به‌روزرسانی (About & Release Metadata)
         AboutUpdateSection(
             context = context,
-            currentVersionName = currentVersionName,
-            onShowInstallPermissionDialog = { showInstallPermissionDialog = true }
+            currentVersionName = currentVersionName
         )
     }
 
@@ -283,13 +278,6 @@ fun SettingsScreen(
             context = context,
             deviceGuide = deviceGuide,
             onDismiss = { showAutoStartDialog = false }
-        )
-    }
-
-    if (showInstallPermissionDialog) {
-        InstallPermissionDialog(
-            context = context,
-            onDismiss = { showInstallPermissionDialog = false }
         )
     }
 

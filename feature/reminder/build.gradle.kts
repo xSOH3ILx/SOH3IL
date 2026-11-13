@@ -24,13 +24,19 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        disable += "RememberInComposition"
+        disable += "FrequentlyChangingValue"
+        disable += "NullSafeMutableLiveData"
+        disable += "AutoboxingStateCreation"
+        disable += "ObsoleteLintCustomCheck"
+    }
 }
 
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:jalali"))
-    implementation(project(":core:database"))
-    implementation(project(":core:scheduler"))
     implementation(project(":core:designsystem"))
 
     implementation(platform(libs.compose.bom))

@@ -132,4 +132,24 @@ class IcsParserTest {
         )
         assertEquals(5, imported.size)
     }
+
+    @Test
+    fun testUtcDateTimeIsConvertedToTehran() {
+        val ics = """
+            BEGIN:VCALENDAR
+            BEGIN:VEVENT
+            DTSTART:20250321T063000Z
+            SUMMARY:رویداد UTC
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val imported = IcsParser.importFromIcsStream(
+            ByteArrayInputStream(ics.toByteArray(Charsets.UTF_8))
+        )
+
+        assertEquals(1, imported.size)
+        assertEquals(10, imported.first().hour)
+        assertEquals(0, imported.first().minute)
+    }
 }

@@ -1,9 +1,17 @@
 <resources>
-    <string name="app_name">سهیل</string>
+    <!-- Permanent product name. Change only on the user's direct instruction. -->
+    <string name="app_name">SOH3IL</string>
     <string name="shortcut_add_reminder_short">یادآور جدید</string>
     <string name="shortcut_add_reminder_long">افزودن یادآور جدید</string>
     <string name="shortcut_today_short">امروز</string>
     <string name="shortcut_today_long">مشاهده وقایع امروز</string>
     <string name="shortcut_converter_short">مبدل تاریخ</string>
     <string name="shortcut_converter_long">مبدل پیشرفته تاریخ</string>
+    <string name="widget_today">امروز</string>
+    <string name="widget_sample_day">۱۸</string>
+    <string name="widget_sample_month">آبان</string>
+    <string name="widget_sample_year">۱۴۰۵ خورشیدی</string>
+    <string name="widget_sample_other_dates">8 نوامبر • ۲۷ جمادی‌الاول</string>
+    <string name="widget_sample_occasion">بدون مناسبت تعطیل</string>
+    <string name="widget_sample_reminders">بدون یادآور برای امروز</string>
 </resources>

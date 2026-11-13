@@ -38,13 +38,15 @@ fun DayCell(
     isSelected: Boolean,
     isToday: Boolean,
     isHoliday: Boolean,
+    isFriday: Boolean = false,
     hasReminder: Boolean,
     monthName: String = "",
     eventsCount: Int = 0,
     onClick: () -> Unit
 ) {
+    val isOfficialHoliday = isHoliday && !isFriday
     val cellBackground = when {
-        // Selected holidays stay red, never blue. #B91C1C keeps white text above 4.5:1.
+        // Selected holidays stay red, never blue, per the product color contract.
         isSelected && isHoliday -> FarsiHolidayRed
         isSelected -> MaterialTheme.colorScheme.primary
         isToday -> MaterialTheme.colorScheme.surfaceVariant
@@ -56,7 +58,8 @@ fun DayCell(
         append(dayNumber.toPersianDigits())
         if (monthName.isNotBlank()) append(" $monthName")
         if (isToday) append("، امروز")
-        if (isHoliday) append("، تعطیل رسمی")
+        if (isFriday) append("، جمعه")
+        if (isOfficialHoliday) append("، تعطیل رسمی")
         if (eventsCount > 0) {
             append("، دارای ${eventsCount.toPersianDigits()} یادآور")
         } else if (hasReminder) {

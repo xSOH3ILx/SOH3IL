@@ -114,7 +114,7 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             }
 
             // 4. Click opens MainActivity
-            val launchIntent = Intent(context, Class.forName("com.soh3il.calendar.MainActivity")).apply {
+            val launchIntent = Intent(context, com.soh3il.calendar.MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             val pendingIntent = PendingIntent.getActivity(

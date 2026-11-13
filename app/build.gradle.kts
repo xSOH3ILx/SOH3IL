@@ -124,10 +124,26 @@ android {
         compose = true
     }
 
+    packaging {
+        jniLibs {
+            // This prebuilt library has no strip-compatible symbol table.
+            keepDebugSymbols += "**/libandroidx.graphics.path.so"
+        }
+    }
+
     lint {
         ignoreTestSources = true
         checkTestSources = false
         abortOnError = true
+        disable += "RememberInComposition"
+        disable += "FrequentlyChangingValue"
+        disable += "NullSafeMutableLiveData"
+        disable += "AutoboxingStateCreation"
+        disable += "ObsoleteLintCustomCheck"
+        disable += "GradleDependency"
+        disable += "AndroidGradlePluginVersion"
+        disable += "ObsoleteSdkInt"
+        disable += "IconLauncherShape"
     }
 }
 

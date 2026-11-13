@@ -18,8 +18,10 @@ class DatabaseConverters {
     @TypeConverter
     fun toRecurrenceRule(data: String): RecurrenceRule {
         val parts = data.split("|")
-        val type = RecurrenceType.valueOf(parts.getOrElse(0) { RecurrenceType.NONE.name })
-        val interval = parts.getOrNull(1)?.toIntOrNull() ?: 1
+        val type = runCatching {
+            RecurrenceType.valueOf(parts.getOrElse(0) { RecurrenceType.NONE.name })
+        }.getOrDefault(RecurrenceType.NONE)
+        val interval = (parts.getOrNull(1)?.toIntOrNull() ?: 1).coerceAtLeast(1)
         val dayOfMonth = parts.getOrNull(2)?.toIntOrNull()
         val daysOfWeek = parts.getOrNull(3)
             ?.takeIf { it.isNotEmpty() }
@@ -52,7 +54,7 @@ class DatabaseConverters {
             if (parts.size == 2) {
                 val value = parts[0].toIntOrNull()
                 val unit = runCatching { PreReminderUnit.valueOf(parts[1]) }.getOrNull()
-                if (value != null && unit != null) PreReminder(value, unit) else null
+                if (value != null && value > 0 && unit != null) PreReminder(value, unit) else null
             } else null
         }
     }

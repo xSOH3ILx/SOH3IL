@@ -12,7 +12,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.soh3il.core.database.preferences.UserPreferences
@@ -45,21 +44,19 @@ object PersistentNotificationHelper {
     )
 
     fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "نمایش پیوسته تاریخ روز شمسی و رویدادها در نوار وضعیت، صفحه قفل و AOD"
-                setShowBadge(true)
-                enableVibration(false)
-                enableLights(false)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-            notificationManager.createNotificationChannel(channel)
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "نمایش پیوسته تاریخ روز شمسی و رویدادها در نوار وضعیت، صفحه قفل و AOD"
+            setShowBadge(true)
+            enableVibration(false)
+            enableLights(false)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
+        notificationManager.createNotificationChannel(channel)
     }
 
     private fun createDayNumberBitmap(context: Context, dayNumber: Int): Bitmap {
@@ -157,6 +154,7 @@ object PersistentNotificationHelper {
         return bitmap
     }
 
+    @Suppress("DiscouragedApi")
     private fun getDayDrawableRes(context: Context, day: Int): Int {
         val safeDay = day.coerceIn(1, 31)
         val resName = "ic_stat_day_$safeDay"
@@ -202,10 +200,10 @@ object PersistentNotificationHelper {
         // Today's active reminders count (including recurring reminders)
         val todayRemindersCount = reminders.count { it.matchesDate(today) }
 
-        // تفکیک خطوط به شکل ساختاریافته، کاملاً راست‌چین و بدون فشردگی خطی (بدون ایموجی طبق قوانین طراحی سهیل)
+        // تفکیک خطوط به شکل ساختاریافته، کاملاً راست‌چین و بدون فشردگی خطی (بدون ایموجی طبق قوانین طراحی برنامه)
         val lineJalali = "${rlm}تقویم خورشیدی: ${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
-        val lineGregorian = "${rlm}تقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth} ${conv.dayOfWeekNameEn} ${conv.gregorian.year})"
-        val lineHijri = if (hijriStr != null) "${rlm}تقویم هجری قمری: $hijriStr" else null
+        val lineGregorian = "${rlm}تقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth.toPersianDigits()} ${conv.dayOfWeekNameEn} ${conv.gregorian.year.toPersianDigits()})"
+        val lineHijri = if (hijriStr != null) "${rlm}تقویم هجری قمری محاسباتی: $hijriStr" else null
 
         val lineOccasions = if (occasions.isNotEmpty()) {
             "${rlm}رویدادها: " + occasions.joinToString("، ") { it.titleFa }
@@ -237,7 +235,10 @@ object PersistentNotificationHelper {
         }
 
         // Content intent (explicitly opens MainActivity)
-        val launchIntent = Intent(context, Class.forName("com.soh3il.calendar.MainActivity")).apply {
+        val launchIntent = Intent().setClassName(
+            context,
+            "com.soh3il.calendar.MainActivity"
+        ).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val contentPendingIntent = PendingIntent.getActivity(
@@ -248,7 +249,10 @@ object PersistentNotificationHelper {
         )
 
         // Action intent for "+ یادآور جدید" (explicitly opens MainActivity)
-        val addReminderIntent = Intent(context, Class.forName("com.soh3il.calendar.MainActivity")).apply {
+        val addReminderIntent = Intent().setClassName(
+            context,
+            "com.soh3il.calendar.MainActivity"
+        ).apply {
             putExtra(EXTRA_OPEN_ADD_REMINDER, true)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }

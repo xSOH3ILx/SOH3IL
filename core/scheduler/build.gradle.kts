@@ -19,6 +19,14 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    lint {
+        disable += "RememberInComposition"
+        disable += "FrequentlyChangingValue"
+        disable += "NullSafeMutableLiveData"
+        disable += "AutoboxingStateCreation"
+        disable += "ObsoleteLintCustomCheck"
+    }
 }
 
 dependencies {

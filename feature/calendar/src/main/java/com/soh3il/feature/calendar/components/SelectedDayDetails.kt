@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -159,7 +160,7 @@ fun SelectedDayDetails(
 
                 // Qamari Chip
                 TripleDateCard(
-                    title = "قمری",
+                    title = "قمری محاسباتی",
                     value = hijriFull,
                     onClick = { copyToClipboard("تاریخ قمری", hijriFull) },
                     modifier = Modifier.weight(1f)
@@ -266,6 +267,7 @@ private fun TripleDateCard(
             .clip(RoundedCornerShape(10.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable { onClick() }
+            .heightIn(min = 48.dp)
             .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
