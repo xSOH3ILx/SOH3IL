@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Android](https://img.shields.io/badge/Platform-Android-green.svg)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-blue.svg)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-blue.svg)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-blueviolet.svg)
 ![License](https://img.shields.io/badge/License-MIT-orange.svg)
 ![CI/CD](https://github.com/xSOH3ILx/SOH3IL/actions/workflows/build-and-release.yml/badge.svg)
@@ -60,8 +60,8 @@
 - تفکیک خط به خط و ساختاریافته تاریخ‌های خورشیدی، میلادی و هجری قمری با نشانه‌گذاری اجباری راست‌چین (RLM Unicode) جهت انطباق ۱۰۰٪ با زبان فارسی در کلیه پوسته‌های اندروید.
 - نمایش مناسبت‌های روز و خلاصه یادآورهای فعال به همراه کلید دسترسی سریع «+ افزودن یادآور».
 
-### ۹. ویجت هوشمند Material 3 Expressive برای صفحه اصلی (Home Screen Widget)
-- ویجت اختصاصی با سبک طراحی Google Material 3 Expressive برای صفحه اصلی گوشی.
+### ۹. ویجت‌های هوشمند Material 3 Expressive برای صفحه اصلی (Home Screen Widgets)
+- سه اندازهٔ ویجت با فونت Vazirmatn: روز فشرده، کارت تاریخ و نمای ماهانهٔ ۶×۷ با هایلایت امروز و تعطیلات.
 - نمایش بَدج بزرگ عدد روز، نام ماه و روز هفته به همراه سال خورشیدی، معادل میلادی/قمری، رویدادهای روز و تعداد یادآورها با قابلیت لمس مستقیم جهت باز شدن برنامه.
 
 ### ۱۰. نمای دستور کار و تاگل expressive تب‌های تقویم

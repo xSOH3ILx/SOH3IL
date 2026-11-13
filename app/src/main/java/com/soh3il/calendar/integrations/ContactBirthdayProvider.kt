@@ -1,5 +1,6 @@
 package com.soh3il.calendar.integrations
 
+import android.annotation.SuppressLint
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -11,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object ContactBirthdayProvider {
+    @SuppressLint("Recycle")
     suspend fun loadForSolarYear(context: Context, solarYear: Int): List<Occasion> = withContext(Dispatchers.IO) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             return@withContext emptyList()

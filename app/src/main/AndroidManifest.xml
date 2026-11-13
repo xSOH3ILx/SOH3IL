@@ -561,6 +561,28 @@
                 android:resource="@xml/widget_calendar_info" />
         </receiver>
 
+        <receiver
+            android:name=".widget.CompactCalendarWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_calendar_compact_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.MonthCalendarWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_calendar_month_info" />
+        </receiver>
+
         <!-- FileProvider for calendar export sharing -->
         <provider
             android:name="androidx.core.content.FileProvider"

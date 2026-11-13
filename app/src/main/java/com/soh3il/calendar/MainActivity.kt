@@ -83,7 +83,10 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIncomingIntent(intent: Intent?) {
         if (intent == null) return
-        if (intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)) {
+        if (
+            intent.action == com.soh3il.core.scheduler.PersistentNotificationHelper.ACTION_OPEN_ADD_REMINDER ||
+            intent.getBooleanExtra(com.soh3il.core.scheduler.PersistentNotificationHelper.EXTRA_OPEN_ADD_REMINDER, false)
+        ) {
             openAddReminderTrigger = true
         }
         when (intent.getStringExtra("extra_action")) {

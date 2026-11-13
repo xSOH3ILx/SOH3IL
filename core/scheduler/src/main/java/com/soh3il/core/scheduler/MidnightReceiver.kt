@@ -101,18 +101,22 @@ class MidnightReceiver : BroadcastReceiver() {
 
         fun requestWidgetUpdate(context: Context) {
             try {
-                val component = ComponentName(
-                    context.packageName,
-                    "com.soh3il.calendar.widget.CalendarAppWidgetProvider"
-                )
                 val manager = AppWidgetManager.getInstance(context)
-                val ids = manager.getAppWidgetIds(component)
-                if (ids.isEmpty()) return
-                val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
-                    this.component = component
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                listOf(
+                    "com.soh3il.calendar.widget.CalendarAppWidgetProvider",
+                    "com.soh3il.calendar.widget.CompactCalendarWidgetProvider",
+                    "com.soh3il.calendar.widget.MonthCalendarWidgetProvider"
+                ).forEach { providerName ->
+                    val component = ComponentName(context.packageName, providerName)
+                    val ids = manager.getAppWidgetIds(component)
+                    if (ids.isNotEmpty()) {
+                        val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
+                            this.component = component
+                            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                        }
+                        context.sendBroadcast(intent)
+                    }
                 }
-                context.sendBroadcast(intent)
             } catch (e: Exception) {
                 Log.e(TAG, "widget refresh failed: ${e.javaClass.simpleName}")
             }

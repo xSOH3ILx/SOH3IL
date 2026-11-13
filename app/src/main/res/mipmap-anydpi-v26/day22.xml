@@ -3,13 +3,13 @@
     <background android:drawable="@color/dynamic_icon_background" />
     <foreground>
         <inset
-            android:drawable="@drawable/ic_stat_day_22"
+            android:drawable="@drawable/ic_launcher_day_22"
             android:inset="18%"
             android:tint="@color/dynamic_icon_digit" />
     </foreground>
     <monochrome>
         <inset
-            android:drawable="@drawable/ic_stat_day_22"
+            android:drawable="@drawable/ic_launcher_day_22"
             android:inset="18%"
             android:tint="@color/dynamic_icon_digit" />
     </monochrome>

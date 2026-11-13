@@ -56,11 +56,16 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
         fun requestUpdate(context: Context) {
             try {
                 val appWidgetManager = AppWidgetManager.getInstance(context)
-                val thisWidget = ComponentName(context, CalendarAppWidgetProvider::class.java)
-                val allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
-                if (allWidgetIds != null && allWidgetIds.isNotEmpty()) {
+                val components = listOf(
+                    CalendarAppWidgetProvider::class.java,
+                    CompactCalendarWidgetProvider::class.java,
+                    MonthCalendarWidgetProvider::class.java
+                ).map { ComponentName(context, it) }
+                components.forEach { component ->
+                    val allWidgetIds = appWidgetManager.getAppWidgetIds(component)
+                    if (allWidgetIds.isEmpty()) return@forEach
                     val updateIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
-                        component = thisWidget
+                        this.component = component
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds)
                     }
                     context.sendBroadcast(updateIntent)
@@ -75,6 +80,8 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             for (widgetId in allWidgetIds) {
                 updateAppWidget(context, appWidgetManager, widgetId, reminders)
             }
+            CompactCalendarWidgetProvider.updateAllWidgets(context)
+            MonthCalendarWidgetProvider.updateAllWidgets(context)
         }
 
         fun updateAppWidget(

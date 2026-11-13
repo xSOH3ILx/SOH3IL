@@ -88,7 +88,7 @@ fun AddReminderSheet(
     var recurrenceType by remember { mutableStateOf(existingReminder?.recurrence?.type ?: RecurrenceType.NONE) }
     var recurrenceInterval by remember { mutableIntStateOf(existingReminder?.recurrence?.interval ?: 1) }
     var showCustomRecurrenceDialog by remember { mutableStateOf(false) }
-    var recurrenceExpanded by remember { mutableStateOf(existingReminder?.recurrence?.type != RecurrenceType.NONE) }
+    var recurrenceExpanded by remember { mutableStateOf(false) }
 
     // Pre-reminder state: presets or custom
     val initialPreMinutes = existingReminder?.preReminders?.firstOrNull()?.toMinutes()?.toInt()
@@ -106,7 +106,7 @@ fun AddReminderSheet(
     }
     var isCustomPreReminderSelected by remember { mutableStateOf(customPreReminder != null) }
     var showCustomPreReminderDialog by remember { mutableStateOf(false) }
-    var preReminderExpanded by remember { mutableStateOf(existingReminder?.preReminders?.isNotEmpty() == true) }
+    var preReminderExpanded by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -185,7 +185,12 @@ fun AddReminderSheet(
                     recurrenceExpanded = true
                     if (type == RecurrenceType.NONE) recurrenceInterval = 1
                 },
-                onCustomizeIntervalClick = { showCustomRecurrenceDialog = true },
+                onCustomizeIntervalClick = {
+                    if (recurrenceType == RecurrenceType.NONE) {
+                        recurrenceType = RecurrenceType.DAILY
+                    }
+                    showCustomRecurrenceDialog = true
+                },
                 expanded = recurrenceExpanded,
                 onExpandedChange = { recurrenceExpanded = !recurrenceExpanded }
             )

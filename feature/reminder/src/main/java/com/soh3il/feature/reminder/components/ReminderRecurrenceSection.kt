@@ -91,25 +91,26 @@ fun ReminderRecurrenceSection(
                     )
                 }
 
-                // Customize Recurrence Interval Button
-                if (recurrenceType != RecurrenceType.NONE) {
-                    FilterChip(
-                        selected = recurrenceInterval > 1,
-                        onClick = onCustomizeIntervalClick,
-                        label = {
-                            val label = if (recurrenceInterval > 1) "تکرار دلخواه: ${recurrenceInterval.toPersianDigits()}" else "تکرار دلخواه"
-                            Text(label, fontSize = 12.sp, fontWeight = if (recurrenceInterval > 1) FontWeight.Bold else FontWeight.Normal)
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
+                FilterChip(
+                    selected = recurrenceInterval > 1,
+                    onClick = onCustomizeIntervalClick,
+                    label = {
+                        val label = if (recurrenceInterval > 1) {
+                            "تکرار دلخواه: ${recurrenceInterval.toPersianDigits()}"
+                        } else {
+                            "تکرار دلخواه"
+                        }
+                        Text(label, fontSize = 12.sp, fontWeight = if (recurrenceInterval > 1) FontWeight.Bold else FontWeight.Normal)
+                    },
+                    leadingIcon = {
+                        Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp))
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
             }
     }
 }

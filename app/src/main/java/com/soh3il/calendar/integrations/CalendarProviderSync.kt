@@ -1,5 +1,6 @@
 package com.soh3il.calendar.integrations
 
+import android.annotation.SuppressLint
 import android.Manifest
 import android.content.ContentValues
 import android.content.Context
@@ -56,6 +57,7 @@ object CalendarProviderSync {
         Result.success(synced)
     }
 
+    @SuppressLint("Recycle")
     private fun findWritableCalendarId(context: Context): Long? {
         val projection = arrayOf(CalendarContract.Calendars._ID, CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL)
         context.contentResolver.query(
@@ -70,6 +72,7 @@ object CalendarProviderSync {
         return null
     }
 
+    @SuppressLint("Recycle")
     private fun findEventId(context: Context, marker: String): Long? {
         context.contentResolver.query(
             CalendarContract.Events.CONTENT_URI,

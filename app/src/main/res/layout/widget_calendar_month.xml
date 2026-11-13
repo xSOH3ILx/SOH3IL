@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/month_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layoutDirection="rtl"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/month_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/vazirmatn_bold"
+        android:gravity="center"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
+
+        <TextView android:id="@+id/month_weekday_0" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_weekday_1" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_weekday_2" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_weekday_3" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_weekday_4" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_weekday_5" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_weekday_6" style="@style/WidgetCalendarCell" />
+    </LinearLayout>
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:columnCount="7"
+        android:rowCount="6">
+
+        <TextView android:id="@+id/month_cell_0" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_1" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_2" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_3" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_4" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_5" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_6" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_7" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_8" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_9" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_10" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_11" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_12" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_13" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_14" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_15" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_16" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_17" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_18" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_19" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_20" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_21" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_22" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_23" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_24" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_25" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_26" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_27" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_28" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_29" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_30" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_31" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_32" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_33" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_34" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_35" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_36" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_37" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_38" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_39" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_40" style="@style/WidgetCalendarCell" />
+        <TextView android:id="@+id/month_cell_41" style="@style/WidgetCalendarCell" />
+    </GridLayout>
+</LinearLayout>

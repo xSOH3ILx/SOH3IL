@@ -31,6 +31,7 @@ object PersistentNotificationHelper {
     private const val CHANNEL_NAME = "نوار اعلان دائمی تاریخ"
     private const val NOTIFICATION_ID = 2001
     const val EXTRA_OPEN_ADD_REMINDER = "extra_open_add_reminder"
+    const val ACTION_OPEN_ADD_REMINDER = "com.soh3il.calendar.action.OPEN_ADD_REMINDER"
 
     private val GREGORIAN_MONTHS_FA = listOf(
         "ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن",
@@ -67,7 +68,7 @@ object PersistentNotificationHelper {
 
         val text = dayNumber.toPersianDigits()
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
+            color = Color.rgb(215, 255, 74)
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             textSize = if (text.length > 2) sizePx * 0.48f else sizePx * 0.68f
             textAlign = Paint.Align.CENTER
@@ -140,7 +141,7 @@ object PersistentNotificationHelper {
         // عدد بزرگ روز خورشیدی در بدنه کارت
         val dayText = today.day.toPersianDigits()
         val dayPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
+            color = Color.rgb(215, 255, 74)
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             textSize = (sizePx - headerHeight) * 0.65f
             textAlign = Paint.Align.CENTER
@@ -202,8 +203,14 @@ object PersistentNotificationHelper {
 
         // تفکیک خطوط به شکل ساختاریافته، کاملاً راست‌چین و بدون فشردگی خطی (بدون ایموجی طبق قوانین طراحی برنامه)
         val lineJalali = "${rlm}تقویم خورشیدی: ${today.dayOfWeekNameFa}، ${today.day.toPersianDigits()} ${today.monthNameFa} ${today.year.toPersianDigits()}"
-        val lineGregorian = "${rlm}تقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth.toPersianDigits()} ${conv.dayOfWeekNameEn} ${conv.gregorian.year.toPersianDigits()})"
-        val lineHijri = if (hijriStr != null) "${rlm}تقویم هجری قمری محاسباتی: $hijriStr" else null
+        val showGregorian = UserPreferences.isPersistentGregorianEnabled(context)
+        val showHijri = UserPreferences.isPersistentHijriEnabled(context)
+        val lineGregorian = if (showGregorian) {
+            "${rlm}تقویم میلادی: $gregStr (${conv.gregorian.dayOfMonth.toPersianDigits()} ${conv.dayOfWeekNameEn} ${conv.gregorian.year.toPersianDigits()})"
+        } else null
+        val lineHijri = if (showHijri && hijriStr != null) {
+            "${rlm}تقویم هجری قمری محاسباتی: $hijriStr"
+        } else null
 
         val lineOccasions = if (occasions.isNotEmpty()) {
             "${rlm}رویدادها: " + occasions.joinToString("، ") { it.titleFa }
@@ -226,13 +233,16 @@ object PersistentNotificationHelper {
         )
 
         // خلاصه فشرده جهت نمایش در حالت تک‌خطی اعلان (کاملاً راست‌چین با RLM)
-        val gregShort = "${conv.gregorian.dayOfMonth.toPersianDigits()} ${GREGORIAN_MONTHS_FA.getOrElse(conv.gregorian.monthValue - 1) { "" }}"
-        val hijriShort = if (conv.hijriYear > 0) "${conv.hijriDay.toPersianDigits()} ${HIJRI_MONTHS_FA.getOrElse(conv.hijriMonth - 1) { "" }}" else null
-        val shortSummary = if (hijriShort != null) {
-            "${rlm}${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort • $hijriShort"
-        } else {
-            "${rlm}${today.day.toPersianDigits()} ${today.monthNameFa} • $gregShort"
+        val dateParts = buildList {
+            add("${today.day.toPersianDigits()} ${today.monthNameFa}")
+            if (showGregorian) {
+                add("${conv.gregorian.dayOfMonth.toPersianDigits()} ${GREGORIAN_MONTHS_FA.getOrElse(conv.gregorian.monthValue - 1) { "" }}")
+            }
+            if (showHijri && conv.hijriYear > 0) {
+                add("${conv.hijriDay.toPersianDigits()} ${HIJRI_MONTHS_FA.getOrElse(conv.hijriMonth - 1) { "" }}")
+            }
         }
+        val shortSummary = rlm + dateParts.joinToString(" • ")
 
         // Content intent (explicitly opens MainActivity)
         val launchIntent = Intent().setClassName(
@@ -253,6 +263,7 @@ object PersistentNotificationHelper {
             context,
             "com.soh3il.calendar.MainActivity"
         ).apply {
+            action = ACTION_OPEN_ADD_REMINDER
             putExtra(EXTRA_OPEN_ADD_REMINDER, true)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -274,10 +285,10 @@ object PersistentNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val smallIconRes = getDayDrawableRes(context, today.day)
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(fullTitle)
             .setContentText(shortSummary)
-            .setSubText("${rlm}${today.monthNameFa} ${today.year.toPersianDigits()}")
             .setStyle(
                 NotificationCompat.InboxStyle()
                     .setSummaryText("${rlm}تقویم خورشیدی SOH3IL")
@@ -302,12 +313,24 @@ object PersistentNotificationHelper {
             .addAction(android.R.drawable.ic_input_add, "افزودن یادآور", addReminderPendingIntent)
 
         // تنظیم تضمینی آیکون روز در نوار وضعیت با شناسه منبع استاندارد اندروید
-        val smallIconRes = getDayDrawableRes(context, today.day)
         builder.setSmallIcon(smallIconRes)
 
         // نمایش بَدج گرافیکی تقویم امروز بجای آیکون پیش‌فرض برنامه در بدنه اعلان
         val dateBadgeBitmap = createDateBadgeBitmap(context, today)
         builder.setLargeIcon(dateBadgeBitmap)
+
+        val publicVersion = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(smallIconRes)
+            .setContentTitle(fullTitle)
+            .setContentText(shortSummary)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(true)
+            .setSilent(true)
+            .setOnlyAlertOnce(true)
+            .setShowWhen(false)
+            .build()
+        builder.setPublicVersion(publicVersion)
 
         val notification = builder.build()
         try {

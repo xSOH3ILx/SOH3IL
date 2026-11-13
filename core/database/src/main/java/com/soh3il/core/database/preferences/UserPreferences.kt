@@ -13,6 +13,8 @@ object UserPreferences {
     private const val KEY_PERSISTENT_NOTIFICATION = "pref_persistent_notification"
     private const val KEY_LIVE_ICON = "pref_live_icon"
     private const val KEY_LOCKSCREEN_CALENDAR = "pref_lockscreen_calendar"
+    private const val KEY_PERSISTENT_GREGORIAN = "pref_persistent_gregorian"
+    private const val KEY_PERSISTENT_HIJRI = "pref_persistent_hijri"
     private const val KEY_CONTACT_BIRTHDAYS = "pref_contact_birthdays"
 
     private fun getPrefs(context: Context): SharedPreferences {
@@ -84,6 +86,20 @@ object UserPreferences {
 
     fun setLockscreenCalendarEnabled(context: Context, enabled: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_LOCKSCREEN_CALENDAR, enabled).apply()
+    }
+
+    fun isPersistentGregorianEnabled(context: Context): Boolean =
+        getPrefs(context).getBoolean(KEY_PERSISTENT_GREGORIAN, true)
+
+    fun setPersistentGregorianEnabled(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_PERSISTENT_GREGORIAN, enabled).apply()
+    }
+
+    fun isPersistentHijriEnabled(context: Context): Boolean =
+        getPrefs(context).getBoolean(KEY_PERSISTENT_HIJRI, true)
+
+    fun setPersistentHijriEnabled(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_PERSISTENT_HIJRI, enabled).apply()
     }
 
     fun isContactBirthdaysEnabled(context: Context): Boolean =

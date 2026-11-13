@@ -52,6 +52,10 @@ fun NotificationsSection(
     onPersistentNotificationToggled: (Boolean) -> Unit,
     isLockscreenCalendarEnabled: Boolean,
     onLockscreenCalendarToggled: (Boolean) -> Unit,
+    isGregorianDateEnabled: Boolean,
+    onGregorianDateToggled: (Boolean) -> Unit,
+    isHijriDateEnabled: Boolean,
+    onHijriDateToggled: (Boolean) -> Unit,
     isDynamicNotifIconEnabled: Boolean,
     onDynamicNotifIconToggled: (Boolean) -> Unit,
     selectedSoundTitle: String,
@@ -134,6 +138,68 @@ fun NotificationsSection(
                     )
                 }
                 Switch(checked = isLockscreenCalendarEnabled, onCheckedChange = null)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(role = Role.Switch) {
+                        onGregorianDateToggled(!isGregorianDateEnabled)
+                    }
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "نمایش تاریخ میلادی",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "تاریخ میلادی در اعلان همیشگی و صفحه‌قفل نمایش داده شود",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = isGregorianDateEnabled, onCheckedChange = null)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(role = Role.Switch) {
+                        onHijriDateToggled(!isHijriDateEnabled)
+                    }
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "نمایش تاریخ هجری قمری",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "تاریخ قمری محاسباتی در اعلان همیشگی و صفحه‌قفل نمایش داده شود",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = isHijriDateEnabled, onCheckedChange = null)
             }
 
             Spacer(modifier = Modifier.height(10.dp))

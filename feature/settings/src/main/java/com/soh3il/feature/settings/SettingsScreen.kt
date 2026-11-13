@@ -89,6 +89,12 @@ fun SettingsScreen(
     var isLockscreenCalendarEnabled by remember {
         mutableStateOf(UserPreferences.isLockscreenCalendarEnabled(context))
     }
+    var isGregorianDateEnabled by remember {
+        mutableStateOf(UserPreferences.isPersistentGregorianEnabled(context))
+    }
+    var isHijriDateEnabled by remember {
+        mutableStateOf(UserPreferences.isPersistentHijriEnabled(context))
+    }
     var isLiveIconEnabled by remember {
         mutableStateOf(UserPreferences.isLiveIconEnabled(context))
     }
@@ -100,19 +106,24 @@ fun SettingsScreen(
     }
 
     fun syncAllWidgetsAndNotifications() {
-        // 1. Broadcast widget update
-        try {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val component = ComponentName(context.packageName, "com.soh3il.calendar.widget.CalendarAppWidgetProvider")
-            val ids = appWidgetManager.getAppWidgetIds(component)
-            if (ids != null && ids.isNotEmpty()) {
-                val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
-                    this.component = component
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-                }
-                context.sendBroadcast(intent)
+        // 1. Broadcast all SOH3IL widget variants without coupling this feature to :app
+        val manager = AppWidgetManager.getInstance(context)
+        listOf(
+            "com.soh3il.calendar.widget.CalendarAppWidgetProvider",
+            "com.soh3il.calendar.widget.CompactCalendarWidgetProvider",
+            "com.soh3il.calendar.widget.MonthCalendarWidgetProvider"
+        ).forEach { providerName ->
+            val component = ComponentName(context.packageName, providerName)
+            val ids = manager.getAppWidgetIds(component)
+            if (ids.isNotEmpty()) {
+                context.sendBroadcast(
+                    Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).apply {
+                        this.component = component
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                    }
+                )
             }
-        } catch (_: Exception) {}
+        }
 
         // 2. Refresh Persistent Notification
         scope.launch(Dispatchers.IO) {
@@ -246,6 +257,18 @@ fun SettingsScreen(
             onLockscreenCalendarToggled = { enabled ->
                 isLockscreenCalendarEnabled = enabled
                 UserPreferences.setLockscreenCalendarEnabled(context, enabled)
+                syncAllWidgetsAndNotifications()
+            },
+            isGregorianDateEnabled = isGregorianDateEnabled,
+            onGregorianDateToggled = { enabled ->
+                isGregorianDateEnabled = enabled
+                UserPreferences.setPersistentGregorianEnabled(context, enabled)
+                syncAllWidgetsAndNotifications()
+            },
+            isHijriDateEnabled = isHijriDateEnabled,
+            onHijriDateToggled = { enabled ->
+                isHijriDateEnabled = enabled
+                UserPreferences.setPersistentHijriEnabled(context, enabled)
                 syncAllWidgetsAndNotifications()
             },
             isDynamicNotifIconEnabled = isDynamicNotifIconEnabled,
