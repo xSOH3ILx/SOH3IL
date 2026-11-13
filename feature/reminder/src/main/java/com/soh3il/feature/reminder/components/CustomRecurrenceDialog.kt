@@ -47,8 +47,8 @@ fun CustomRecurrenceDialog(
     val unitLabel = when (recurrenceType) {
         RecurrenceType.DAILY -> "روز"
         RecurrenceType.WEEKLY -> "هفته"
-        RecurrenceType.MONTHLY_JALALI -> "ماه شمسی"
-        RecurrenceType.YEARLY_JALALI -> "سال شمسی"
+        RecurrenceType.MONTHLY_JALALI -> "ماه خورشیدی"
+        RecurrenceType.YEARLY_JALALI -> "سال خورشیدی"
         else -> "دوره"
     }
 
@@ -164,7 +164,7 @@ fun CustomRecurrenceDialog(
 
                 val valInt = intervalInput.toIntStandardOrNull() ?: 1
                 val previewDetail = when (recurrenceType) {
-                    RecurrenceType.MONTHLY_JALALI -> "هر ${valInt.toPersianDigits()} ماه شمسی در تاریخ ${initialDate.day.toPersianDigits()} هر ماه"
+                    RecurrenceType.MONTHLY_JALALI -> "هر ${valInt.toPersianDigits()} ماه خورشیدی در تاریخ ${initialDate.day.toPersianDigits()} هر ماه"
                     RecurrenceType.DAILY -> "هر ${valInt.toPersianDigits()} روز یکبار"
                     RecurrenceType.WEEKLY -> "هر ${valInt.toPersianDigits()} هفته یکبار"
                     RecurrenceType.YEARLY_JALALI -> "هر ${valInt.toPersianDigits()} سال یکبار در ${initialDate.day.toPersianDigits()} ${initialDate.monthNameFa}"

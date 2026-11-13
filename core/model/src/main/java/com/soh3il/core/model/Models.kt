@@ -93,7 +93,7 @@ data class ReminderCategory(
 }
 
 /**
- * Occasions & Holidays sourced from FarsiUI dataset
+ * Occasions and holidays used by the SOH3IL calendar
  */
 data class Occasion(
     val id: String,

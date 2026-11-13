@@ -91,12 +91,12 @@ fun YearMonthPickerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
-                        onClick = { selectedYear++ },
+                        onClick = { selectedYear-- },
                         modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             Icons.Default.ChevronRight,
-                            contentDescription = "سال بعد",
+                            contentDescription = "سال قبل",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -109,12 +109,12 @@ fun YearMonthPickerDialog(
                     )
 
                     IconButton(
-                        onClick = { selectedYear-- },
+                        onClick = { selectedYear++ },
                         modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             Icons.Default.ChevronLeft,
-                            contentDescription = "سال قبل",
+                            contentDescription = "سال بعد",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }

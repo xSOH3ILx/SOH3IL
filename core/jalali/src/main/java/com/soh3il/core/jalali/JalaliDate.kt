@@ -14,7 +14,7 @@ data class JalaliDate(
 ) : Comparable<JalaliDate> {
 
     init {
-        require(year in 1..9999) { "سال شمسی باید بین ۱ تا ۹۹۹۹ باشد (مقدار دریافتی: $year)" }
+        require(year in 1..9999) { "سال خورشیدی باید بین ۱ تا ۹۹۹۹ باشد (مقدار دریافتی: $year)" }
         require(month in 1..12) { "ماه باید بین ۱ تا ۱۲ باشد (مقدار دریافتی: $month)" }
         val maxDays = getDaysInMonth(year, month)
         require(day in 1..maxDays) { "روز ماه $month در سال $year باید بین ۱ تا $maxDays باشد (مقدار دریافتی: $day)" }

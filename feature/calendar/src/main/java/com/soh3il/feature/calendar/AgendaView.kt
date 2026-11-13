@@ -62,6 +62,7 @@ data class AgendaDayItem(
 fun AgendaView(
     today: JalaliDate,
     reminders: List<Reminder>,
+    additionalOccasions: List<Occasion> = emptyList(),
     onReminderClick: (Reminder) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -73,7 +74,7 @@ fun AgendaView(
     }
 
     // Generate agenda items for the next 45 days with real-time query and category filtering
-    val agendaItems = remember(today, reminders, normalizedQuery, selectedCategoryColor) {
+    val agendaItems = remember(today, reminders, additionalOccasions, normalizedQuery, selectedCategoryColor) {
         val list = mutableListOf<AgendaDayItem>()
         val tomorrow = today.plusDays(1)
 
@@ -84,7 +85,8 @@ fun AgendaView(
             val date = today.plusDays(i.toLong())
             val dateStr = date.format("YYYY-MM-DD")
             val monthOccasions = IranianHolidays.getOccasionsForMonth(date.year, date.month)
-            var dayOccasions = monthOccasions.filter { it.jalaliDate == dateStr }
+            var dayOccasions = (monthOccasions + additionalOccasions.filter { it.jalaliDate == dateStr })
+                .distinctBy { it.id }
 
             var dayReminders = reminders.filter { rem -> rem.visibleOn(date) }
 

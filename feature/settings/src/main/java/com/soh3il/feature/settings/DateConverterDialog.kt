@@ -128,7 +128,7 @@ fun DateConverterDialog(
                     FilterChip(
                         selected = mode == 0,
                         onClick = { mode = 0 },
-                        label = { Text("ورودی: شمسی") },
+                        label = { Text("ورودی: خورشیدی") },
                         modifier = Modifier.weight(1f)
                     )
                     FilterChip(

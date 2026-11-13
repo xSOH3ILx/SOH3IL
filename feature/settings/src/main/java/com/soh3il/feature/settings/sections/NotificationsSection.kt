@@ -50,6 +50,8 @@ fun NotificationsSection(
     context: Context,
     isPersistentNotificationEnabled: Boolean,
     onPersistentNotificationToggled: (Boolean) -> Unit,
+    isLockscreenCalendarEnabled: Boolean,
+    onLockscreenCalendarToggled: (Boolean) -> Unit,
     isDynamicNotifIconEnabled: Boolean,
     onDynamicNotifIconToggled: (Boolean) -> Unit,
     selectedSoundTitle: String,
@@ -89,7 +91,7 @@ fun NotificationsSection(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "نمایش عدد بزرگ روز شمسی در نوار وضعیت، صفحه قفل و Always On Display (AOD) با مناسبت‌ها و آیکون زنده.",
+                        text = "نمایش عدد بزرگ روز خورشیدی در نوار وضعیت، صفحه قفل و Always On Display (AOD) با مناسبت‌ها و آیکون زنده.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 17.sp
@@ -100,6 +102,38 @@ fun NotificationsSection(
                     checked = isPersistentNotificationEnabled,
                     onCheckedChange = null
                 )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .semantics(mergeDescendants = true) {}
+                    .clickable(role = Role.Switch) {
+                        onLockscreenCalendarToggled(!isLockscreenCalendarEnabled)
+                    }
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "نمایش جزئیات تقویم روی صفحه‌قفل",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "نمایش تاریخ و رویدادهای غیرحساس در اعلان دائمی صفحه‌قفل",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 17.sp
+                    )
+                }
+                Switch(checked = isLockscreenCalendarEnabled, onCheckedChange = null)
             }
 
             Spacer(modifier = Modifier.height(10.dp))

@@ -88,6 +88,7 @@ fun AddReminderSheet(
     var recurrenceType by remember { mutableStateOf(existingReminder?.recurrence?.type ?: RecurrenceType.NONE) }
     var recurrenceInterval by remember { mutableIntStateOf(existingReminder?.recurrence?.interval ?: 1) }
     var showCustomRecurrenceDialog by remember { mutableStateOf(false) }
+    var recurrenceExpanded by remember { mutableStateOf(existingReminder?.recurrence?.type != RecurrenceType.NONE) }
 
     // Pre-reminder state: presets or custom
     val initialPreMinutes = existingReminder?.preReminders?.firstOrNull()?.toMinutes()?.toInt()
@@ -105,6 +106,7 @@ fun AddReminderSheet(
     }
     var isCustomPreReminderSelected by remember { mutableStateOf(customPreReminder != null) }
     var showCustomPreReminderDialog by remember { mutableStateOf(false) }
+    var preReminderExpanded by remember { mutableStateOf(existingReminder?.preReminders?.isNotEmpty() == true) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -142,14 +144,6 @@ fun AddReminderSheet(
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(top = 2.dp)
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = { selectedDate = selectedDate.plusDays(-1) }) {
-                            Text("روز قبل", fontSize = 12.sp)
-                        }
-                        TextButton(onClick = { selectedDate = selectedDate.plusDays(1) }) {
-                            Text("روز بعد", fontSize = 12.sp)
-                        }
-                    }
                 }
 
                 IconButton(onClick = onDismiss) {
@@ -188,9 +182,12 @@ fun AddReminderSheet(
                 recurrenceInterval = recurrenceInterval,
                 onRecurrenceTypeChange = { type ->
                     recurrenceType = type
+                    recurrenceExpanded = true
                     if (type == RecurrenceType.NONE) recurrenceInterval = 1
                 },
-                onCustomizeIntervalClick = { showCustomRecurrenceDialog = true }
+                onCustomizeIntervalClick = { showCustomRecurrenceDialog = true },
+                expanded = recurrenceExpanded,
+                onExpandedChange = { recurrenceExpanded = !recurrenceExpanded }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -208,7 +205,9 @@ fun AddReminderSheet(
                     isCustomPreReminderSelected = true
                     selectedPreReminderMinutes = null
                 },
-                onCustomizeClick = { showCustomPreReminderDialog = true }
+                onCustomizeClick = { showCustomPreReminderDialog = true },
+                expanded = preReminderExpanded,
+                onExpandedChange = { preReminderExpanded = !preReminderExpanded }
             )
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -12,6 +12,8 @@ object UserPreferences {
     private const val KEY_NOTIFICATION_SOUND_TITLE = "pref_sound_title"
     private const val KEY_PERSISTENT_NOTIFICATION = "pref_persistent_notification"
     private const val KEY_LIVE_ICON = "pref_live_icon"
+    private const val KEY_LOCKSCREEN_CALENDAR = "pref_lockscreen_calendar"
+    private const val KEY_CONTACT_BIRTHDAYS = "pref_contact_birthdays"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -75,5 +77,19 @@ object UserPreferences {
 
     fun setDynamicNotificationIconEnabled(context: Context, enabled: Boolean) {
         getPrefs(context).edit().putBoolean("pref_dynamic_notif_icon", enabled).apply()
+    }
+
+    fun isLockscreenCalendarEnabled(context: Context): Boolean =
+        getPrefs(context).getBoolean(KEY_LOCKSCREEN_CALENDAR, true)
+
+    fun setLockscreenCalendarEnabled(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_LOCKSCREEN_CALENDAR, enabled).apply()
+    }
+
+    fun isContactBirthdaysEnabled(context: Context): Boolean =
+        getPrefs(context).getBoolean(KEY_CONTACT_BIRTHDAYS, false)
+
+    fun setContactBirthdaysEnabled(context: Context, enabled: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_CONTACT_BIRTHDAYS, enabled).apply()
     }
 }

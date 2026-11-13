@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="dynamic_icon_background">#2563EB</color>
+    <color name="dynamic_icon_background">#5B626A</color>
+    <color name="dynamic_icon_digit">#D7FF4A</color>
     <color name="widget_surface">#1E293B</color>
     <color name="widget_surface_stroke">#334155</color>
     <color name="widget_badge_surface">#0F172A</color>

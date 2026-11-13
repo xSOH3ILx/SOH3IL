@@ -11,10 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -54,6 +51,7 @@ import kotlinx.coroutines.isActive
 fun CalendarScreen(
     reminders: List<Reminder> = emptyList(),
     occasions: List<Occasion> = emptyList(),
+    additionalOccasions: List<Occasion> = emptyList(),
     onAddReminderClick: (JalaliDate) -> Unit = {},
     onReminderClick: (Reminder) -> Unit = {}
 ) {
@@ -76,31 +74,18 @@ fun CalendarScreen(
         }
     }
 
-    val monthOccasions = remember(displayedDate.year, displayedDate.month, occasions) {
-        if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(displayedDate.year, displayedDate.month)
+    val monthOccasions = remember(displayedDate.year, displayedDate.month, occasions, additionalOccasions) {
+        (if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(displayedDate.year, displayedDate.month)) +
+            additionalOccasions.filter { it.jalaliDate.startsWith("${displayedDate.year}-${displayedDate.month.toString().padStart(2, '0')}-") }
     }
 
-    val selectedDayOccasions = remember(selectedDate, occasions) {
-        val list = if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(selectedDate.year, selectedDate.month)
+    val selectedDayOccasions = remember(selectedDate, occasions, additionalOccasions) {
+        val list = (if (occasions.isNotEmpty()) occasions else IranianHolidays.getOccasionsForMonth(selectedDate.year, selectedDate.month)) +
+            additionalOccasions.filter { it.jalaliDate == selectedDate.format("YYYY-MM-DD") }
         list.filter { it.jalaliDate == selectedDate.format("YYYY-MM-DD") }
     }
 
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val targetDate = if (viewMode == 0) selectedDate else today
-                    onAddReminderClick(targetDate)
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "افزودن یادآور")
-            }
-        },
-        // [LOCKED RULE] DO NOT CHANGE: FAB position strictly locked to FabPosition.Start (Right side in RTL) per user requirement
-        floatingActionButtonPosition = FabPosition.Start
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -108,7 +93,7 @@ fun CalendarScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // View Mode Selector (Material 3 SingleChoiceSegmentedButtonRow with centered text, without checkmark)
+            // View mode selector using the expressive segmented control pattern.
             SingleChoiceSegmentedButtonRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -227,6 +212,7 @@ fun CalendarScreen(
                 AgendaView(
                     today = today,
                     reminders = reminders,
+                    additionalOccasions = additionalOccasions,
                     onReminderClick = onReminderClick,
                     modifier = Modifier.fillMaxSize()
                 )

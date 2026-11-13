@@ -69,11 +69,11 @@ object DateConverter {
     fun daysInMonth(year: Int, month: Int): Int = JalaliDate.daysInMonth(year, month)
 
     /**
-     * تبدیل از تاریخ شمسی
+     * تبدیل از تاریخ خورشیدی
      */
     fun fromJalali(year: Int, month: Int, day: Int): ConversionResult {
-        require(year in 1..9999) { "سال شمسی باید بین ۱ تا ۹۹۹۹ باشد (مقدار دریافتی: $year)" }
-        require(month in 1..12) { "ماه شمسی باید بین ۱ تا ۱۲ باشد (مقدار دریافتی: $month)" }
+        require(year in 1..9999) { "سال خورشیدی باید بین ۱ تا ۹۹۹۹ باشد (مقدار دریافتی: $year)" }
+        require(month in 1..12) { "ماه خورشیدی باید بین ۱ تا ۱۲ باشد (مقدار دریافتی: $month)" }
         val maxDays = JalaliDate.daysInMonth(year, month)
         require(day in 1..maxDays) { "روز ماه $month در سال $year باید بین ۱ تا $maxDays باشد (مقدار دریافتی: $day)" }
 

@@ -19,7 +19,7 @@ object IranianHolidays {
         val isHoliday: Boolean
     )
 
-    // ۱. تعطیلات رسمی ثابت شمسی (در تمامی سال‌ها تعطیل رسمی هستند)
+    // ۱. تعطیلات رسمی ثابت خورشیدی (در تمامی سال‌ها تعطیل رسمی هستند)
     private val FIXED_SOLAR_HOLIDAYS = listOf(
         HolidayEntry(1, 1, "آغاز سال نو / عید نوروز", isHoliday = true),
         HolidayEntry(1, 2, "عید نوروز", isHoliday = true),
@@ -33,7 +33,7 @@ object IranianHolidays {
         HolidayEntry(12, 29, "روز ملی شدن صنعت نفت ایران", isHoliday = true)
     )
 
-    // ۲. مناسبت‌های ملی، باستانی و فرهنگی شمسی (غیرتعطیل - isHoliday = false)
+    // ۲. مناسبت‌های ملی، باستانی و فرهنگی خورشیدی (غیرتعطیل - isHoliday = false)
     private val SOLAR_CULTURAL_OCCASIONS = listOf(
         HolidayEntry(1, 18, "روز سلامت (روز جهانی بهداشت)", isHoliday = false),
         HolidayEntry(1, 25, "روز بزرگداشت عطار نیشابوری", isHoliday = false),
@@ -156,7 +156,7 @@ object IranianHolidays {
     fun getOccasionsForMonth(year: Int, month: Int): List<Occasion> {
         val list = mutableListOf<Occasion>()
 
-        // ۱. تعطیلات رسمی ثابت شمسی (تعطیل رسمی = true)
+        // ۱. تعطیلات رسمی ثابت خورشیدی (تعطیل رسمی = true)
         FIXED_SOLAR_HOLIDAYS.filter { it.month == month }.forEach { entry ->
             val dateStr = formatJalaliDate(year, month, entry.day)
             list.add(
@@ -169,7 +169,7 @@ object IranianHolidays {
             )
         }
 
-        // ۲. مناسبت‌های ملی و باستانی شمسی (غیرتعطیل = false)
+        // ۲. مناسبت‌های ملی و باستانی خورشیدی (غیرتعطیل = false)
         SOLAR_CULTURAL_OCCASIONS.filter { it.month == month }.forEach { entry ->
             val dateStr = formatJalaliDate(year, month, entry.day)
             list.add(

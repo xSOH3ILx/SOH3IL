@@ -2,10 +2,8 @@ package com.soh3il.feature.reminder.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -28,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.soh3il.core.designsystem.components.FarsiCard
+import com.soh3il.core.designsystem.components.FarsiAccordion
 import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.model.PreReminder
 import com.soh3il.core.model.PreReminderUnit
@@ -42,33 +39,33 @@ fun ReminderPreNotificationSection(
     onPresetSelected: (Int?) -> Unit,
     onCustomChipSelected: () -> Unit,
     onCustomizeClick: () -> Unit,
+    expanded: Boolean,
+    onExpandedChange: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    FarsiCard(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.NotificationsActive,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = "پیش‌یادآور (اعلان قبل از زمان اصلی)",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 6.dp)
-                    )
-                }
+    val summary = when {
+        isCustomPreReminderSelected && customPreReminder != null -> {
+            val unit = when (customPreReminder.unit) {
+                PreReminderUnit.MINUTES -> "دقیقه"
+                PreReminderUnit.HOURS -> "ساعت"
+                PreReminderUnit.DAYS -> "روز"
             }
+            "${customPreReminder.value.toPersianDigits()} $unit قبل"
+        }
+        selectedPreReminderMinutes == null -> "بدون پیش‌یادآور"
+        selectedPreReminderMinutes < 60 -> "${selectedPreReminderMinutes.toPersianDigits()} دقیقه قبل"
+        selectedPreReminderMinutes % 1440 == 0 -> "${(selectedPreReminderMinutes / 1440).toPersianDigits()} روز قبل"
+        else -> "${(selectedPreReminderMinutes / 60).toPersianDigits()} ساعت قبل"
+    }
 
-            Spacer(modifier = Modifier.height(10.dp))
+    FarsiAccordion(
+        title = "پیش‌یادآور",
+        summary = summary,
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Spacer(modifier = Modifier.height(4.dp))
 
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -157,6 +154,5 @@ fun ReminderPreNotificationSection(
                     shape = RoundedCornerShape(12.dp)
                 )
             }
-        }
     }
 }

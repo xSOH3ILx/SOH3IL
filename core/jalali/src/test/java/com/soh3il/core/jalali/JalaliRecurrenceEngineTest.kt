@@ -15,6 +15,48 @@ import org.junit.Test
 
 class JalaliRecurrenceEngineTest {
 
+    @Test
+    fun customDailyIntervalRepeatsEveryThreeDays() {
+        val reminder = Reminder(
+            id = 20,
+            title = "هر سه روز",
+            jalaliYear = 1405,
+            jalaliMonth = 1,
+            jalaliDay = 1,
+            hour = 8,
+            minute = 0,
+            recurrence = RecurrenceRule(type = RecurrenceType.DAILY, interval = 3)
+        )
+        val reference = JalaliDate(1405, 1, 1).toEpochMillis(9, 0, 0)
+        val next = JalaliRecurrenceEngine.calculateNextTrigger(reminder, reference)
+        assertNotNull(next)
+        val date = JalaliDate.fromEpochMillis(next!!)
+        assertEquals(1405, date.year)
+        assertEquals(1, date.month)
+        assertEquals(4, date.day)
+    }
+
+    @Test
+    fun customWeeklyIntervalRepeatsEveryThreeWeeks() {
+        val reminder = Reminder(
+            id = 21,
+            title = "هر سه هفته",
+            jalaliYear = 1405,
+            jalaliMonth = 1,
+            jalaliDay = 1,
+            hour = 8,
+            minute = 0,
+            recurrence = RecurrenceRule(type = RecurrenceType.WEEKLY, interval = 3)
+        )
+        val reference = JalaliDate(1405, 1, 1).toEpochMillis(9, 0, 0)
+        val next = JalaliRecurrenceEngine.calculateNextTrigger(reminder, reference)
+        assertNotNull(next)
+        val date = JalaliDate.fromEpochMillis(next!!)
+        assertEquals(1405, date.year)
+        assertEquals(1, date.month)
+        assertEquals(22, date.day)
+    }
+
     /**
      * Requirement: When user sets a recurring reminder for the 3rd of every month,
      * it MUST fire on the 3rd of EVERY solar month without shifting to 2nd or 4th!
@@ -49,7 +91,7 @@ class JalaliRecurrenceEngineTest {
             val triggerDate = JalaliDate.fromEpochMillis(nextTrigger!!)
             assertEquals("سال باید ۱۴۰۵ باشد", 1405, triggerDate.year)
             assertEquals("ماه باید $expectedMonth باشد", expectedMonth, triggerDate.month)
-            assertEquals("روز یادآور باید دقیقاً ۳ام ماه شمسی باشد و هرگز جابجا نشود", 3, triggerDate.day)
+            assertEquals("روز یادآور باید دقیقاً ۳ام ماه خورشیدی باشد و هرگز جابجا نشود", 3, triggerDate.day)
 
             // Advance reference time past this trigger to simulate moving to next month
             currentRefEpoch = nextTrigger + 1000L

@@ -50,7 +50,7 @@ object PersistentNotificationHelper {
             CHANNEL_NAME,
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "نمایش پیوسته تاریخ روز شمسی و رویدادها در نوار وضعیت، صفحه قفل و AOD"
+                description = "نمایش پیوسته تاریخ روز خورشیدی و رویدادها در نوار وضعیت، صفحه قفل و AOD"
             setShowBadge(true)
             enableVibration(false)
             enableLights(false)
@@ -94,17 +94,17 @@ object PersistentNotificationHelper {
         val cornerRadius = sizePx * 0.24f
         val fullRect = android.graphics.RectF(0f, 0f, sizePx.toFloat(), sizePx.toFloat())
 
-        // پس‌زمینه کارت تقویم (تم اسلیت شیک تیره #1E293B)
+        // پس‌زمینه خنثی آیکون و اعلان (خاکستری Expressive)
         val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#1E293B")
+            color = Color.rgb(91, 98, 106)
             style = Paint.Style.FILL
         }
         canvas.drawRoundRect(fullRect, cornerRadius, cornerRadius, bgPaint)
 
-        // نوار بالایی نام ماه (رنگ فیروزه‌ای اختصاصی متریال ۳ #0284C7)
+        // نوار بالایی نام ماه با سبز فسفری خوانا
         val headerHeight = sizePx * 0.34f
         val headerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#0284C7")
+            color = Color.rgb(215, 255, 74)
             style = Paint.Style.FILL
         }
         val headerPath = android.graphics.Path().apply {
@@ -124,10 +124,10 @@ object PersistentNotificationHelper {
         canvas.drawPath(headerPath, headerPaint)
         canvas.restore()
 
-        // متن نام ماه شمسی
+        // متن نام ماه خورشیدی
         val monthText = today.monthNameFa
         val monthPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
+            color = Color.rgb(35, 39, 43)
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             textSize = headerHeight * 0.52f
             textAlign = Paint.Align.CENTER
@@ -137,7 +137,7 @@ object PersistentNotificationHelper {
         val monthY = (headerHeight / 2f) - monthBounds.exactCenterY()
         canvas.drawText(monthText, sizePx / 2f, monthY, monthPaint)
 
-        // عدد بزرگ روز شمسی در بدنه کارت
+        // عدد بزرگ روز خورشیدی در بدنه کارت
         val dayText = today.day.toPersianDigits()
         val dayPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
@@ -217,13 +217,13 @@ object PersistentNotificationHelper {
             "${rlm}یادآورها: بدون یادآور برای امروز"
         }
 
-        val bigTextFormatted = listOfNotNull(
+        val notificationLines = listOfNotNull(
             lineJalali,
             lineGregorian,
             lineHijri,
             lineOccasions,
             lineReminders
-        ).joinToString("\n")
+        )
 
         // خلاصه فشرده جهت نمایش در حالت تک‌خطی اعلان (کاملاً راست‌چین با RLM)
         val gregShort = "${conv.gregorian.dayOfMonth.toPersianDigits()} ${GREGORIAN_MONTHS_FA.getOrElse(conv.gregorian.monthValue - 1) { "" }}"
@@ -279,14 +279,21 @@ object PersistentNotificationHelper {
             .setContentText(shortSummary)
             .setSubText("${rlm}${today.monthNameFa} ${today.year.toPersianDigits()}")
             .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(bigTextFormatted)
+                NotificationCompat.InboxStyle()
+                    .setSummaryText("${rlm}تقویم خورشیدی SOH3IL")
                     .setBigContentTitle(fullTitle)
+                    .also { style -> notificationLines.forEach(style::addLine) }
             )
             .setOngoing(true)
             .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setVisibility(
+                if (UserPreferences.isLockscreenCalendarEnabled(context)) {
+                    NotificationCompat.VISIBILITY_PUBLIC
+                } else {
+                    NotificationCompat.VISIBILITY_PRIVATE
+                }
+            )
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)

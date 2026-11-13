@@ -144,7 +144,7 @@ fun AppearanceSection(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "نمایش روز جاری شمسی به عنوان آیکون برنامه در صفحه برنامه‌های گوشی شما.",
+                        text = "نمایش روز جاری خورشیدی به عنوان آیکون برنامه در صفحه برنامه‌های گوشی شما.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

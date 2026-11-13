@@ -58,13 +58,13 @@ fun ReminderFormFields(
                 )
             },
             modifier = Modifier.fillMaxWidth(),
-            minLines = 2,
-            maxLines = 3,
+            minLines = 3,
+            maxLines = 8,
             shape = RoundedCornerShape(14.dp),
             textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Start),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done
+                imeAction = ImeAction.Default
             )
         )
     }

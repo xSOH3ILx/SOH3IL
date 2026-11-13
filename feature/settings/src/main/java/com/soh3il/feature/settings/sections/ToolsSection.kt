@@ -34,7 +34,8 @@ import com.soh3il.feature.settings.components.SettingsSectionHeader
 fun ToolsSection(
     onOpenDateConverter: () -> Unit,
     onExportIcsClick: (() -> Unit)?,
-    importIcsLauncher: ActivityResultLauncher<String>
+    importIcsLauncher: ActivityResultLauncher<String>,
+    onSyncCalendarClick: (() -> Unit)? = null
 ) {
     SettingsSectionHeader(
         title = "ابزارها و گاه‌شماری",
@@ -119,6 +120,31 @@ fun ToolsSection(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("ورود ICS", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = "همگام‌سازی با تقویم دستگاه و Google Calendar",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "یادآورهای SOH3IL را در تقویم قابل ویرایش دستگاه ثبت یا به‌روزرسانی می‌کند.",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
+            )
+            OutlinedButton(
+                onClick = { onSyncCalendarClick?.invoke() },
+                enabled = onSyncCalendarClick != null,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("همگام‌سازی اکنون", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

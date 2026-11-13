@@ -17,7 +17,7 @@ import com.soh3il.core.database.preferences.UserPreferences
 object NotificationHelper {
 
     const val CHANNEL_ID = "soh3il_reminders_channel"
-    const val CHANNEL_NAME = "یادآورهای تقویم شمسی"
+    const val CHANNEL_NAME = "یادآورهای تقویم خورشیدی"
 
     const val ACTION_MARK_DONE = "com.soh3il.calendar.ACTION_MARK_DONE"
     const val ACTION_DISMISS_REMINDER = "com.soh3il.calendar.ACTION_DISMISS_REMINDER"

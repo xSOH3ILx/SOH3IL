@@ -42,11 +42,29 @@ import com.soh3il.feature.calendar.CalendarScreen
 import com.soh3il.feature.reminder.AddReminderSheet
 import android.content.Intent
 import com.soh3il.feature.settings.SettingsScreen
+import com.soh3il.calendar.integrations.CalendarProviderSync
+import com.soh3il.calendar.integrations.ContactBirthdayProvider
+import com.soh3il.core.model.Occasion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
+
+    private var integrationRefreshVersion by mutableStateOf(0)
+
+    private val requestContactsPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                UserPreferences.setContactBirthdaysEnabled(this, true)
+                integrationRefreshVersion++
+            }
+        }
+
+    private val requestCalendarPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            integrationRefreshVersion++
+        }
 
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -113,6 +131,26 @@ class MainActivity : ComponentActivity() {
 
                 val remindersState by db.reminderDao().getAllReminders().collectAsState(initial = emptyList())
                 val reminders = remindersState.map { it.toDomain() }
+                var contactBirthdays by remember { mutableStateOf<List<Occasion>>(emptyList()) }
+                val contactsPermissionGranted = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_CONTACTS
+                ) == PackageManager.PERMISSION_GRANTED
+                val contactBirthdaysEnabled = UserPreferences.isContactBirthdaysEnabled(context)
+                val todaySolarYear = com.soh3il.core.jalali.JalaliDate.now().year
+
+                androidx.compose.runtime.LaunchedEffect(
+                    contactBirthdaysEnabled,
+                    contactsPermissionGranted,
+                    integrationRefreshVersion,
+                    todaySolarYear
+                ) {
+                    contactBirthdays = if (contactBirthdaysEnabled && contactsPermissionGranted) {
+                        ContactBirthdayProvider.loadForSolarYear(context, todaySolarYear)
+                    } else {
+                        emptyList()
+                    }
+                }
 
                 val currentVersion = remember {
                     runCatching {
@@ -184,6 +222,7 @@ class MainActivity : ComponentActivity() {
                         when (currentTab) {
                             0 -> CalendarScreen(
                                 reminders = reminders,
+                                additionalOccasions = contactBirthdays,
                                 onAddReminderClick = { date ->
                                     selectedCalendarDate = date
                                     editingReminder = null
@@ -257,6 +296,36 @@ class MainActivity : ComponentActivity() {
                                             }
                                             android.widget.Toast.makeText(this@MainActivity, msg, android.widget.Toast.LENGTH_SHORT).show()
                                         }
+                                    }
+                                },
+                                onSyncCalendarClick = {
+                                    val hasCalendarPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
+                                        ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED
+                                    if (!hasCalendarPermission) {
+                                        requestCalendarPermissions.launch(
+                                            arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+                                        )
+                                    } else {
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            val result = CalendarProviderSync.syncReminders(context, reminders)
+                                            withContext(Dispatchers.Main) {
+                                                val message = result.fold(
+                                                    onSuccess = { count -> "${count.toPersianDigits()} یادآور با تقویم دستگاه همگام شد" },
+                                                    onFailure = { it.message ?: "همگام‌سازی تقویم انجام نشد" }
+                                                )
+                                                android.widget.Toast.makeText(this@MainActivity, message, android.widget.Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                    }
+                                },
+                                contactBirthdaysEnabled = contactBirthdaysEnabled,
+                                contactsPermissionGranted = contactsPermissionGranted,
+                                onContactBirthdaysToggled = { enabled ->
+                                    if (enabled && !contactsPermissionGranted) {
+                                        requestContactsPermission.launch(Manifest.permission.READ_CONTACTS)
+                                    } else {
+                                        UserPreferences.setContactBirthdaysEnabled(context, enabled)
+                                        integrationRefreshVersion++
                                     }
                                 }
                             )

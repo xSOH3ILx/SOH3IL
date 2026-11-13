@@ -52,6 +52,7 @@ import com.soh3il.feature.settings.sections.AboutUpdateSection
 import com.soh3il.feature.settings.sections.AppearanceSection
 import com.soh3il.feature.settings.sections.BatterySection
 import com.soh3il.feature.settings.sections.NotificationsSection
+import com.soh3il.feature.settings.sections.IntegrationsSection
 import com.soh3il.feature.settings.sections.ToolsSection
 import com.soh3il.feature.settings.util.AutoStartHelper
 import kotlinx.coroutines.Dispatchers
@@ -67,6 +68,10 @@ fun SettingsScreen(
     onPersistentNotificationToggled: ((Boolean) -> Unit)? = null,
     onExportIcsClick: (() -> Unit)? = null,
     onImportIcsUri: ((Uri) -> Unit)? = null,
+    onSyncCalendarClick: (() -> Unit)? = null,
+    contactBirthdaysEnabled: Boolean = false,
+    contactsPermissionGranted: Boolean = false,
+    onContactBirthdaysToggled: ((Boolean) -> Unit)? = null,
     onBackClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
@@ -80,6 +85,9 @@ fun SettingsScreen(
     // User preferences state
     var isPersistentNotificationEnabled by remember {
         mutableStateOf(UserPreferences.isPersistentNotificationEnabled(context))
+    }
+    var isLockscreenCalendarEnabled by remember {
+        mutableStateOf(UserPreferences.isLockscreenCalendarEnabled(context))
     }
     var isLiveIconEnabled by remember {
         mutableStateOf(UserPreferences.isLiveIconEnabled(context))
@@ -234,6 +242,12 @@ fun SettingsScreen(
                 onPersistentNotificationToggled?.invoke(enabled)
                 syncAllWidgetsAndNotifications()
             },
+            isLockscreenCalendarEnabled = isLockscreenCalendarEnabled,
+            onLockscreenCalendarToggled = { enabled ->
+                isLockscreenCalendarEnabled = enabled
+                UserPreferences.setLockscreenCalendarEnabled(context, enabled)
+                syncAllWidgetsAndNotifications()
+            },
             isDynamicNotifIconEnabled = isDynamicNotifIconEnabled,
             onDynamicNotifIconToggled = { newVal ->
                 isDynamicNotifIconEnabled = newVal
@@ -247,11 +261,20 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        IntegrationsSection(
+            contactBirthdaysEnabled = contactBirthdaysEnabled,
+            contactsPermissionGranted = contactsPermissionGranted,
+            onContactBirthdaysToggled = { enabled -> onContactBirthdaysToggled?.invoke(enabled) }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         // 3. ابزارها و گاه‌شماری (Tools & Calendar)
         ToolsSection(
             onOpenDateConverter = { showDateConverterDialog = true },
             onExportIcsClick = onExportIcsClick,
-            importIcsLauncher = importIcsLauncher
+            importIcsLauncher = importIcsLauncher,
+            onSyncCalendarClick = onSyncCalendarClick
         )
 
         Spacer(modifier = Modifier.height(20.dp))

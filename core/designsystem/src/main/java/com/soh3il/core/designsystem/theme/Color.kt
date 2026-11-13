@@ -2,7 +2,7 @@ package com.soh3il.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
-// FarsiUI Clean Modern Palette
+// SOH3IL Material 3 Expressive palette
 val FarsiPrimary = Color(0xFF2563EB) // Electric Blue
 val FarsiPrimaryDark = Color(0xFF3B82F6)
 

@@ -1,10 +1,8 @@
 package com.soh3il.feature.reminder.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -26,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.soh3il.core.designsystem.components.FarsiCard
+import com.soh3il.core.designsystem.components.FarsiAccordion
 import com.soh3il.core.designsystem.utils.toPersianDigits
 import com.soh3il.core.model.RecurrenceType
 
@@ -37,43 +34,26 @@ fun ReminderRecurrenceSection(
     recurrenceInterval: Int,
     onRecurrenceTypeChange: (RecurrenceType) -> Unit,
     onCustomizeIntervalClick: () -> Unit,
+    expanded: Boolean,
+    onExpandedChange: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    FarsiCard(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Repeat,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        text = "تکرار بر اساس گاه‌شمار خورشیدی",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 6.dp)
-                    )
-                }
+    val summary = when (recurrenceType) {
+        RecurrenceType.NONE -> "بدون تکرار"
+        RecurrenceType.DAILY -> "هر ${recurrenceInterval.toPersianDigits()} روز"
+        RecurrenceType.WEEKLY -> "هر ${recurrenceInterval.toPersianDigits()} هفته"
+        RecurrenceType.MONTHLY_JALALI -> "هر ${recurrenceInterval.toPersianDigits()} ماه خورشیدی"
+        RecurrenceType.YEARLY_JALALI -> "هر ${recurrenceInterval.toPersianDigits()} سال خورشیدی"
+    }
 
-                if (recurrenceType != RecurrenceType.NONE) {
-                    val intervalText = if (recurrenceInterval == 1) "هر دوره" else "هر ${recurrenceInterval.toPersianDigits()} دوره"
-                    Text(
-                        text = intervalText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
+    FarsiAccordion(
+        title = "تکرار بر اساس گاه‌شمار خورشیدی",
+        summary = summary,
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Spacer(modifier = Modifier.height(4.dp))
 
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -84,7 +64,7 @@ fun ReminderRecurrenceSection(
                     RecurrenceType.NONE to "بدون تکرار (یکبار)",
                     RecurrenceType.DAILY to "روزانه",
                     RecurrenceType.WEEKLY to "هفتگی",
-                    RecurrenceType.MONTHLY_JALALI to "ماهانه شمسی",
+                    RecurrenceType.MONTHLY_JALALI to "ماهانه خورشیدی",
                     RecurrenceType.YEARLY_JALALI to "سالانه خورشیدی"
                 )
 
@@ -117,7 +97,7 @@ fun ReminderRecurrenceSection(
                         selected = recurrenceInterval > 1,
                         onClick = onCustomizeIntervalClick,
                         label = {
-                            val label = if (recurrenceInterval > 1) "بازه: ${recurrenceInterval.toPersianDigits()}" else "تنظیم بازه..."
+                            val label = if (recurrenceInterval > 1) "تکرار دلخواه: ${recurrenceInterval.toPersianDigits()}" else "تکرار دلخواه"
                             Text(label, fontSize = 12.sp, fontWeight = if (recurrenceInterval > 1) FontWeight.Bold else FontWeight.Normal)
                         },
                         leadingIcon = {
@@ -131,6 +111,5 @@ fun ReminderRecurrenceSection(
                     )
                 }
             }
-        }
     }
 }

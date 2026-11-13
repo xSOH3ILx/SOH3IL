@@ -22,9 +22,9 @@
      - Left button (`End` in RTL) = `onNextMonth` (`Icons.Default.ChevronLeft`)
    - Do NOT alter these button positions or vectors.
 
-4. **FLOATING ACTION BUTTON (FAB) POSITION (LOCKED)**:
-   - In `CalendarScreen.kt`, the FAB position is strictly locked to `floatingActionButtonPosition = FabPosition.Start` (Right side in RTL layout).
-   - Do NOT move the FAB to `FabPosition.End` or Center.
+4. **FLOATING ACTION BUTTON (FAB) REMOVED (LOCKED)**:
+   - The calendar screen intentionally has no FAB. The primary add-reminder action is the expressive button below the selected-day details.
+   - Do NOT reintroduce a floating action button without the user's direct instruction.
 
 5. **TAB CHECKMARK REMOVAL (LOCKED)**:
    - In `CalendarScreen.kt`, `SegmentedButton` items for switching between "تقویم ماهانه" and "دستور کار (رویدادها)" must NOT display a checkmark.
@@ -35,7 +35,7 @@
    - Text color for selected cells must be `Color.White`.
 
 7. **APP BRANDING & TYPOGRAPHY**:
-   - App name is strictly `سهیل` (written plainly without diacritics / اعراب / حرکت).
+   - App name is strictly `SOH3IL` and may change only on the user's direct instruction.
    - All numbers presented in Persian context must use `.toPersianDigits()`.
    - Persian & Arabic numeral input in all dialogs and text fields must use `toStandardDigits()` / `toEnglishDigits()` / `toIntStandardOrNull()` to ensure resilience across Iranian and Arabic keyboards.
 
@@ -53,7 +53,7 @@ The project follows a strict multi-module Clean Architecture pattern:
 - `:core:model` — Pure Kotlin domain models (`Models.kt`). ZERO Android framework dependencies allowed.
 - `:core:jalali` — Canonical Jalali/Gregorian/Julian calendar math, `IranianHolidays`, `JalaliRecurrenceEngine`, and `IcsParser`. Pure Kotlin + JUnit tests required for every logic change.
 - `:core:database` — Room database (`Soh3ilDatabase`), DAOs, Entities, Converters, and `UserPreferences`.
-- `:core:designsystem` — Material 3 theme (`Soh3ilTheme`, `Color.kt`, `Type.kt`), Vazirmatn typography, `PersianUtils`, and reusable `FarsiComponents`.
+- `:core:designsystem` — Material 3 Expressive theme (`Soh3ilTheme`, `Color.kt`, `Type.kt`), Vazirmatn typography, `PersianUtils`, and reusable `FarsiComponents`.
 - `:core:scheduler` — Background scheduling (`AlarmScheduler`, `AlarmReceiver`, `MidnightScheduler`, `MidnightReceiver`, `LiveIconHelper`, `NotificationHelper`, `PersistentNotificationHelper`, `IcsHelper`).
 - `:core:updater` — Self-update engine (`UpdateChecker`).
 - `:feature:calendar` | `:feature:reminder` | `:feature:settings` — UI feature modules. Feature modules MUST NOT depend on other feature modules unless explicitly routed through navigation/contracts.
@@ -162,7 +162,7 @@ The project follows a strict multi-module Clean Architecture pattern:
 
 ---
 
-## 5. Material Design 3 (M3), RTL & Accessibility Standards
+## 5. Material Design 3 Expressive, RTL & Accessibility Standards
 
 ### Rule 5.1: Mandatory RTL Layout & AutoMirrored Icons
 - `Soh3ilTheme` (`Theme.kt`) MUST wrap its root content in:
@@ -179,7 +179,7 @@ The project follows a strict multi-module Clean Architecture pattern:
 - Every `ModalBottomSheet` (e.g., `AddReminderSheet.kt`) MUST apply `.navigationBarsPadding().imePadding()` to its scrollable content so the soft keyboard (IME) never obscures text inputs or action buttons.
 
 ### Rule 5.3: M3 Tonal Surface Hierarchy & WCAG AA Holiday Contrast
-- Do NOT use hardcoded hex colors inside feature Composables. All colors must come from `MaterialTheme.colorScheme` or a theme-aware `CompositionLocal` in `:core:designsystem`.
+- Use Material 3 Expressive motion, shape and color tokens across all screens, dialogs, notifications, widgets and settings. Do NOT use hardcoded hex colors inside feature Composables. All colors must come from `MaterialTheme.colorScheme` or a theme-aware `CompositionLocal` in `:core:designsystem`.
 - Use Material 3 surface container roles (`surfaceContainerLow`, `surfaceContainer`, `surfaceContainerHigh`) for Cards, BottomSheets, and Dialogs instead of `surfaceVariant.copy(alpha = ...)`.
 - Official holidays and Fridays in `DayCell.kt`, `SelectedDayDetails.kt`, and `AgendaView.kt` must use theme-aware semantic tokens (`colorScheme.error` / `errorContainer` / `onErrorContainer`) that maintain a minimum 4.5:1 contrast ratio in both Light and Dark themes.
   - *(Note: When a holiday cell is selected on the calendar grid [`isSelected && isHoliday`], its background MUST be `FarsiHolidayRed` [`#EF4444`] with `Color.White` text per Core Invariant 6).*
