@@ -2,10 +2,8 @@ package com.soh3il.core.jalali
 
 import com.soh3il.core.model.PreReminder
 import com.soh3il.core.model.PreReminderUnit
-import com.soh3il.core.model.RecurrenceRule
 import com.soh3il.core.model.RecurrenceType
 import com.soh3il.core.model.Reminder
-import com.soh3il.core.model.ShortMonthPolicy
 import java.io.InputStream
 import java.time.Instant
 import java.time.LocalDate
@@ -20,11 +18,6 @@ object IcsParser {
 
     const val MAX_EVENTS = 5_000
     const val MAX_STREAM_BYTES = 10 * 1024 * 1024L // 10MB limit
-
-    private val ICS_DAY_TO_PERSIAN = mapOf(
-        "SA" to 1, "SU" to 2, "MO" to 3, "TU" to 4, "WE" to 5, "TH" to 6, "FR" to 7
-    )
-    private val PERSIAN_TO_ICS_DAY = ICS_DAY_TO_PERSIAN.entries.associate { (ics, day) -> day to ics }
 
     /**
      * صدور رویدادها در قالب فایل استاندارد جهانی iCalendar (RFC 5545)
@@ -74,12 +67,12 @@ object IcsParser {
                 sb.append("\r\n")
             }
 
-            val rrule = standardRrule(rem)
+            val rrule = IcsRecurrenceCodec.standardRrule(rem)
             if (rrule != null) {
                 sb.append(foldLine(rrule))
                 sb.append("\r\n")
             }
-            sb.append(foldLine("X-SOH3IL-RECURRENCE:${xRecurrence(rem)}"))
+            sb.append(foldLine("X-SOH3IL-RECURRENCE:${IcsRecurrenceCodec.xRecurrence(rem)}"))
             sb.append("\r\n")
 
             rem.preReminders.forEach { pre ->
@@ -105,47 +98,20 @@ object IcsParser {
         return sb.toString()
     }
 
-    private fun standardRrule(rem: Reminder): String? {
-        val interval = rem.recurrence.interval.coerceAtLeast(1)
-        return when (rem.recurrence.type) {
-            RecurrenceType.DAILY -> "RRULE:FREQ=DAILY;INTERVAL=$interval"
-            RecurrenceType.WEEKLY -> {
-                val days = rem.recurrence.daysOfWeek.sorted().mapNotNull { PERSIAN_TO_ICS_DAY[it] }
-                val byDay = if (days.isEmpty()) "" else ";BYDAY=${days.joinToString(",")}"
-                "RRULE:FREQ=WEEKLY;INTERVAL=$interval$byDay"
-            }
-            RecurrenceType.MONTHLY_JALALI -> "RRULE:FREQ=MONTHLY;INTERVAL=$interval"
-            RecurrenceType.YEARLY_JALALI -> "RRULE:FREQ=YEARLY;INTERVAL=$interval"
-            RecurrenceType.NONE -> null
-        }
-    }
-
-    private fun xRecurrence(rem: Reminder): String {
-        val days = rem.recurrence.daysOfWeek.sorted().joinToString(",")
-        val day = rem.recurrence.dayOfMonth?.toString().orEmpty()
-        return "${rem.recurrence.type.name};INTERVAL=${rem.recurrence.interval.coerceAtLeast(1)};DAY=$day;WEEKDAYS=$days;POLICY=${rem.recurrence.shortMonthPolicy.name}"
-    }
-
     /**
      * خواندن ایمن رویدادها از فایل ICS ورودی مطابق با RFC 5545 (با پشتیبانی از Line Unfolding،
      * مهار سرریز حافظه با سقف ۱۰ مگابایت و حداکثر ۵,۰۰۰ رویداد، و پاک‌سازی کاراکترهای کنترلی).
      */
     fun importFromIcsStream(inputStream: InputStream, maxEvents: Int = MAX_EVENTS): List<Reminder> {
         val reminders = mutableListOf<Reminder>()
-        var bytesRead = 0L
         val eventLimit = maxEvents.coerceIn(0, MAX_EVENTS)
         if (eventLimit == 0) return emptyList()
 
-        val reader = inputStream.bufferedReader(Charsets.UTF_8)
+        val reader = IcsBoundedInputStream(inputStream, MAX_STREAM_BYTES).bufferedReader(Charsets.UTF_8)
         val unfoldedLines = mutableListOf<String>()
         var currentBuilder: StringBuilder? = null
 
         for (rawLine in reader.lineSequence()) {
-            bytesRead += rawLine.toByteArray(Charsets.UTF_8).size + 1L
-            if (bytesRead > MAX_STREAM_BYTES) {
-                break
-            }
-
             if (rawLine.startsWith(" ") || rawLine.startsWith("\t")) {
                 currentBuilder?.append(rawLine.substring(1))
             } else {
@@ -299,9 +265,14 @@ object IcsParser {
                 tehranDateTime.dayOfMonth
             )
             val recurrence = if (xRecurrence.isNotBlank()) {
-                parseXRecurrence(xRecurrence)
+                IcsRecurrenceCodec.parseXRecurrence(xRecurrence)
             } else {
-                parseStandardRrule(rrule)
+                IcsRecurrenceCodec.parseStandardRrule(rrule)
+            }
+            if (recurrence.type == RecurrenceType.MONTHLY_GREGORIAN || recurrence.type == RecurrenceType.YEARLY_GREGORIAN) {
+                require(recurrence.dayOfMonth == null || recurrence.dayOfMonth == tehranDateTime.dayOfMonth) {
+                    "روز مبنای تکرار میلادی با تاریخ شروع یکسان نیست"
+                }
             }
 
             Reminder(
@@ -317,57 +288,6 @@ object IcsParser {
                 isEnabled = true
             )
         }.getOrNull()
-    }
-
-    private fun parseXRecurrence(value: String): RecurrenceRule {
-        val parts = value.split(";")
-        val type = runCatching { RecurrenceType.valueOf(parts.first()) }.getOrDefault(RecurrenceType.NONE)
-        fun field(name: String): String? = parts.firstOrNull { it.startsWith("$name=") }?.substringAfter("=")
-        val interval = field("INTERVAL")?.toIntOrNull()?.coerceAtLeast(1) ?: 1
-        val dayOfMonth = field("DAY")?.toIntOrNull()
-        val daysOfWeek = field("WEEKDAYS")
-            ?.takeIf { it.isNotBlank() }
-            ?.split(",")
-            ?.mapNotNull { it.toIntOrNull() }
-            ?.toSet()
-            ?: emptySet()
-        val policy = field("POLICY")?.let {
-            runCatching { ShortMonthPolicy.valueOf(it) }.getOrNull()
-        } ?: ShortMonthPolicy.SNAP_TO_LAST_DAY
-        return RecurrenceRule(type, interval, dayOfMonth, daysOfWeek, policy)
-    }
-
-    private fun parseStandardRrule(rrule: String): RecurrenceRule {
-        var recType = RecurrenceType.NONE
-        var recInterval = 1
-        if (rrule.contains("FREQ=DAILY", ignoreCase = true)) {
-            recType = RecurrenceType.DAILY
-        } else if (rrule.contains("FREQ=WEEKLY", ignoreCase = true)) {
-            recType = RecurrenceType.WEEKLY
-        } else if (rrule.contains("FREQ=MONTHLY", ignoreCase = true)) {
-            recType = RecurrenceType.MONTHLY_JALALI
-        } else if (rrule.contains("FREQ=YEARLY", ignoreCase = true)) {
-            recType = RecurrenceType.YEARLY_JALALI
-        }
-
-        if (rrule.contains("INTERVAL=", ignoreCase = true)) {
-            val intervalStr = rrule.substringAfter("INTERVAL=").substringBefore(";")
-            recInterval = intervalStr.toIntOrNull() ?: 1
-        }
-        val daysOfWeek = if (rrule.contains("BYDAY=", ignoreCase = true)) {
-            rrule.substringAfter("BYDAY=")
-                .substringBefore(";")
-                .split(",")
-                .mapNotNull { ICS_DAY_TO_PERSIAN[it.trim().uppercase()] }
-                .toSet()
-        } else {
-            emptySet()
-        }
-        return RecurrenceRule(
-            type = recType,
-            interval = recInterval.coerceAtLeast(1),
-            daysOfWeek = daysOfWeek
-        )
     }
 
     fun foldLine(line: String): String {

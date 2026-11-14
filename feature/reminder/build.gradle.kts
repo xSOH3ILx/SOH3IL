@@ -39,6 +39,7 @@ android {
 }
 
 dependencies {
+    testImplementation(libs.junit)
     implementation(project(":core:model"))
     implementation(project(":core:jalali"))
     implementation(project(":core:designsystem"))

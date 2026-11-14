@@ -44,10 +44,12 @@ fun ReminderRecurrenceSection(
         RecurrenceType.WEEKLY -> "هر ${recurrenceInterval.toPersianDigits()} هفته"
         RecurrenceType.MONTHLY_JALALI -> "هر ${recurrenceInterval.toPersianDigits()} ماه خورشیدی"
         RecurrenceType.YEARLY_JALALI -> "هر ${recurrenceInterval.toPersianDigits()} سال خورشیدی"
+        RecurrenceType.MONTHLY_GREGORIAN -> "هر ${recurrenceInterval.toPersianDigits()} ماه میلادی"
+        RecurrenceType.YEARLY_GREGORIAN -> "هر ${recurrenceInterval.toPersianDigits()} سال میلادی"
     }
 
     FarsiAccordion(
-        title = "تکرار بر اساس گاه‌شمار خورشیدی",
+        title = "تکرار یادآور",
         summary = summary,
         expanded = expanded,
         onExpandedChange = onExpandedChange,
@@ -65,7 +67,9 @@ fun ReminderRecurrenceSection(
                     RecurrenceType.DAILY to "روزانه",
                     RecurrenceType.WEEKLY to "هفتگی",
                     RecurrenceType.MONTHLY_JALALI to "ماهانه خورشیدی",
-                    RecurrenceType.YEARLY_JALALI to "سالانه خورشیدی"
+                    RecurrenceType.YEARLY_JALALI to "سالانه خورشیدی",
+                    RecurrenceType.MONTHLY_GREGORIAN to "ماهانه میلادی",
+                    RecurrenceType.YEARLY_GREGORIAN to "سالانه میلادی"
                 )
 
                 recurrenceOptions.forEach { (type, label) ->

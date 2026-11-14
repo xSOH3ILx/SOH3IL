@@ -8,7 +8,9 @@ enum class RecurrenceType {
     DAILY,          // Every day
     WEEKLY,         // Every week on specific days of the week
     MONTHLY_JALALI, // Every solar month on specific solar day (e.g. 3rd of every month)
-    YEARLY_JALALI   // Every solar year on specific solar date (e.g. 1st of Farvardin)
+    YEARLY_JALALI,  // Every solar year on specific solar date (e.g. 1st of Farvardin)
+    MONTHLY_GREGORIAN,
+    YEARLY_GREGORIAN
 }
 
 /**

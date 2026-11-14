@@ -229,6 +229,8 @@ fun SelectedDayDetails(
                                 RecurrenceType.WEEKLY -> if (rem.recurrence.interval <= 1) "هفتگی" else "هر ${rem.recurrence.interval.toPersianDigits()} هفته یکبار"
                                 RecurrenceType.MONTHLY_JALALI -> if (rem.recurrence.interval <= 1) "ماهانه" else "هر ${rem.recurrence.interval.toPersianDigits()} ماه یکبار"
                                 RecurrenceType.YEARLY_JALALI -> if (rem.recurrence.interval <= 1) "سالانه" else "هر ${rem.recurrence.interval.toPersianDigits()} سال یکبار"
+                                RecurrenceType.MONTHLY_GREGORIAN -> "هر ${rem.recurrence.interval.toPersianDigits()} ماه میلادی"
+                                RecurrenceType.YEARLY_GREGORIAN -> "هر ${rem.recurrence.interval.toPersianDigits()} سال میلادی"
                             }
                             val doneLabel = if (rem.isEnabled) null else "انجام‌شده"
                             val subtitle = listOfNotNull(

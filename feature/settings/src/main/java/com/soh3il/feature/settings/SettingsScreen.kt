@@ -72,7 +72,8 @@ fun SettingsScreen(
     contactBirthdaysEnabled: Boolean = false,
     contactsPermissionGranted: Boolean = false,
     onContactBirthdaysToggled: ((Boolean) -> Unit)? = null,
-    onBackClick: (() -> Unit)? = null
+    onBackClick: (() -> Unit)? = null,
+    onWidgetsClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -295,6 +296,7 @@ fun SettingsScreen(
         // 3. ابزارها و گاه‌شماری (Tools & Calendar)
         ToolsSection(
             onOpenDateConverter = { showDateConverterDialog = true },
+            onWidgetsClick = onWidgetsClick,
             onExportIcsClick = onExportIcsClick,
             importIcsLauncher = importIcsLauncher,
             onSyncCalendarClick = onSyncCalendarClick

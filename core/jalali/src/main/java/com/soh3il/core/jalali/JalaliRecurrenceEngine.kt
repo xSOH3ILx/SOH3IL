@@ -95,6 +95,8 @@ object JalaliRecurrenceEngine {
                     zoneId = zoneId
                 )
             }
+            RecurrenceType.MONTHLY_GREGORIAN, RecurrenceType.YEARLY_GREGORIAN ->
+                GregorianRecurrenceEngine.calculateNextTrigger(reminder, referenceEpochMillis, zoneId)
         }
     }
 
@@ -289,6 +291,8 @@ object JalaliRecurrenceEngine {
                 val effectiveDay = resolveDayForMonth(anchorDay, maxDaysInMonth, reminder.recurrence.shortMonthPolicy)
                 effectiveDay != null && date.day == effectiveDay
             }
+            RecurrenceType.MONTHLY_GREGORIAN, RecurrenceType.YEARLY_GREGORIAN ->
+                GregorianRecurrenceEngine.matchesDate(reminder, date)
         }
     }
 }

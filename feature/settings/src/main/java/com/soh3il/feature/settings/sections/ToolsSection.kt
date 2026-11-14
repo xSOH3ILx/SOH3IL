@@ -35,7 +35,8 @@ fun ToolsSection(
     onOpenDateConverter: () -> Unit,
     onExportIcsClick: (() -> Unit)?,
     importIcsLauncher: ActivityResultLauncher<String>,
-    onSyncCalendarClick: (() -> Unit)? = null
+    onSyncCalendarClick: (() -> Unit)? = null,
+    onWidgetsClick: (() -> Unit)? = null
 ) {
     SettingsSectionHeader(
         title = "ابزارها و گاه‌شماری",
@@ -46,6 +47,13 @@ fun ToolsSection(
 
     FarsiCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
+            if (onWidgetsClick != null) {
+                OutlinedButton(onClick = onWidgetsClick, modifier = Modifier.fillMaxWidth()) {
+                    Text("افزودن ویجت به صفحهٔ اصلی")
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+
             // Date Converter Tool
             Row(
                 modifier = Modifier.fillMaxWidth(),

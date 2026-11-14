@@ -49,6 +49,8 @@ fun CustomRecurrenceDialog(
         RecurrenceType.WEEKLY -> "هفته"
         RecurrenceType.MONTHLY_JALALI -> "ماه خورشیدی"
         RecurrenceType.YEARLY_JALALI -> "سال خورشیدی"
+        RecurrenceType.MONTHLY_GREGORIAN -> "ماه میلادی"
+        RecurrenceType.YEARLY_GREGORIAN -> "سال میلادی"
         else -> "دوره"
     }
 
@@ -168,6 +170,8 @@ fun CustomRecurrenceDialog(
                     RecurrenceType.DAILY -> "هر ${valInt.toPersianDigits()} روز یکبار"
                     RecurrenceType.WEEKLY -> "هر ${valInt.toPersianDigits()} هفته یکبار"
                     RecurrenceType.YEARLY_JALALI -> "هر ${valInt.toPersianDigits()} سال یکبار در ${initialDate.day.toPersianDigits()} ${initialDate.monthNameFa}"
+                    RecurrenceType.MONTHLY_GREGORIAN -> "هر ${valInt.toPersianDigits()} ماه میلادی"
+                    RecurrenceType.YEARLY_GREGORIAN -> "هر ${valInt.toPersianDigits()} سال میلادی"
                     else -> ""
                 }
 

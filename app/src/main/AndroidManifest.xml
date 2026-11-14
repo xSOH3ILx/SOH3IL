@@ -552,6 +552,7 @@
         <!-- Material 3 Expressive Calendar Home Screen Widget -->
         <receiver
             android:name=".widget.CalendarAppWidgetProvider"
+            android:label="@string/widget_daily_label"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -563,6 +564,7 @@
 
         <receiver
             android:name=".widget.CompactCalendarWidgetProvider"
+            android:label="@string/widget_compact_label"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -574,6 +576,7 @@
 
         <receiver
             android:name=".widget.MonthCalendarWidgetProvider"
+            android:label="@string/widget_month_label"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

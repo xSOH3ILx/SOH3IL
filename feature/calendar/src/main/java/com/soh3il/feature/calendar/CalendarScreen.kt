@@ -20,6 +20,8 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -53,14 +55,18 @@ fun CalendarScreen(
     occasions: List<Occasion> = emptyList(),
     additionalOccasions: List<Occasion> = emptyList(),
     onAddReminderClick: (JalaliDate) -> Unit = {},
-    onReminderClick: (Reminder) -> Unit = {}
+    onReminderClick: (Reminder) -> Unit = {},
+    onDisplayedYearChanged: (Int) -> Unit = {}
 ) {
     var today by remember { mutableStateOf(JalaliDate.now()) }
-    var displayedDate by remember { mutableStateOf(today) }
-    var selectedDate by remember { mutableStateOf(today) }
+    val dateSaver = remember { Saver<JalaliDate, Long>(save = { it.toJdn() }, restore = { JalaliDate.fromJdn(it) }) }
+    var displayedDate by rememberSaveable(stateSaver = dateSaver) { mutableStateOf(today) }
+    var selectedDate by rememberSaveable(stateSaver = dateSaver) { mutableStateOf(today) }
     var totalDragDistance by remember { mutableFloatStateOf(0f) }
-    var viewMode by remember { mutableIntStateOf(0) } // 0=Month Grid, 1=Agenda View
-    var showYearMonthPicker by remember { mutableStateOf(false) }
+    var viewMode by rememberSaveable { mutableIntStateOf(0) } // 0=Month Grid, 1=Agenda View
+    var showYearMonthPicker by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(displayedDate.year) { onDisplayedYearChanged(displayedDate.year) }
 
     LaunchedEffect(Unit) {
         while (isActive) {

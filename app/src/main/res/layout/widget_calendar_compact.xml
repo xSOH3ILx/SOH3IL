@@ -11,6 +11,7 @@
 
     <TextView
         android:id="@+id/compact_day_of_week"
+        android:text="@string/widget_today"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/vazirmatn_medium"
@@ -20,6 +21,7 @@
 
     <TextView
         android:id="@+id/compact_day_number"
+        android:text="@string/widget_sample_day"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/vazirmatn_bold"
@@ -29,6 +31,7 @@
 
     <TextView
         android:id="@+id/compact_month_name"
+        android:text="@string/widget_sample_month"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/vazirmatn_regular"

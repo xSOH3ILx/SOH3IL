@@ -40,9 +40,13 @@ class MonthCalendarWidgetProvider : AppWidgetProvider() {
         }
 
         private fun updateAppWidget(context: Context, manager: AppWidgetManager, appWidgetId: Int) {
-            val today = JalaliDate.now()
+            manager.updateAppWidget(appWidgetId, createRemoteViews(context, appWidgetId))
+        }
+
+        internal fun createRemoteViews(context: Context, appWidgetId: Int, today: JalaliDate = JalaliDate.now()): RemoteViews {
             val firstDay = JalaliDate(today.year, today.month, 1)
             val holidays = IranianHolidays.getOccasionsForMonth(today.year, today.month)
+                .filter { it.isHoliday }
                 .map { it.jalaliDate }
                 .toSet()
             val views = RemoteViews(context.packageName, R.layout.widget_calendar_month).apply {
@@ -84,7 +88,7 @@ class MonthCalendarWidgetProvider : AppWidgetProvider() {
                     )
                 )
             }
-            manager.updateAppWidget(appWidgetId, views)
+            return views
         }
     }
 }

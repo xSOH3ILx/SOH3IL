@@ -21,40 +21,44 @@ object CalendarProviderSync {
             return@withContext Result.failure(SecurityException("مجوز تقویم صادر نشده است"))
         }
 
-        val calendarId = findWritableCalendarId(context) ?:
-            return@withContext Result.failure(IllegalStateException("تقویم قابل ویرایش پیدا نشد"))
-        var synced = 0
-        reminders.filter { it.id != 0L && it.isEnabled }.forEach { reminder ->
-            val start = JalaliDate(
-                reminder.jalaliYear,
-                reminder.jalaliMonth,
-                reminder.jalaliDay
-            ).toEpochMillis(reminder.hour, reminder.minute, 0, JalaliDate.TEHRAN_ZONE)
-            val marker = "[SOH3IL_REMINDER:${reminder.id}]"
-            val values = ContentValues().apply {
-                put(CalendarContract.Events.CALENDAR_ID, calendarId)
-                put(CalendarContract.Events.TITLE, reminder.title)
-                put(CalendarContract.Events.DESCRIPTION, "${reminder.description}\n$marker")
-                put(CalendarContract.Events.DTSTART, start)
-                put(CalendarContract.Events.DTEND, start + 60 * 60 * 1000L)
-                put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
-            }
+        try {
+            val calendarId = findWritableCalendarId(context) ?:
+                return@withContext Result.failure(IllegalStateException("تقویم قابل ویرایش پیدا نشد"))
+            var synced = 0
+            reminders.filter { it.id != 0L && it.isEnabled }.forEach { reminder ->
+                val start = JalaliDate(
+                    reminder.jalaliYear,
+                    reminder.jalaliMonth,
+                    reminder.jalaliDay
+                ).toEpochMillis(reminder.hour, reminder.minute, 0, JalaliDate.TEHRAN_ZONE)
+                val marker = "[SOH3IL_REMINDER:${reminder.id}]"
+                val values = ContentValues().apply {
+                    put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                    put(CalendarContract.Events.TITLE, reminder.title)
+                    put(CalendarContract.Events.DESCRIPTION, "${reminder.description}\n$marker")
+                    put(CalendarContract.Events.DTSTART, start)
+                    put(CalendarContract.Events.DTEND, start + 60 * 60 * 1000L)
+                    put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
+                }
 
-            val existingId = findEventId(context, marker)
-            val uri = if (existingId != null) {
-                context.contentResolver.update(
-                    CalendarContract.Events.CONTENT_URI,
-                    values,
-                    "${CalendarContract.Events._ID} = ?",
-                    arrayOf(existingId.toString())
-                )
-                CalendarContract.Events.CONTENT_URI.buildUpon().appendPath(existingId.toString()).build()
-            } else {
-                context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                val existingId = findEventId(context, marker)
+                val uri = if (existingId != null) {
+                    context.contentResolver.update(
+                        CalendarContract.Events.CONTENT_URI,
+                        values,
+                        "${CalendarContract.Events._ID} = ?",
+                        arrayOf(existingId.toString())
+                    )
+                    CalendarContract.Events.CONTENT_URI.buildUpon().appendPath(existingId.toString()).build()
+                } else {
+                    context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                }
+                if (uri != null) synced++
             }
-            if (uri != null) synced++
+            Result.success(synced)
+        } catch (error: SecurityException) {
+            Result.failure(SecurityException("دسترسی به تقویم قطع شده است؛ مجوز آن را در تنظیمات گوشی بررسی کنید.", error))
         }
-        Result.success(synced)
     }
 
     @SuppressLint("Recycle")
